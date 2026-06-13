@@ -1,0 +1,23 @@
+import { apiRequest } from '../../api/apiClient';
+import type { BackendLootBox, BackendOpenLootBoxResult } from '../../api/backendContracts';
+import { mapLootBox, mapOpenLootBox } from '../../api/backendMappers';
+import { mockLootboxes, mockOpenLootboxResponse } from '../mockData';
+import type { LootboxDefinition } from './types';
+
+export const shopApi = {
+  async getLootboxes(): Promise<LootboxDefinition[]> {
+    try {
+      const response = await apiRequest<BackendLootBox[]>('/api/lootboxes');
+      const items = response.filter((lootbox) => lootbox.isActive).map(mapLootBox);
+      return items.length > 0 ? items : mockLootboxes;
+    } catch {
+      return mockLootboxes;
+    }
+  },
+
+  openLootbox(id: string) {
+    return apiRequest<BackendOpenLootBoxResult>(`/api/lootboxes/${id}/open`, {
+      method: 'POST',
+    }).then(mapOpenLootBox).catch(() => mockOpenLootboxResponse(id));
+  },
+};

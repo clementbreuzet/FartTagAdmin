@@ -41,5 +41,9 @@ export const apiRequest = async <T>(
     throw new ApiError(body || 'The server could not complete the request.', response.status);
   }
 
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
   return response.json() as Promise<T>;
 };

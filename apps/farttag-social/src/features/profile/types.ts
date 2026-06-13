@@ -38,9 +38,12 @@ export type Wallet = {
 export type InventoryItem = {
   id: string;
   name: string;
-  type: 'title' | 'frame' | 'collectible' | 'other';
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  type: 'title' | 'frame' | 'effect' | 'sticker' | 'mythic' | 'collectible' | 'other';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
   isShowcased: boolean;
+  isEquipped: boolean;
+  sourceLabel: string;
+  slot: 'title' | 'frame' | 'effect' | 'none';
 };
 
 export type InventoryResponse = {

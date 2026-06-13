@@ -1,5 +1,6 @@
 export type BleStatus = 'disconnected' | 'connecting' | 'connected';
 export type UploadStatus = 'idle' | 'pending' | 'uploaded' | 'error';
+export type DetectionSource = 'ble' | 'phone-mic';
 
 export type ConnectedFartTag = {
   id: string;
@@ -15,6 +16,7 @@ export type DetectedFartEvent = {
   audioLevel: number;
   gasLevel: number;
   provisionalScore: number;
+  source?: DetectionSource;
 };
 
 export type OfficialFartResult = {

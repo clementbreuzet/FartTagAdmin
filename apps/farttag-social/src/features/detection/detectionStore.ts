@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 import { detectionApi } from './detectionApi';
+import { PhoneMicService } from '../../services/audio/PhoneMicService';
+import { mockDetectedEvent, mockOfficialDetectionResult } from '../mockData';
 import type {
   BleStatus,
   ConnectedFartTag,
@@ -15,9 +17,13 @@ type DetectionState = {
   error: string | null;
   lastEvent: DetectedFartEvent | null;
   officialResult: OfficialFartResult | null;
+  isPhoneMicRecording: boolean;
+  inputMode: 'ble' | 'phone-mic';
   uploadStatus: UploadStatus;
   connectDevice: () => Promise<void>;
   receiveAutomaticEvent: (event: DetectedFartEvent) => void;
+  startPhoneMicTest: () => Promise<void>;
+  stopPhoneMicTest: () => Promise<void>;
   simulateAutomaticEvent: () => void;
   uploadLastEvent: () => Promise<void>;
 };
@@ -28,7 +34,7 @@ const getErrorMessage = (error: unknown) =>
 const wait = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
 
-const createProvisionalEvent = (): DetectedFartEvent => {
+const createProvisionalEvent = (source: 'ble' | 'phone-mic'): DetectedFartEvent => {
   const audioLevel = Math.round((62 + Math.random() * 25) * 10) / 10;
   const gasLevel = Math.round((78 + Math.random() * 65) * 10) / 10;
   const durationMs = Math.round(900 + Math.random() * 3_500);
@@ -40,16 +46,24 @@ const createProvisionalEvent = (): DetectedFartEvent => {
     audioLevel,
     gasLevel,
     provisionalScore: Math.round(audioLevel * 0.65 + gasLevel * 0.35),
+    source,
   };
 };
 
 export const useDetectionStore = create<DetectionState>((set, get) => ({
-  bleStatus: 'disconnected',
-  device: null,
+  bleStatus: 'connected',
+  device: {
+    id: 'FT-SOCIAL-DEMO-01',
+    name: 'FartTag de Camille',
+    batteryLevel: 84,
+    rssi: -58,
+  },
   error: null,
-  lastEvent: null,
-  officialResult: null,
-  uploadStatus: 'idle',
+  lastEvent: mockDetectedEvent,
+  inputMode: 'ble',
+  officialResult: mockOfficialDetectionResult,
+  isPhoneMicRecording: false,
+  uploadStatus: 'uploaded',
 
   connectDevice: async () => {
     set({ bleStatus: 'connecting', error: null });
@@ -62,6 +76,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         batteryLevel: 84,
         rssi: -58,
       },
+      inputMode: 'ble',
     });
   },
 
@@ -70,6 +85,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
       error: null,
       lastEvent: event,
       officialResult: null,
+      inputMode: event.source === 'phone-mic' ? 'phone-mic' : 'ble',
       uploadStatus: 'idle',
     });
   },
@@ -78,12 +94,64 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
     if (get().bleStatus !== 'connected') {
       return;
     }
-    get().receiveAutomaticEvent(createProvisionalEvent());
+    get().receiveAutomaticEvent(createProvisionalEvent('ble'));
+  },
+
+  startPhoneMicTest: async () => {
+    if (get().isPhoneMicRecording) {
+      return;
+    }
+
+    set({ error: null, isPhoneMicRecording: true });
+
+    try {
+      const granted = await PhoneMicService.requestPermission();
+      if (!granted) {
+        throw new Error('Le micro est nécessaire pour ce mode de test temporaire.');
+      }
+
+      await PhoneMicService.startRecording();
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+        isPhoneMicRecording: false,
+      });
+    }
+  },
+
+  stopPhoneMicTest: async () => {
+    if (!get().isPhoneMicRecording) {
+      return;
+    }
+
+    set({ error: null });
+
+    try {
+      const capture = await PhoneMicService.stopRecording();
+      const provisionalEvent: DetectedFartEvent = {
+        audioLevel: capture.averageLevel,
+        capturedAt: new Date().toISOString(),
+        durationMs: capture.durationMs || 1_800,
+        gasLevel: Math.round(Math.max(20, Math.min(100, capture.peakLevel * 0.9 + 9))),
+        id: `phone-mic-${Date.now()}`,
+        provisionalScore: Math.round(capture.averageLevel * 0.68 + capture.peakLevel * 0.32),
+        source: 'phone-mic',
+      };
+
+      get().receiveAutomaticEvent(provisionalEvent);
+    } catch (error) {
+      set({
+        error: getErrorMessage(error),
+      });
+    } finally {
+      set({ isPhoneMicRecording: false });
+    }
   },
 
   uploadLastEvent: async () => {
-    const { device, lastEvent } = get();
-    if (!device || !lastEvent) {
+    const { device, inputMode, lastEvent } = get();
+    const deviceId = device?.id ?? (inputMode === 'phone-mic' ? 'PHONE-MIC-TEST' : null);
+    if (!deviceId || !lastEvent) {
       return;
     }
 
@@ -93,7 +161,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         audioLevel: lastEvent.audioLevel,
         capturedAt: lastEvent.capturedAt,
         clientEventId: lastEvent.id,
-        deviceId: device.id,
+        deviceId,
         durationMs: lastEvent.durationMs,
         gasLevel: lastEvent.gasLevel,
         provisionalScore: lastEvent.provisionalScore,

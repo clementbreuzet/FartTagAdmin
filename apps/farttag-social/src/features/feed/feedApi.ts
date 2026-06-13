@@ -1,21 +1,28 @@
 import { apiRequest } from '../../api/apiClient';
+import type { BackendFartEvent, BackendFeedItem } from '../../api/backendContracts';
+import { mapFeedItem, mapReactionResponse } from '../../api/backendMappers';
+import { mockFeedEvents } from '../mockData';
 import type {
   FartReactionType,
-  FeedResponse,
   PublicFartEvent,
   ReactToFartResponse,
 } from './types';
 
 export const feedApi = {
   async getFeed(): Promise<PublicFartEvent[]> {
-    const response = await apiRequest<FeedResponse | PublicFartEvent[]>('/api/feed');
-    return Array.isArray(response) ? response : response.items;
+    try {
+      const response = await apiRequest<BackendFeedItem[]>('/api/feed');
+      const events = response.map(mapFeedItem);
+      return events.length > 0 ? events : mockFeedEvents;
+    } catch {
+      return mockFeedEvents;
+    }
   },
 
   react(fartEventId: string, reactionType: FartReactionType) {
-    return apiRequest<ReactToFartResponse>(`/api/fart-events/${fartEventId}/react`, {
+    return apiRequest<BackendFartEvent>(`/api/fart-events/${fartEventId}/react`, {
       body: JSON.stringify({ reactionType }),
       method: 'POST',
-    });
+    }).then(mapReactionResponse) satisfies Promise<ReactToFartResponse>;
   },
 };

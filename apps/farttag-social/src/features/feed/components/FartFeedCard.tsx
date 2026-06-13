@@ -11,6 +11,8 @@ type FartFeedCardProps = {
   event: PublicFartEvent;
   isReacting: boolean;
   onCommentsPress?: (eventId: string) => void;
+  onOpenDetails?: (eventId: string) => void;
+  onUserPress?: (user: PublicFartEvent['user']) => void;
   onReact: (eventId: string, reaction: FartReactionType) => void;
   onReplay: (event: PublicFartEvent) => void;
 };
@@ -29,13 +31,15 @@ export const FartFeedCard = ({
   event,
   isReacting,
   onCommentsPress,
+  onOpenDetails,
+  onUserPress,
   onReact,
   onReplay,
 }: FartFeedCardProps) => (
   <View style={styles.card}>
     <View style={styles.topGlow} />
 
-    <View style={styles.userRow}>
+    <Pressable onPress={() => onUserPress?.(event.user)} style={styles.userRow}>
       <UserAvatar displayName={event.user.displayName} imageUrl={event.user.avatarUrl} />
       <View style={styles.userCopy}>
         <View style={styles.nameRow}>
@@ -52,7 +56,7 @@ export const FartFeedCard = ({
         <Text style={styles.scoreLabel}>SCORE</Text>
         <Text style={styles.scoreValue}>{event.score}</Text>
       </View>
-    </View>
+    </Pressable>
 
     <View style={styles.metrics}>
       <FeedMetric accent="purple" label="Durée" value={formatDuration(event.durationMs)} />
@@ -73,6 +77,10 @@ export const FartFeedCard = ({
       <Text style={styles.replayText}>
         {event.audioReplayUrl ? 'RÉÉCOUTER' : 'AUDIO INDISPONIBLE'}
       </Text>
+    </Pressable>
+
+    <Pressable onPress={() => onOpenDetails?.(event.id)} style={styles.detailsButton}>
+      <Text style={styles.detailsText}>VOIR LES DÉTAILS</Text>
     </Pressable>
 
     <View style={styles.footer}>
@@ -224,5 +232,20 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 11,
     fontWeight: '800',
+  },
+  detailsButton: {
+    alignItems: 'center',
+    borderColor: colors.neonCyan,
+    borderRadius: 13,
+    borderWidth: 1,
+    marginTop: 12,
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  detailsText: {
+    color: colors.neonCyan,
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.9,
   },
 });

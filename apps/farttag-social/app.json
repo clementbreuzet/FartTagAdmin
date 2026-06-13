@@ -5,11 +5,25 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "plugins": [
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow FartTag Social to record audio for the temporary micro test mode."
+        }
+      ]
+    ],
     "android": {
-      "package": "com.farttag.social"
+      "package": "com.farttag.social",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "ios": {
-      "bundleIdentifier": "com.farttag.social"
+      "bundleIdentifier": "com.farttag.social",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "FartTag Social uses the microphone for the temporary test mode when BLE is not connected."
+      }
     }
   }
 }
