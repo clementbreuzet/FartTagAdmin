@@ -22,5 +22,5 @@ Quand je demande une tâche :
 
 Toujours respecter le contexte projet :
 FartTag Admin est l’application de calibration et maintenance du boîtier FartTag.
-L’app utilisateur publique est FartSocial.
+L’app utilisateur publique est FartTag Social.
 Ne pas mélanger les deux.

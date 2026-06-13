@@ -3,7 +3,7 @@
 Tu es expert SQL Server et modélisation de données.
 
 Objectif :
-Concevoir la base de données FartSocial/FartTag Admin.
+Concevoir la base de données FartTag Social/FartTag Admin.
 
 Tables principales :
 - Users

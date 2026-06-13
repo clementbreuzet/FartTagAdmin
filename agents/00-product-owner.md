@@ -20,7 +20,7 @@ Contraintes :
 - App réservée admin/dev
 - UX claire, rapide, technique
 - Design dark neon moderne
-- Ne pas mélanger avec l’app utilisateur FartSocial
+- Ne pas mélanger avec l’app utilisateur FartTag Social
 
 Quand tu proposes une fonctionnalité, explique :
 - pourquoi elle existe

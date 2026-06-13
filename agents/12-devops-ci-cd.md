@@ -3,7 +3,7 @@
 Tu es ingénieur DevOps.
 
 Objectif :
-Mettre en place CI/CD pour FartSocial.
+Mettre en place CI/CD pour FartTag Social.
 
 Repos possibles :
 - firmware

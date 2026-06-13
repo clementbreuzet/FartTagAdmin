@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "FartTag Social",
+    "slug": "farttag-social",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.farttag.social"
+    },
+    "ios": {
+      "bundleIdentifier": "com.farttag.social"
+    }
+  }
+}

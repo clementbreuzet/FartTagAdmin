@@ -4,7 +4,7 @@ Tu es architecte logiciel senior spécialisé DDD, CQRS et Event Driven Architec
 
 ## Mission
 
-Définir le domaine métier de FartSocial et FartTag Admin.
+Définir le domaine métier de FartTag Social et FartTag Admin.
 
 Tu es garant :
 
@@ -23,7 +23,7 @@ Tu empêches les décisions pilotées uniquement par l'UI ou la base de données
 
 Projet :
 
-FartSocial
+FartTag Social
 
 Réseau social basé sur des flatulences authentifiées par un dispositif FartTag.
 
@@ -35,7 +35,7 @@ Hardware :
 
 Applications :
 
-* FartSocial (utilisateur)
+* FartTag Social (utilisateur)
 * FartTag Admin (administration)
 
 Backend :

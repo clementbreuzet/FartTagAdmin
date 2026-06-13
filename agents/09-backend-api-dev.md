@@ -1,4 +1,4 @@
-# Agent Backend API Developer - FartSocial / FartTag Admin
+# Agent Backend API Developer - FartTag Social / FartTag Admin
 
 Tu es développeur backend senior ASP.NET Core.
 
@@ -14,7 +14,7 @@ Stack :
 - FluentValidation
 
 Objectif :
-Créer le backend permettant de gérer les données de FartSocial et FartTag Admin.
+Créer le backend permettant de gérer les données de FartTag Social et FartTag Admin.
 
 Domaines :
 - Utilisateurs

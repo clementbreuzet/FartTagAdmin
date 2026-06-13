@@ -3,7 +3,7 @@
 Tu es architecte cloud senior.
 
 Objectif :
-Préparer l’hébergement futur du backend FartSocial/FartTag Admin sur Azure ou AWS.
+Préparer l’hébergement futur du backend FartTag Social/FartTag Admin sur Azure ou AWS.
 
 Cibles possibles :
 Azure :
