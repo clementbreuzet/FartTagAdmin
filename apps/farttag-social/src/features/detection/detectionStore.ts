@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { detectionApi } from './detectionApi';
 import { PhoneMicService } from '../../services/audio/PhoneMicService';
 import { mockDetectedEvent, mockOfficialDetectionResult } from '../mockData';
+import { useHistoryStore } from '../history/historyStore';
 import type {
   BleStatus,
   ConnectedFartTag,
@@ -36,6 +37,11 @@ const getErrorMessage = (error: unknown) =>
 
 const wait = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
+
+const refreshHistoryAfterInsert = () => {
+  console.log('[detection] FartEvent created, refreshing history');
+  void useHistoryStore.getState().refreshHistory();
+};
 
 const createProvisionalEvent = (source: 'ble' | 'phone-mic'): DetectedFartEvent => {
   const audioLevel = Math.round((62 + Math.random() * 25) * 10) / 10;
@@ -95,26 +101,56 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
   },
 
   saveLastAudio: async () => {
-    const lastEvent = get().lastEvent;
-    if (!lastEvent?.audioUri || lastEvent.audioFileId) {
+    const { device, inputMode, lastEvent, uploadStatus } = get();
+    const deviceId = inputMode === 'phone-mic' ? null : device?.id ?? null;
+    if (
+      !lastEvent ||
+      (!lastEvent.audioUri && !lastEvent.audioFileId) ||
+      uploadStatus === 'uploaded' ||
+      (inputMode === 'ble' && !deviceId)
+    ) {
       return;
     }
 
-    set({ audioSaveStatus: 'saving', error: null });
+    set({ audioSaveStatus: 'saving', error: null, uploadStatus: 'pending' });
     try {
-      const uploadedAudio = await detectionApi.uploadAudio(lastEvent.audioUri, lastEvent.durationMs);
+      const uploadedAudio = lastEvent.audioFileId
+        ? {
+            id: lastEvent.audioFileId,
+            replayUrl: lastEvent.audioReplayUrl,
+          }
+        : await detectionApi.uploadAudio(lastEvent.audioUri!, lastEvent.durationMs);
+
       set((state) => ({
-        audioSaveStatus: 'saved',
         lastEvent: state.lastEvent?.id === lastEvent.id
           ? {
               ...state.lastEvent,
               audioFileId: uploadedAudio.id,
-              audioReplayUrl: uploadedAudio.replayUrl,
+              audioReplayUrl: uploadedAudio.replayUrl ?? state.lastEvent.audioReplayUrl,
             }
           : state.lastEvent,
       }));
+
+      const officialResult = await detectionApi.uploadEvent({
+        audioFileId: uploadedAudio.id,
+        audioLevel: lastEvent.audioLevel,
+        capturedAt: lastEvent.capturedAt,
+        clientEventId: lastEvent.id,
+        deviceId,
+        durationMs: lastEvent.durationMs,
+        gasLevel: lastEvent.gasLevel,
+        provisionalScore: lastEvent.provisionalScore,
+      });
+
+      set((state) => ({
+        audioSaveStatus: 'saved',
+        officialResult,
+        uploadStatus: 'uploaded',
+        lastEvent: state.lastEvent,
+      }));
+      refreshHistoryAfterInsert();
     } catch (error) {
-      set({ audioSaveStatus: 'error', error: getErrorMessage(error) });
+      set({ audioSaveStatus: 'error', error: getErrorMessage(error), uploadStatus: 'error' });
     }
   },
 
@@ -202,6 +238,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         audioUri: lastEvent.audioUri,
       });
       set({ officialResult, uploadStatus: 'uploaded' });
+      refreshHistoryAfterInsert();
     } catch (error) {
       set({ error: getErrorMessage(error), uploadStatus: 'error' });
     }

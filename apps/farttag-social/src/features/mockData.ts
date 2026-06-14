@@ -126,10 +126,13 @@ export const mockFeedEvents: PublicFartEvent[] = [
 export const mockHistoryEvents: FartHistoryEvent[] = [
   {
     audioLevel: 77.1,
+    audioFileId: null,
     audioReplayUrl: 'https://example.com/replay/2',
+    category: 'legendary',
     durationMs: 1680,
     gasLevel: 88.2,
     id: 'hist-001',
+    isAuthenticated: true,
     isLegendary: true,
     occurredAt: '2026-06-12T20:15:00.000Z',
     officialScore: 97,
@@ -137,10 +140,13 @@ export const mockHistoryEvents: FartHistoryEvent[] = [
   },
   {
     audioLevel: 69.4,
+    audioFileId: null,
     audioReplayUrl: null,
+    category: 'rare',
     durationMs: 1320,
     gasLevel: 74.8,
     id: 'hist-002',
+    isAuthenticated: true,
     isLegendary: false,
     occurredAt: '2026-06-11T09:05:00.000Z',
     officialScore: 83,
@@ -337,7 +343,9 @@ export const mockOpenLootboxResponse = (lootboxId: string): OpenLootboxResponse 
 export const mockFartDetailsById: Record<string, FartDetails> = {
   'fart-best-001': {
     audioLevel: 82.4,
+    audioFileId: null,
     audioReplayUrl: 'https://example.com/replay/details-1',
+    category: 'legendary',
     comments: [
       {
         authorDisplayName: 'Nina Volt',

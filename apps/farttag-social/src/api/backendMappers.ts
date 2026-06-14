@@ -282,7 +282,10 @@ export const mapHistoryItem = (item: BackendFartHistoryItem): FartHistoryEvent =
   audioLevel: item.audioLevel,
   gasLevel: item.gasLevel,
   visibility: normalizeVisibility(item.visibility),
+  category: item.category,
+  isAuthenticated: item.isAuthenticated,
   isLegendary: item.category.toLowerCase() === 'legendary' || item.category.toLowerCase() === 'mythic',
+  audioFileId: item.audioFileId,
   audioReplayUrl: resolveApiUrl(item.audioReplayUrl),
 });
 
@@ -291,11 +294,13 @@ export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
   occurredAt: event.timestamp,
   officialScore: event.officialScore,
   isAuthenticated: event.isAuthenticated,
+  category: event.category,
   audioLevel: event.audioLevel,
   gasLevel: event.gasLevel,
   durationMs: event.durationMs,
   temperatureCelsius: event.temperature,
   visibility: normalizeVisibility(event.visibility),
+  audioFileId: event.audioFileId,
   audioReplayUrl: resolveApiUrl(event.audioReplayUrl),
   device: {
     id: event.deviceId,

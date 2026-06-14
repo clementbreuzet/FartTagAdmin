@@ -39,6 +39,7 @@ export type BackendFartEvent = {
 
 export type BackendFartHistoryItem = {
   id: string;
+  audioFileId: string | null;
   audioReplayUrl: string | null;
   timestamp: string;
   officialScore: number;

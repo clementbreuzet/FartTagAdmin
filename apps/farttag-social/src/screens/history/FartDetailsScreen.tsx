@@ -2,8 +2,6 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
-  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -16,6 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ReactionBar } from '../../features/feed/components/ReactionBar';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFartDetailsStore } from '../../features/fart-details/fartDetailsStore';
+import { AudioPlayButton } from '../../features/history/components/AudioPlayButton';
+import { useHistoryStore } from '../../features/history/historyStore';
 import type { RootStackParamList } from '../../navigation/types';
 import { LabelValueRow, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -32,22 +32,19 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
   const react = useFartDetailsStore((state) => state.react);
   const reset = useFartDetailsStore((state) => state.reset);
   const setVisibility = useFartDetailsStore((state) => state.setVisibility);
+  const currentlyPlayingId = useHistoryStore((state) => state.currentlyPlayingId);
+  const playbackStatus = useHistoryStore((state) => state.playbackStatus);
+  const playAudio = useHistoryStore((state) => state.playAudio);
+  const stopAudio = useHistoryStore((state) => state.stopAudio);
+  const playbackError = useHistoryStore((state) => state.error);
 
   useEffect(() => {
     void loadDetails(route.params.fartEventId);
-    return reset;
-  }, [loadDetails, reset, route.params.fartEventId]);
-
-  const replay = async () => {
-    if (!details?.audioReplayUrl) {
-      return;
-    }
-    try {
-      await Linking.openURL(details.audioReplayUrl);
-    } catch {
-      Alert.alert('Replay indisponible', "L'audio n'a pas pu être ouvert.");
-    }
-  };
+    return () => {
+      reset();
+      stopAudio();
+    };
+  }, [loadDetails, reset, route.params.fartEventId, stopAudio]);
 
   const share = async () => {
     if (!details) {
@@ -83,6 +80,7 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
           </View>
           <Text style={styles.scoreLabel}>SCORE OFFICIEL</Text>
           <Text style={styles.score}>{details.officialScore}</Text>
+          <Text style={styles.category}>{details.category.toUpperCase()}</Text>
           <Text style={styles.date}>{new Date(details.occurredAt).toLocaleString()}</Text>
         </View>
 
@@ -134,11 +132,15 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        {playbackError ? <Text style={styles.error}>{playbackError}</Text> : null}
 
         <View style={styles.actions}>
-          <Pressable disabled={!details.audioReplayUrl} onPress={() => void replay()} style={[styles.action, styles.playAction, !details.audioReplayUrl && styles.disabled]}>
-            <Text style={[styles.actionText, styles.playText]}>{details.audioReplayUrl ? '▶ PLAY AUDIO' : 'AUDIO INDISPONIBLE'}</Text>
-          </Pressable>
+          <AudioPlayButton
+            disabled={!details.audioReplayUrl && !details.audioFileId}
+            isCurrent={currentlyPlayingId === details.id}
+            onPress={() => void playAudio(details)}
+            status={playbackStatus}
+          />
           <Pressable onPress={() => void share()} style={[styles.action, styles.shareAction]}>
             <Text style={[styles.actionText, styles.shareText]}>PARTAGER</Text>
           </Pressable>
@@ -190,6 +192,7 @@ const styles = StyleSheet.create({
   authText: { color: colors.neonCyan, fontSize: 8, fontWeight: '900', letterSpacing: 0.7 },
   scoreLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2, marginTop: 14 },
   score: { color: colors.neonGreen, fontSize: 58, fontWeight: '900', marginTop: 2 },
+  category: { color: colors.neonPurple, fontSize: 11, fontWeight: '900', letterSpacing: 1, marginTop: 3 },
   date: { color: colors.textSecondary, fontSize: 10, marginTop: 5 },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginBottom: 14 },
   metric: { backgroundColor: colors.surface, borderRadius: 15, borderWidth: 1, flex: 1, minWidth: '46%', padding: 13 },

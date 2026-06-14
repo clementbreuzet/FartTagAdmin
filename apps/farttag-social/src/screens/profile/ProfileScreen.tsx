@@ -24,6 +24,7 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const loadBadges = useBadgesStore((state) => state.loadBadges);
   const badgesHaveLoaded = useBadgesStore((state) => state.hasLoaded);
   const loadHistory = useHistoryStore((state) => state.loadHistory);
+  const refreshHistory = useHistoryStore((state) => state.refreshHistory);
   const historyHasLoaded = useHistoryStore((state) => state.hasLoaded);
   const loadInventory = useInventoryStore((state) => state.loadInventory);
   const inventoryHasLoaded = useInventoryStore((state) => state.hasLoaded);
@@ -54,11 +55,19 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
     profileHasLoaded,
   ]);
 
+  const changeTab = (tab: ProfileTab) => {
+    console.log('[profile] Tab selected', { historyHasLoaded, tab });
+    setActiveTab(tab);
+    if (tab === 'history') {
+      void refreshHistory();
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <SubmenuTabs
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onChange={changeTab}
         tabs={[
           { label: 'Profil', value: 'profile' },
           { label: 'Badges', value: 'badges' },

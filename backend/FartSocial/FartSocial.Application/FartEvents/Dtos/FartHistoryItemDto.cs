@@ -2,6 +2,7 @@ namespace FartSocial.Application.FartEvents.Dtos;
 
 public sealed record FartHistoryItemDto(
     Guid Id,
+    Guid? AudioFileId,
     string? AudioReplayUrl,
     DateTimeOffset Timestamp,
     int OfficialScore,

@@ -23,6 +23,7 @@ export const initializeDevelopmentAuth = async (): Promise<void> => {
   }
 
   let response: BackendAuthResponse;
+  console.log('[auth] Development authentication started');
   try {
     response = await login();
   } catch (error) {
@@ -41,4 +42,9 @@ export const initializeDevelopmentAuth = async (): Promise<void> => {
   }
 
   setApiAccessToken(response.accessToken);
+  console.log('[auth] Development authentication ready', {
+    hasAccessToken: Boolean(response.accessToken),
+    userId: response.user.id,
+    userName: response.user.userName,
+  });
 };

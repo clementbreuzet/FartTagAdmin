@@ -30,9 +30,9 @@ const FALLBACK_EVENT: DetectedFartEvent = {
 };
 
 const FALLBACK_HISTORY: FartHistoryEvent[] = [
-  { audioLevel: 72.6, audioReplayUrl: null, durationMs: 2_800, gasLevel: 98.4, id: 'fallback-history-1', isLegendary: false, occurredAt: '2026-06-14T15:02:00.000Z', officialScore: 82, visibility: 'private' },
-  { audioLevel: 68.2, audioReplayUrl: null, durationMs: 2_100, gasLevel: 84.6, id: 'fallback-history-2', isLegendary: false, occurredAt: '2026-06-14T13:47:00.000Z', officialScore: 64, visibility: 'private' },
-  { audioLevel: 55.1, audioReplayUrl: null, durationMs: 1_300, gasLevel: 60.2, id: 'fallback-history-3', isLegendary: false, occurredAt: '2026-06-14T11:23:00.000Z', officialScore: 49, visibility: 'private' },
+  { audioFileId: null, audioLevel: 72.6, audioReplayUrl: null, category: 'epic', durationMs: 2_800, gasLevel: 98.4, id: 'fallback-history-1', isAuthenticated: true, isLegendary: false, occurredAt: '2026-06-14T15:02:00.000Z', officialScore: 82, visibility: 'private' },
+  { audioFileId: null, audioLevel: 68.2, audioReplayUrl: null, category: 'rare', durationMs: 2_100, gasLevel: 84.6, id: 'fallback-history-2', isAuthenticated: true, isLegendary: false, occurredAt: '2026-06-14T13:47:00.000Z', officialScore: 64, visibility: 'private' },
+  { audioFileId: null, audioLevel: 55.1, audioReplayUrl: null, category: 'common', durationMs: 1_300, gasLevel: 60.2, id: 'fallback-history-3', isAuthenticated: true, isLegendary: false, occurredAt: '2026-06-14T11:23:00.000Z', officialScore: 49, visibility: 'private' },
 ];
 
 const categoryForScore = (score: number) => score >= 92 ? 'Catégorie 5' : score >= 80 ? 'Catégorie 3' : 'Catégorie 2';

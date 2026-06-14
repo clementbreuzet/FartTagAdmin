@@ -7,11 +7,13 @@ export type FartDetails = {
   occurredAt: string;
   officialScore: number;
   isAuthenticated: boolean;
+  category: string;
   audioLevel: number;
   gasLevel: number;
   durationMs: number;
   temperatureCelsius: number;
   visibility: FartVisibility;
+  audioFileId: string | null;
   audioReplayUrl: string | null;
   device: {
     id: string;

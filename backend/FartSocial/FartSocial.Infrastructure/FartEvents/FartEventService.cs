@@ -79,6 +79,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
         {
             history.Add(new FartHistoryItemDto(
                 eventItem.Id,
+                eventItem.AudioFileId,
                 eventItem.AudioFileId.HasValue ? $"/api/fart-events/audio/{eventItem.AudioFileId.Value}" : null,
                 eventItem.OccurredAt,
                 eventItem.OfficialScore,
