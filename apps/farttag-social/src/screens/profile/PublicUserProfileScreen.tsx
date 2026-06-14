@@ -3,7 +3,6 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ScreenHeader } from '../../shared/components';
 import type { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 
@@ -15,15 +14,9 @@ export const PublicUserProfileScreen = ({ navigation, route }: PublicUserProfile
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
-        <ScreenHeader
-          action={
-            <Pressable onPress={navigation.goBack} style={styles.backButton}>
-              <Text style={styles.backText}>RETOUR</Text>
-            </Pressable>
-          }
-          subtitle="Vue partageable d'un utilisateur."
-          title="Profil public"
-        />
+        <Pressable onPress={navigation.goBack} style={styles.backButton}>
+          <Text style={styles.backText}>RETOUR</Text>
+        </Pressable>
 
         <View style={styles.card}>
           <View style={styles.avatar}>

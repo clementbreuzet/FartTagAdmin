@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DetectionMetric } from '../../features/detection/components/DetectionMetric';
 import { useDetectionStore } from '../../features/detection/detectionStore';
-import { LabelValueRow, ScreenHeader, SubmenuTabs } from '../../shared/components';
+import { LabelValueRow, SubmenuTabs } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 const bleLabels = {
@@ -60,7 +60,6 @@ export const DetectionScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <ScreenHeader subtitle="Écoute automatique du FartTag connecté." title="Détection" />
         <SubmenuTabs
           activeTab={section}
           onChange={setSection}

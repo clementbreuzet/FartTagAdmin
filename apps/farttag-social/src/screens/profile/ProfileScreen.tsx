@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ScreenHeader, SubmenuTabs } from '../../shared/components';
+import { SubmenuTabs } from '../../shared/components';
 import { useBadgesStore } from '../../features/badges/badgesStore';
 import { useHistoryStore } from '../../features/history/historyStore';
 import { useInventoryStore } from '../../features/inventory/inventoryStore';
@@ -56,12 +56,6 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <ScreenHeader
-          subtitle="Identité, collections et réglages personnels."
-          title="Profil"
-        />
-      </View>
       <SubmenuTabs
         activeTab={activeTab}
         onChange={setActiveTab}

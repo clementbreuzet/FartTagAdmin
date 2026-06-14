@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ScreenHeader, SubmenuTabs } from '../../shared/components';
+import { SubmenuTabs } from '../../shared/components';
 import { FartFeedCard } from '../../features/feed/components/FartFeedCard';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFeedStore } from '../../features/feed/feedStore';
@@ -97,7 +97,6 @@ export const HomeFeedScreen = () => {
   if (isLoading && events.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <FeedHeader />
         <FeedState
           description="Les meilleurs événements publics arrivent."
           loading
@@ -110,7 +109,6 @@ export const HomeFeedScreen = () => {
   if (error && events.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <FeedHeader />
         <FeedState
           actionLabel="Réessayer"
           description={error}
@@ -141,7 +139,10 @@ export const HomeFeedScreen = () => {
         }
         ListHeaderComponent={
           <>
-            <FeedHeader />
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>PUBLIC</Text>
+            </View>
             <SubmenuTabs
               activeTab={feedTab}
               onChange={setFeedTab}
@@ -186,19 +187,6 @@ export const HomeFeedScreen = () => {
     </SafeAreaView>
   );
 };
-
-const FeedHeader = () => (
-  <ScreenHeader
-    action={
-      <View style={styles.liveBadge}>
-        <View style={styles.liveDot} />
-        <Text style={styles.liveText}>PUBLIC</Text>
-      </View>
-    }
-    subtitle="Les farts publics qui font du bruit."
-    title="Home Feed"
-  />
-);
 
 const styles = StyleSheet.create({
   safeArea: {

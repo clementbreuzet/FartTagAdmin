@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { profileApi } from '../profile/profileApi';
+import { useProfileStore } from '../profile/profileStore';
 import type { Wallet } from '../profile/types';
 import { shopApi } from './shopApi';
 import type { LootboxDefinition, LootboxReward } from './types';
@@ -58,6 +59,7 @@ export const useShopStore = create<ShopState>((set, get) => ({
         wallet: result.wallet,
         revealVisible: true,
       });
+      useProfileStore.setState({ wallet: result.wallet });
     } catch (error) {
       set({ error: getErrorMessage(error) });
     } finally {

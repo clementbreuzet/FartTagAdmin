@@ -17,7 +17,7 @@ import { ReactionBar } from '../../features/feed/components/ReactionBar';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFartDetailsStore } from '../../features/fart-details/fartDetailsStore';
 import type { RootStackParamList } from '../../navigation/types';
-import { LabelValueRow, ScreenHeader, SectionTitle, SurfaceCard } from '../../shared/components';
+import { LabelValueRow, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type FartDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'FartDetailsScreen'>;
@@ -162,14 +162,9 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
 };
 
 const DetailsHeader = ({ onBack }: { onBack: () => void }) => (
-  <ScreenHeader
-    action={
-      <Pressable onPress={onBack} style={styles.backButton}>
-        <Text style={styles.backText}>RETOUR</Text>
-      </Pressable>
-    }
-    title="Détail du fart"
-  />
+  <Pressable onPress={onBack} style={styles.backButton}>
+    <Text style={styles.backText}>RETOUR</Text>
+  </Pressable>
 );
 
 const Metric = ({ accent, label, value }: { accent: 'cyan' | 'green' | 'purple'; label: string; value: string }) => {
