@@ -11,6 +11,10 @@
 *.suo
 *.userosscache
 *.sln.docstates
+*.exe
+*.pdb
+*.dll
+*.cache
 
 # ------------------------------------------
 # Rider

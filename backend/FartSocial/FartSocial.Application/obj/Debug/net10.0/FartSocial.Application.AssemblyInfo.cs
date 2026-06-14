@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FartSocial.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ab0b9a310cef430cd793b9c00eab7f9d75f11de2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1ad1a63eb5eccf84a3f541af662621bd9f4e3ea1")]
 [assembly: System.Reflection.AssemblyProductAttribute("FartSocial.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FartSocial.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

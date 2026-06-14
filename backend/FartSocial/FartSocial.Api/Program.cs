@@ -73,6 +73,7 @@ builder.Services
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() { Title = "FartSocial API", Version = "v1" });
+    options.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.",
@@ -104,6 +105,7 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseSerilogRequestLogging();
+app.UseDeveloperExceptionPage();
 
 if (app.Environment.IsDevelopment())
 {

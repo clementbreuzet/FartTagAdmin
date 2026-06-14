@@ -5,19 +5,42 @@ import type { CreateFartEventRequest, OfficialFartResult } from './types';
 
 const getFileExtension = (uri: string) => uri.split('.').pop()?.toLowerCase() || 'm4a';
 
-const uploadAudio = async (uri: string, durationMs: number): Promise<BackendAudioUpload> => {
+const getFileExtension = (uri: string) =>
+  uri.split('.').pop()?.toLowerCase() || 'm4a';
+
+const getMimeType = (extension: string) => {
+  switch (extension) {
+    case 'wav':
+      return 'audio/wav';
+    case 'mp3':
+      return 'audio/mpeg';
+    case 'm4a':
+    case 'mp4':
+      return 'audio/mp4';
+    default:
+      return 'audio/mp4';
+  }
+};
+
+const uploadAudio = async (
+  uri: string,
+  durationMs: number,
+): Promise<BackendAudioUpload> => {
   const extension = getFileExtension(uri);
+
   const form = new FormData();
-  form.append('durationMs', String(durationMs));
-  form.append('file', {
-    name: `phone-mic-${Date.now()}.${extension}`,
-    type: extension === 'wav' ? 'audio/wav' : 'audio/mp4',
+
+  form.append('DurationMs', String(durationMs));
+
+  form.append('File', {
     uri,
-  } as unknown as Blob);
+    name: `phone-mic-${Date.now()}.${extension}`,
+    type: getMimeType(extension),
+  } as any);
 
   return apiRequest<BackendAudioUpload>('/api/fart-events/audio', {
-    body: form,
     method: 'POST',
+    body: form,
   });
 };
 

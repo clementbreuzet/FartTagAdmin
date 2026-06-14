@@ -56,39 +56,39 @@ public sealed class FartEventsController(
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(MaxAudioFileSize)]
     public async Task<ActionResult<AudioUploadDto>> UploadAudio(
-        UploadAudioRequest uploadAudioRequest,
-        CancellationToken cancellationToken)
+        [FromForm] UploadAudioRequest uploadAudioRequest,
+        CancellationToken cancellationToken)    
     {
         var userId = GetUserId();
         if (userId is null)
         {
             return Unauthorized();
         }
-        if (file.Length is <= 0 or > MaxAudioFileSize)
+        if (uploadAudioRequest.File.Length is <= 0 or > MaxAudioFileSize)
         {
             return BadRequest("Le fichier audio doit peser entre 1 octet et 15 Mo.");
         }
-        if (!AllowedAudioTypes.Contains(file.ContentType.ToLowerInvariant()))
+        if (!AllowedAudioTypes.Contains(uploadAudioRequest.File.ContentType.ToLowerInvariant()))
         {
             return BadRequest("Le format audio fourni n'est pas accepté.");
         }
-        if (durationMs is < 1 or > 600_000)
+        if (uploadAudioRequest.DurationMs is < 1 or > 600_000)
         {
             return BadRequest("La durée audio est invalide.");
         }
 
-        await using var input = file.OpenReadStream();
-        await using var buffer = new MemoryStream((int)file.Length);
+        await using var input = uploadAudioRequest.File.OpenReadStream();
+        await using var buffer = new MemoryStream((int)uploadAudioRequest.File.Length);
         await input.CopyToAsync(buffer, cancellationToken);
         var blobData = buffer.ToArray();
 
         var audioFile = new FartAudioFile
         {
             BlobData = blobData,
-            ContentType = file.ContentType,
-            DurationMs = durationMs,
-            FileName = Path.GetFileName(file.FileName),
-            SizeBytes = file.Length,
+            ContentType = uploadAudioRequest.File.ContentType,
+            DurationMs = uploadAudioRequest.DurationMs.Value!,
+            FileName = Path.GetFileName(uploadAudioRequest.File.FileName),
+            SizeBytes = uploadAudioRequest.File.Length,
             Sha256 = Convert.ToHexString(SHA256.HashData(blobData)).ToLowerInvariant(),
             UserId = userId.Value,
         };

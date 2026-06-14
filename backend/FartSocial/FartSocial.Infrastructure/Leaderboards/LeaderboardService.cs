@@ -25,38 +25,91 @@ public sealed class LeaderboardService(FartSocialDbContext dbContext) : ILeaderb
     {
         var scoreQuery = ApplyScope(dbContext.FartEvents.AsNoTracking(), scopeUserIds);
 
-        var globalScores = await scoreQuery
+        var rawGlobalScores = await scoreQuery
             .GroupBy(x => x.UserId)
-            .Select(group => new LeaderboardAggregate(group.Key, group.Sum(item => item.OfficialScore), null, null))
+            .Select(group => new
+            {
+                UserId = group.Key,
+                Score = group.Sum(item => item.OfficialScore)
+            })
             .OrderByDescending(item => item.Score)
             .ThenBy(item => item.UserId)
             .Take(TopLimit)
             .ToListAsync(cancellationToken);
+
+        var globalScores = rawGlobalScores
+            .Select(item => new LeaderboardAggregate(
+                item.UserId,
+                item.Score,
+                null,
+                null))
+            .ToList();
 
         var weekCutoff = DateTimeOffset.UtcNow.AddDays(-7);
-        var weekScores = await ApplyScope(dbContext.FartEvents.AsNoTracking().Where(x => x.OccurredAt >= weekCutoff), scopeUserIds)
+
+        var weekRawScores = await ApplyScope(
+                dbContext.FartEvents
+                    .AsNoTracking()
+                    .Where(x => x.OccurredAt >= weekCutoff),
+                scopeUserIds)
+                    .GroupBy(x => x.UserId)
+                    .Select(group => new
+                    {
+                        UserId = group.Key,
+                        Score = group.Sum(item => item.OfficialScore)
+                    })
+                    .OrderByDescending(item => item.Score)
+                    .ThenBy(item => item.UserId)
+                    .Take(TopLimit)
+                    .ToListAsync(cancellationToken);
+
+        var weekScores = weekRawScores
+            .Select(item => new LeaderboardAggregate(
+                item.UserId,
+                item.Score,
+                null,
+                null))
+            .ToList();
+
+        var longestRawScores = await scoreQuery
             .GroupBy(x => x.UserId)
-            .Select(group => new LeaderboardAggregate(group.Key, group.Sum(item => item.OfficialScore), null, null))
-            .OrderByDescending(item => item.Score)
+            .Select(group => new
+            {
+                UserId = group.Key,
+                DurationMs = group.Max(item => item.DurationMs)
+            })
+            .OrderByDescending(item => item.DurationMs)
             .ThenBy(item => item.UserId)
             .Take(TopLimit)
             .ToListAsync(cancellationToken);
 
-        var longestScores = await scoreQuery
+        var longestScores = longestRawScores
+            .Select(item => new LeaderboardAggregate(
+                item.UserId,
+                item.DurationMs,
+                item.DurationMs,
+                null))
+            .ToList();
+
+        var toxicRawScores = await scoreQuery
             .GroupBy(x => x.UserId)
-            .Select(group => new LeaderboardAggregate(group.Key, group.Max(item => item.DurationMs), group.Max(item => item.DurationMs), null))
-            .OrderByDescending(item => item.DurationMs ?? 0)
+            .Select(group => new
+            {
+                UserId = group.Key,
+                GasLevel = group.Max(item => item.GasLevel)
+            })
+            .OrderByDescending(item => item.GasLevel)
             .ThenBy(item => item.UserId)
             .Take(TopLimit)
             .ToListAsync(cancellationToken);
 
-        var toxicScores = await scoreQuery
-            .GroupBy(x => x.UserId)
-            .Select(group => new LeaderboardAggregate(group.Key, group.Max(item => item.GasLevel), null, group.Max(item => item.GasLevel)))
-            .OrderByDescending(item => item.GasLevel ?? 0)
-            .ThenBy(item => item.UserId)
-            .Take(TopLimit)
-            .ToListAsync(cancellationToken);
+                var toxicScores = toxicRawScores
+                    .Select(item => new LeaderboardAggregate(
+                        item.UserId,
+                        item.GasLevel,
+                        null,
+                        item.GasLevel))
+                    .ToList();
 
         var userIds = globalScores
             .Concat(weekScores)
