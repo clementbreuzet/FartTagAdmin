@@ -12,18 +12,13 @@ export type PublicUserProfileRouteParams = {
 };
 
 export type AppRouteParamList = {
-  BadgesScreen: undefined;
   DetectionScreen: undefined;
   FartDetailsScreen: { fartEventId: string };
-  FartHistoryScreen: undefined;
-  FriendsScreen: undefined;
   HomeFeedScreen: undefined;
-  InventoryScreen: undefined;
-  LeaderboardScreen: undefined;
   ProfileScreen: undefined;
   PublicUserProfileScreen: PublicUserProfileRouteParams;
-  SettingsScreen: undefined;
   ShopScreen: undefined;
+  SocialScreen: undefined;
 };
 
 export type HomeStackParamList = {
@@ -37,24 +32,15 @@ export type DetectionStackParamList = {
   FartDetailsScreen: { fartEventId: string };
 };
 
-export type HistoryStackParamList = {
-  FartHistoryScreen: undefined;
-  FartDetailsScreen: { fartEventId: string };
-};
-
 export type SocialStackParamList = {
-  FriendsScreen: undefined;
-  LeaderboardScreen: undefined;
   PublicUserProfileScreen: PublicUserProfileRouteParams;
+  SocialScreen: undefined;
 };
 
 export type ProfileStackParamList = {
-  BadgesScreen: undefined;
-  InventoryScreen: undefined;
-  FartHistoryScreen: undefined;
+  FartDetailsScreen: { fartEventId: string };
   ProfileScreen: undefined;
   PublicUserProfileScreen: PublicUserProfileRouteParams;
-  SettingsScreen: undefined;
 };
 
 export type RootTabParamList = {

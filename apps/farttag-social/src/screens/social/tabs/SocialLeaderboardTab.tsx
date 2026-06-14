@@ -1,5 +1,4 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -7,18 +6,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FeedState } from '../../../features/feed/components/FeedState';
+import { LeaderboardModeBar } from '../../../features/leaderboards/components/LeaderboardModeBar';
+import { LeaderboardRow } from '../../../features/leaderboards/components/LeaderboardRow';
+import { selectVisibleLeaderboard, useLeaderboardsStore } from '../../../features/leaderboards/leaderboardsStore';
+import type { SectionScreenNavigation } from '../../../navigation/screenNavigation';
+import { colors } from '../../../theme/colors';
 
-import { FeedState } from '../../features/feed/components/FeedState';
-import { LeaderboardModeBar } from '../../features/leaderboards/components/LeaderboardModeBar';
-import { LeaderboardRow } from '../../features/leaderboards/components/LeaderboardRow';
-import { selectVisibleLeaderboard, useLeaderboardsStore } from '../../features/leaderboards/leaderboardsStore';
-import type { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
+type SocialLeaderboardTabProps = {
+  navigation: SectionScreenNavigation;
+};
 
-type LeaderboardScreenProps = NativeStackScreenProps<RootStackParamList, 'LeaderboardScreen'>;
-
-export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
+export const SocialLeaderboardTab = ({ navigation }: SocialLeaderboardTabProps) => {
   const activeMode = useLeaderboardsStore((state) => state.activeMode);
   const error = useLeaderboardsStore((state) => state.error);
   const hasLoaded = useLeaderboardsStore((state) => state.hasLoaded);
@@ -33,12 +32,6 @@ export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
   const refreshLeaderboards = useLeaderboardsStore((state) => state.refreshLeaderboards);
   const setMode = useLeaderboardsStore((state) => state.setMode);
 
-  useEffect(() => {
-    if (!hasLoaded && !isLoading) {
-      void loadLeaderboards();
-    }
-  }, [hasLoaded, isLoading, loadLeaderboards]);
-
   const visibleEntries = useMemo(
     () => selectVisibleLeaderboard({ activeMode, error, friends, global, hasLoaded, isLoading, isRefreshing, loadLeaderboards, longest, mostToxic, refreshLeaderboards, setMode, week }),
     [activeMode, error, friends, global, hasLoaded, isLoading, isRefreshing, loadLeaderboards, longest, mostToxic, refreshLeaderboards, setMode, week],
@@ -46,17 +39,15 @@ export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
 
   if (isLoading && global.length === 0 && friends.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <LeaderboardHeader />
+      <View style={styles.safeArea}>
         <FeedState description="Chargement des classements et de la hierarchie." loading title="Chargement du leaderboard" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && global.length === 0 && friends.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <LeaderboardHeader />
+      <View style={styles.safeArea}>
         <FeedState
           actionLabel="Reessayer"
           description={error}
@@ -66,12 +57,12 @@ export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
           title="Leaderboard indisponible"
           tone="purple"
         />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <FlatList
         contentContainerStyle={styles.content}
         data={visibleEntries}
@@ -86,7 +77,6 @@ export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
         }
         ListHeaderComponent={
           <>
-            <LeaderboardHeader />
             <View style={styles.summaryCard}>
               <View>
                 <Text style={styles.summaryValue}>{visibleEntries.length}</Text>
@@ -122,7 +112,7 @@ export const LeaderboardScreen = ({ navigation }: LeaderboardScreenProps) => {
         )}
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -146,16 +136,6 @@ const modeLabel = (mode: string) => {
       return mode.toUpperCase();
   }
 };
-
-const LeaderboardHeader = () => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Leaderboard</Text>
-      <Text style={styles.subtitle}>Rangs, scores et bragging rights sur tout le reseau.</Text>
-    </View>
-  </View>
-);
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -224,5 +204,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LeaderboardScreen;
+export default SocialLeaderboardTab;
 

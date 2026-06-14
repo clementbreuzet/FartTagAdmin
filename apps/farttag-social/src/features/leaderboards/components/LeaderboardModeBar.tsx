@@ -1,7 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../../../theme/colors';
+import { SubmenuTabs } from '../../../shared/components';
 import type { LeaderboardMode } from '../types';
 
 type LeaderboardModeBarProps = {
@@ -20,49 +19,5 @@ const modes: { label: string; value: LeaderboardMode }[] = [
 ];
 
 export const LeaderboardModeBar = ({ activeMode, onChange }: LeaderboardModeBarProps) => (
-  <View style={styles.row}>
-    {modes.map((mode) => {
-      const active = mode.value === activeMode;
-      return (
-        <Pressable
-          key={mode.value}
-          onPress={() => onChange(mode.value)}
-          style={[styles.chip, active && styles.activeChip]}
-        >
-          <Text style={[styles.label, active && styles.activeLabel]}>{mode.label}</Text>
-        </Pressable>
-      );
-    })}
-  </View>
+  <SubmenuTabs activeTab={activeMode} onChange={onChange} tabs={modes} />
 );
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  chip: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  activeChip: {
-    backgroundColor: '#9CFF0018',
-    borderColor: colors.neonGreen,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  activeLabel: {
-    color: colors.neonGreen,
-  },
-});

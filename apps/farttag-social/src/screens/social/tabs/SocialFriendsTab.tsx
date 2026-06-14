@@ -1,21 +1,16 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { FeedState } from '../../features/feed/components/FeedState';
-import { FriendChip } from '../../features/friends/components/FriendChip';
-import { FriendProfileModal } from '../../features/friends/components/FriendProfileModal';
-import { FriendRequestCard } from '../../features/friends/components/FriendRequestCard';
-import { selectFilteredFriends, selectFilteredIncomingRequests, selectFilteredOutgoingRequests, useFriendsStore } from '../../features/friends/friendsStore';
-import type { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
-
-type FriendsScreenProps = NativeStackScreenProps<RootStackParamList, 'FriendsScreen'>;
+import { SubmenuTabs } from '../../../shared/components';
+import { FeedState } from '../../../features/feed/components/FeedState';
+import { FriendChip } from '../../../features/friends/components/FriendChip';
+import { FriendProfileModal } from '../../../features/friends/components/FriendProfileModal';
+import { FriendRequestCard } from '../../../features/friends/components/FriendRequestCard';
+import { selectFilteredFriends, selectFilteredIncomingRequests, selectFilteredOutgoingRequests, useFriendsStore } from '../../../features/friends/friendsStore';
+import { colors } from '../../../theme/colors';
 
 type Section = 'friends' | 'incoming' | 'outgoing' | 'search';
 
-export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
+export const SocialFriendsTab = () => {
   const [section, setSection] = useState<Section>('friends');
   const error = useFriendsStore((state) => state.error);
   const friends = useFriendsStore((state) => state.friends);
@@ -39,12 +34,6 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
   const declineRequest = useFriendsStore((state) => state.declineRequest);
   const removeFriend = useFriendsStore((state) => state.removeFriend);
 
-  useEffect(() => {
-    if (!hasLoaded && !isLoading) {
-      void loadFriends();
-    }
-  }, [hasLoaded, isLoading, loadFriends]);
-
   const filteredFriends = useMemo(() => selectFilteredFriends({ error, friends, hasLoaded, incomingRequests, outgoingRequests, isAddingFriend, isAcceptingRequestId, isLoading, isRefreshing, isRemovingFriendId, isDecliningRequestId, query, selectedFriendId, loadFriends, refreshFriends, setQuery, setSelectedFriendId, addFriend, acceptRequest, declineRequest, removeFriend }), [acceptRequest, addFriend, declineRequest, error, friends, hasLoaded, incomingRequests, isAcceptingRequestId, isAddingFriend, isDecliningRequestId, isLoading, isRefreshing, isRemovingFriendId, query, outgoingRequests, refreshFriends, removeFriend, selectedFriendId, setQuery, setSelectedFriendId, loadFriends]);
   const filteredIncoming = useMemo(() => selectFilteredIncomingRequests({ error, friends, hasLoaded, incomingRequests, outgoingRequests, isAddingFriend, isAcceptingRequestId, isLoading, isRefreshing, isRemovingFriendId, isDecliningRequestId, query, selectedFriendId, loadFriends, refreshFriends, setQuery, setSelectedFriendId, addFriend, acceptRequest, declineRequest, removeFriend }), [acceptRequest, addFriend, declineRequest, error, friends, hasLoaded, incomingRequests, isAcceptingRequestId, isAddingFriend, isDecliningRequestId, isLoading, isRefreshing, isRemovingFriendId, query, outgoingRequests, refreshFriends, removeFriend, selectedFriendId, setQuery, setSelectedFriendId, loadFriends]);
   const filteredOutgoing = useMemo(() => selectFilteredOutgoingRequests({ error, friends, hasLoaded, incomingRequests, outgoingRequests, isAddingFriend, isAcceptingRequestId, isLoading, isRefreshing, isRemovingFriendId, isDecliningRequestId, query, selectedFriendId, loadFriends, refreshFriends, setQuery, setSelectedFriendId, addFriend, acceptRequest, declineRequest, removeFriend }), [acceptRequest, addFriend, declineRequest, error, friends, hasLoaded, incomingRequests, isAcceptingRequestId, isAddingFriend, isDecliningRequestId, isLoading, isRefreshing, isRemovingFriendId, query, outgoingRequests, refreshFriends, removeFriend, selectedFriendId, setQuery, setSelectedFriendId, loadFriends]);
@@ -66,17 +55,15 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
 
   if (isLoading && !hasLoaded) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FriendsHeader onBack={navigation.goBack} />
+      <View style={styles.safeArea}>
         <FeedState loading description="Chargement des amis et des demandes." title="Chargement des amis" tone="purple" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && !hasLoaded) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FriendsHeader onBack={navigation.goBack} />
+      <View style={styles.safeArea}>
         <FeedState
           actionLabel="Reessayer"
           description={error}
@@ -86,12 +73,12 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
           title="Amis indisponibles"
           tone="purple"
         />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -104,7 +91,6 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <FriendsHeader onBack={navigation.goBack} />
         <View style={styles.summaryCard}>
           <Summary label="Amis" value={String(friends.length)} />
           <Summary label="Recues" value={String(incomingRequests.length)} />
@@ -133,21 +119,16 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
           {searchHit ? <Text style={styles.searchResult}>Resultat detecte: {searchHit.displayName}</Text> : null}
         </View>
 
-        <View style={styles.tabs}>
-          {([
-            ['friends', 'Amis'],
-            ['incoming', 'Recues'],
-            ['outgoing', 'Envoyees'],
-            ['search', 'Recherche'],
-          ] as const).map(([value, label]) => {
-            const active = section === value;
-            return (
-              <Pressable key={value} onPress={() => setSection(value)} style={[styles.tab, active && styles.tabActive]}>
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <SubmenuTabs
+          activeTab={section}
+          onChange={setSection}
+          tabs={[
+            { label: 'Amis', value: 'friends' },
+            { label: 'Recues', value: 'incoming' },
+            { label: 'Envoyees', value: 'outgoing' },
+            { label: 'Recherche', value: 'search' },
+          ]}
+        />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -209,22 +190,9 @@ export const FriendsScreen = ({ navigation }: FriendsScreenProps) => {
       </ScrollView>
 
       <FriendProfileModal friend={selectedFriend} onClose={() => setSelectedFriendId(null)} />
-    </SafeAreaView>
+    </View>
   );
 };
-
-const FriendsHeader = ({ onBack }: { onBack: () => void }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Amis</Text>
-      <Text style={styles.subtitle}>Demandes, liens et recherche de nouveaux compagnons de bruit.</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.backButton}>
-      <Text style={styles.backText}>RETOUR</Text>
-    </Pressable>
-  </View>
-);
 
 const Summary = ({ label, value }: { label: string; value: string }) => (
   <View style={styles.summaryBox}>
@@ -422,5 +390,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FriendsScreen;
+export default SocialFriendsTab;
 

@@ -1,28 +1,26 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Alert,
   FlatList,
   Linking,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { FeedState } from '../../../features/feed/components/FeedState';
+import { HistoryEventCard } from '../../../features/history/components/HistoryEventCard';
+import { HistoryFilterBar } from '../../../features/history/components/HistoryFilterBar';
+import { useHistoryStore } from '../../../features/history/historyStore';
+import type { FartHistoryEvent } from '../../../features/history/types';
+import type { SectionScreenNavigation } from '../../../navigation/screenNavigation';
+import { colors } from '../../../theme/colors';
 
-import { FeedState } from '../../features/feed/components/FeedState';
-import { HistoryEventCard } from '../../features/history/components/HistoryEventCard';
-import { HistoryFilterBar } from '../../features/history/components/HistoryFilterBar';
-import { useHistoryStore } from '../../features/history/historyStore';
-import type { FartHistoryEvent } from '../../features/history/types';
-import type { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
+type ProfileHistoryTabProps = {
+  navigation: SectionScreenNavigation;
+};
 
-type FartHistoryScreenProps = NativeStackScreenProps<RootStackParamList, 'FartHistoryScreen'>;
-
-export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
+export const ProfileHistoryTab = ({ navigation }: ProfileHistoryTabProps) => {
   const error = useHistoryStore((state) => state.error);
   const events = useHistoryStore((state) => state.events);
   const filter = useHistoryStore((state) => state.filter);
@@ -32,12 +30,6 @@ export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
   const loadHistory = useHistoryStore((state) => state.loadHistory);
   const refreshHistory = useHistoryStore((state) => state.refreshHistory);
   const setFilter = useHistoryStore((state) => state.setFilter);
-
-  useEffect(() => {
-    if (!hasLoaded && !isLoading) {
-      void loadHistory();
-    }
-  }, [hasLoaded, isLoading, loadHistory]);
 
   const visibleEvents = useMemo(
     () =>
@@ -64,30 +56,24 @@ export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
     }
   };
 
-  const backToProfile = () => {
-    navigation.goBack();
-  };
-
   if (isLoading && events.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <HistoryHeader onBack={backToProfile} />
+      <View style={styles.safeArea}>
         <FeedState description="Récupération de tes scores officiels." loading title="Chargement de l'historique" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && events.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <HistoryHeader onBack={backToProfile} />
+      <View style={styles.safeArea}>
         <FeedState actionLabel="Réessayer" description={error} onAction={() => void loadHistory()} title="Historique indisponible" tone="purple" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <FlatList
         ListEmptyComponent={
           <FeedState
@@ -97,7 +83,6 @@ export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
         }
         ListHeaderComponent={
           <>
-            <HistoryHeader onBack={backToProfile} />
             <HistoryFilterBar activeFilter={filter} onChange={setFilter} />
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </>
@@ -122,41 +107,14 @@ export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
         )}
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+    </View>
   );
 };
-
-const HistoryHeader = ({ onBack }: { onBack: () => void }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Historique</Text>
-      <Text style={styles.subtitle}>Tes farts, classés du plus récent au plus ancien.</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.backButton}>
-      <Text style={styles.backButtonText}>RETOUR PROFIL</Text>
-    </Pressable>
-  </View>
-);
 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { flexGrow: 1, padding: 16, paddingBottom: 40 },
-  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 19 },
-  backButton: {
-    alignSelf: 'flex-start',
-    borderColor: colors.neonCyan,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  backButtonText: { color: colors.neonCyan, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
-  eyebrow: { color: colors.neonGreen, fontSize: 11, fontWeight: '900', letterSpacing: 2.2 },
-  title: { color: colors.textPrimary, fontSize: 29, fontWeight: '800', marginTop: 3 },
-  subtitle: { color: colors.textSecondary, fontSize: 10, marginTop: 5 },
   error: { color: colors.danger, fontSize: 10, marginBottom: 13, textAlign: 'center' },
 });
 
-export default FartHistoryScreen;
+export default ProfileHistoryTab;

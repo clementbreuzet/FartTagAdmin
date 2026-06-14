@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DetectionMetric } from '../../features/detection/components/DetectionMetric';
 import { useDetectionStore } from '../../features/detection/detectionStore';
+import { LabelValueRow, ScreenHeader, SubmenuTabs } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 const bleLabels = {
@@ -28,6 +29,7 @@ const uploadLabels = {
 
 export const DetectionScreen = () => {
   const [showDetails, setShowDetails] = useState(false);
+  const [section, setSection] = useState<'live' | 'official'>('live');
   const bleStatus = useDetectionStore((state) => state.bleStatus);
   const device = useDetectionStore((state) => state.device);
   const error = useDetectionStore((state) => state.error);
@@ -58,15 +60,19 @@ export const DetectionScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-            <Text style={styles.title}>Détection</Text>
-            <Text style={styles.subtitle}>Écoute automatique du FartTag connecté.</Text>
-          </View>
-        </View>
+        <ScreenHeader subtitle="Écoute automatique du FartTag connecté." title="Détection" />
+        <SubmenuTabs
+          activeTab={section}
+          onChange={setSection}
+          tabs={[
+            { label: 'Detection live', value: 'live' },
+            { label: 'Resultat officiel', value: 'official' },
+          ]}
+        />
 
-        <View style={[styles.card, styles.deviceCard]}>
+        {section === 'live' ? (
+          <>
+          <View style={[styles.card, styles.deviceCard]}>
           <View style={styles.cardHeader}>
             <View>
               <Text style={styles.sectionEyebrow}>DEVICE</Text>
@@ -125,9 +131,9 @@ export const DetectionScreen = () => {
                 : 'Mode test temporaire, pour enregistrer avec le micro du téléphone.'}
             </Text>
           </View>
-        </View>
+          </View>
 
-        <View style={[styles.card, styles.eventCard]}>
+          <View style={[styles.card, styles.eventCard]}>
           <View style={styles.cardHeader}>
             <View>
               <Text style={styles.sectionEyebrow}>DERNIER ÉVÉNEMENT</Text>
@@ -175,11 +181,14 @@ export const DetectionScreen = () => {
 
               {showDetails ? (
                 <View style={styles.details}>
-                  <DetailRow label="ID local" value={lastEvent.id} />
-                  <DetailRow label="Capture" value={new Date(lastEvent.capturedAt).toLocaleString()} />
-                  <DetailRow
+                  <LabelValueRow compact divider="none" label="ID local" value={lastEvent.id} valueTone="secondary" />
+                  <LabelValueRow compact divider="none" label="Capture" value={new Date(lastEvent.capturedAt).toLocaleString()} valueTone="secondary" />
+                  <LabelValueRow
+                    compact
+                    divider="none"
                     label="Origine"
                     value={inputMode === 'phone-mic' ? 'Micro du téléphone (test)' : 'Détection automatique BLE'}
+                    valueTone="secondary"
                   />
                 </View>
               ) : null}
@@ -189,11 +198,13 @@ export const DetectionScreen = () => {
               La détection démarre automatiquement dès que le device est connecté. Aucune action utilisateur n'est requise.
             </Text>
           )}
-        </View>
+          </View>
+          </>
+        ) : null}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <View style={[styles.card, styles.officialCard]}>
+        {section === 'official' ? <View style={[styles.card, styles.officialCard]}>
           <Text style={styles.sectionEyebrow}>RÉSULTAT OFFICIEL BACKEND</Text>
           {officialResult ? (
             <>
@@ -223,25 +234,16 @@ export const DetectionScreen = () => {
               Le backend attribuera le score officiel, les Flatulons, badges et classement après l'envoi.
             </Text>
           )}
-        </View>
+        </View> : null}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.detailRow}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text numberOfLines={1} style={styles.detailValue}>
-      {value}
-    </Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 40 },
-  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  header: { display: 'none' },
   eyebrow: { color: colors.neonGreen, fontSize: 11, fontWeight: '900', letterSpacing: 2.2 },
   title: { color: colors.textPrimary, fontSize: 29, fontWeight: '800', marginTop: 3 },
   subtitle: { color: colors.textSecondary, fontSize: 11, marginTop: 5 },
@@ -325,9 +327,6 @@ const styles = StyleSheet.create({
   detailButton: { borderColor: colors.neonPurple, borderRadius: 12, borderWidth: 1, marginTop: 12, paddingVertical: 11 },
   detailButtonText: { color: colors.neonPurple, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, textAlign: 'center' },
   details: { backgroundColor: colors.surfaceElevated, borderRadius: 13, marginTop: 10, padding: 12 },
-  detailRow: { flexDirection: 'row', gap: 12, justifyContent: 'space-between', paddingVertical: 5 },
-  detailLabel: { color: colors.textMuted, fontSize: 9, fontWeight: '800' },
-  detailValue: { color: colors.textSecondary, flex: 1, fontSize: 9, textAlign: 'right' },
   waitingText: { color: colors.textSecondary, fontSize: 11, lineHeight: 18, marginTop: 14 },
   error: { color: colors.danger, fontSize: 11, marginBottom: 16, textAlign: 'center' },
   officialScoreRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },

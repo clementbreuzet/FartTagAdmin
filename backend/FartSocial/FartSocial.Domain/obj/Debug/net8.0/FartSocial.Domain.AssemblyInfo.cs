@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6442277b7c7f8b39ec72074a6ddef37a5126eb48")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6cc49d480b846e4135d1b4adff9a09bdefbd3423")]
 [assembly: System.Reflection.AssemblyProductAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

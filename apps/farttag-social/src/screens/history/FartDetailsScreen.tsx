@@ -17,6 +17,7 @@ import { ReactionBar } from '../../features/feed/components/ReactionBar';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFartDetailsStore } from '../../features/fart-details/fartDetailsStore';
 import type { RootStackParamList } from '../../navigation/types';
+import { LabelValueRow, ScreenHeader, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type FartDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'FartDetailsScreen'>;
@@ -92,12 +93,12 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
           <Metric accent="cyan" label="Température" value={`${details.temperatureCelsius.toFixed(1)} °C`} />
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Device utilisé</Text>
-          <DetailRow label="Nom" value={details.device.name} />
-          <DetailRow label="Modèle" value={details.device.model} />
-          <DetailRow label="Device ID" value={details.device.id} />
-        </View>
+        <SurfaceCard style={styles.card}>
+          <SectionTitle accent="default" title="Device utilisé" />
+          <LabelValueRow compact divider="top" label="Nom" value={details.device.name} />
+          <LabelValueRow compact divider="top" label="Modèle" value={details.device.model} />
+          <LabelValueRow compact divider="top" label="Device ID" value={details.device.id} />
+        </SurfaceCard>
 
         <View style={[styles.card, styles.rewardCard]}>
           <Text style={styles.sectionTitle}>Récompenses gagnées</Text>
@@ -161,22 +162,14 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
 };
 
 const DetailsHeader = ({ onBack }: { onBack: () => void }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Détail du fart</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.backButton}>
-      <Text style={styles.backText}>RETOUR</Text>
-    </Pressable>
-  </View>
-);
-
-const DetailRow = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.row}>
-    <Text style={styles.label}>{label}</Text>
-    <Text numberOfLines={1} style={styles.value}>{value}</Text>
-  </View>
+  <ScreenHeader
+    action={
+      <Pressable onPress={onBack} style={styles.backButton}>
+        <Text style={styles.backText}>RETOUR</Text>
+      </Pressable>
+    }
+    title="Détail du fart"
+  />
 );
 
 const Metric = ({ accent, label, value }: { accent: 'cyan' | 'green' | 'purple'; label: string; value: string }) => {
@@ -210,9 +203,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 20, borderWidth: 1, marginBottom: 14, padding: 15 },
   rewardCard: { borderColor: colors.neonPurple },
   sectionTitle: { color: colors.textPrimary, fontSize: 12, fontWeight: '900', letterSpacing: 0.8, marginBottom: 12, textTransform: 'uppercase' },
-  row: { borderTopColor: colors.border, borderTopWidth: 1, flexDirection: 'row', gap: 12, justifyContent: 'space-between', paddingVertical: 11 },
-  label: { color: colors.textMuted, fontSize: 10, fontWeight: '800' },
-  value: { color: colors.textPrimary, flex: 1, fontSize: 10, fontWeight: '700', textAlign: 'right' },
   flatulons: { color: colors.neonPurple, fontSize: 23, fontWeight: '900' },
   rewardText: { color: colors.textSecondary, fontSize: 10, marginTop: 8 },
   commentsHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },

@@ -1,8 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader, SubmenuTabs } from '../../shared/components';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { LootboxCard } from '../../features/shop/components/LootboxCard';
 import { RevealModal } from '../../features/shop/components/RevealModal';
@@ -12,7 +13,8 @@ import { colors } from '../../theme/colors';
 
 type ShopScreenProps = NativeStackScreenProps<RootStackParamList, 'ShopScreen'>;
 
-export const ShopScreen = ({ navigation }: ShopScreenProps) => {
+export const ShopScreen = (_props: ShopScreenProps) => {
+  const [section, setSection] = useState<'reactors' | 'latest'>('reactors');
   const error = useShopStore((state) => state.error);
   const hasLoaded = useShopStore((state) => state.hasLoaded);
   const isLoading = useShopStore((state) => state.isLoading);
@@ -42,7 +44,15 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
   if (isLoading && lootboxes.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <Header onBack={navigation.goBack} />
+        <Header />
+        <SubmenuTabs
+          activeTab={section}
+          onChange={setSection}
+          tabs={[
+            { label: 'Reacteurs', value: 'reactors' },
+            { label: 'Dernier objet', value: 'latest' },
+          ]}
+        />
         <FeedState description="Préparation du Réacteur à Gaz." loading title="Chargement de la boutique" />
       </SafeAreaView>
     );
@@ -51,7 +61,7 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
   if (!wallet) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <Header onBack={navigation.goBack} />
+        <Header />
         <FeedState actionLabel="Réessayer" description={error ?? 'Boutique indisponible.'} onAction={() => void loadShop()} title="Boutique indisponible" tone="purple" />
       </SafeAreaView>
     );
@@ -60,19 +70,27 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Header onBack={navigation.goBack} />
+        <Header />
+        <SubmenuTabs
+          activeTab={section}
+          onChange={setSection}
+          tabs={[
+            { label: 'Reacteurs', value: 'reactors' },
+            { label: 'Dernier objet', value: 'latest' },
+          ]}
+        />
 
         <View style={styles.walletCard}>
           <Text style={styles.walletLabel}>SOLDE FLATULONS</Text>
           <Text style={styles.walletValue}>{wallet.flatulons.toLocaleString()}</Text>
         </View>
 
-        <View style={styles.gachaBanner}>
+        {section === 'reactors' ? <View style={styles.gachaBanner}>
           <Text style={styles.bannerTitle}>RÉACTEUR À GAZ</Text>
           <Text style={styles.bannerText}>Le backend choisit la récompense, le mobile n'affiche que la révélation.</Text>
-        </View>
+        </View> : null}
 
-        {lootboxes.map((lootbox) => (
+        {section === 'reactors' ? lootboxes.map((lootbox) => (
           <LootboxCard
             isOpening={isOpening && openingLootboxId === lootbox.id}
             key={lootbox.id}
@@ -86,9 +104,9 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
             }}
             disabled={isOpening}
           />
-        ))}
+        )) : null}
 
-        <View style={styles.lastCard}>
+        {section === 'latest' ? <View style={styles.lastCard}>
           <Text style={styles.sectionTitle}>Dernier objet obtenu</Text>
           {lastReward ? (
             <View style={styles.lastReward}>
@@ -102,7 +120,7 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
           ) : (
             <Text style={styles.emptyText}>Aucune ouverture récente.</Text>
           )}
-        </View>
+        </View> : null}
 
         <RevealModal
           onClose={() => setRevealVisible(false)}
@@ -112,36 +130,25 @@ export const ShopScreen = ({ navigation }: ShopScreenProps) => {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable onPress={openLast} style={styles.quickButton}>
+        {section === 'reactors' ? <Pressable onPress={openLast} style={styles.quickButton}>
           <Text style={styles.quickText}>OUVRIR LE PREMIER RÉACTEUR</Text>
-        </Pressable>
+        </Pressable> : null}
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const Header = ({ onBack }: { onBack: () => void }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Shop</Text>
-      <Text style={styles.subtitle}>Boutique et tirages serveur du Réacteur à Gaz.</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.backButton}>
-      <Text style={styles.backText}>RETOUR</Text>
-    </Pressable>
-  </View>
+const Header = () => (
+  <ScreenHeader subtitle="Boutique et tirages serveur du Réacteur à Gaz." title="Shop" />
 );
 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 44 },
-  header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 18 },
+  header: { display: 'none' },
   eyebrow: { color: colors.neonGreen, fontSize: 11, fontWeight: '900', letterSpacing: 2.2 },
   title: { color: colors.textPrimary, fontSize: 29, fontWeight: '900', marginTop: 3 },
   subtitle: { color: colors.textSecondary, fontSize: 10, marginTop: 5 },
-  backButton: { borderColor: colors.neonCyan, borderRadius: 11, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 8 },
-  backText: { color: colors.neonCyan, fontSize: 8, fontWeight: '900' },
   walletCard: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.neonGreen, borderRadius: 20, borderWidth: 1, marginBottom: 14, padding: 16 },
   walletLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   walletValue: { color: colors.neonGreen, fontSize: 34, fontWeight: '900', marginTop: 5 },

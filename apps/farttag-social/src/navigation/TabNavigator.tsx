@@ -5,18 +5,13 @@ import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TabIcon } from '../components/navigation/TabIcon';
-import { BadgesScreen } from '../screens/badges/BadgesScreen';
 import { DetectionScreen } from '../screens/detection/DetectionScreen';
 import { FartDetailsScreen } from '../screens/history/FartDetailsScreen';
-import { FartHistoryScreen } from '../screens/history/FartHistoryScreen';
-import { FriendsScreen } from '../screens/friends/FriendsScreen';
 import { HomeFeedScreen } from '../screens/home/HomeFeedScreen';
-import { InventoryScreen } from '../screens/inventory/InventoryScreen';
-import { LeaderboardScreen } from '../screens/leaderboard/LeaderboardScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { PublicUserProfileScreen } from '../screens/profile/PublicUserProfileScreen';
-import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { ShopScreen } from '../screens/shop/ShopScreen';
+import { SocialScreen } from '../screens/social/SocialScreen';
 import { appTheme } from '../theme/theme';
 import type {
   AppRouteParamList,
@@ -60,8 +55,7 @@ const ShopNavigator = () => (
 
 const SocialNavigator = () => (
   <SocialStack.Navigator screenOptions={stackOptions}>
-    <SocialStack.Screen component={LeaderboardScreen} name="LeaderboardScreen" />
-    <SocialStack.Screen component={FriendsScreen} name="FriendsScreen" />
+    <SocialStack.Screen component={SocialScreen} name="SocialScreen" />
     <SocialStack.Screen component={PublicUserProfileScreen} name="PublicUserProfileScreen" />
   </SocialStack.Navigator>
 );
@@ -69,11 +63,8 @@ const SocialNavigator = () => (
 const ProfileNavigator = () => (
   <ProfileStack.Navigator screenOptions={stackOptions}>
     <ProfileStack.Screen component={ProfileScreen} name="ProfileScreen" />
-    <ProfileStack.Screen component={BadgesScreen} name="BadgesScreen" />
-    <ProfileStack.Screen component={FartHistoryScreen} name="FartHistoryScreen" />
-    <ProfileStack.Screen component={InventoryScreen} name="InventoryScreen" />
-    <ProfileStack.Screen component={SettingsScreen} name="SettingsScreen" />
     <ProfileStack.Screen component={PublicUserProfileScreen} name="PublicUserProfileScreen" />
+    <ProfileStack.Screen component={FartDetailsScreen} name="FartDetailsScreen" />
   </ProfileStack.Navigator>
 );
 
@@ -88,18 +79,17 @@ export const TabNavigator = () => {
         headerShown: false,
         tabBarActiveTintColor: appTheme.colors.neonGreen,
         tabBarInactiveTintColor: appTheme.colors.textMuted,
-        tabBarIcon: ({ color, focused }) => (
+        tabBarIcon: ({ focused }) => (
           <TabIcon
-            color={color}
             focused={focused}
             name={route.name as keyof RootTabParamList}
           />
         ),
-        tabBarLabelStyle: styles.tabLabel,
+        tabBarShowLabel: false,
         tabBarStyle: [
           styles.tabBar,
           {
-            height: 62 + bottomInset,
+            height: 78 + bottomInset,
             paddingBottom: bottomInset,
           },
         ],
@@ -120,14 +110,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#7CFF0030',
     borderTopWidth: StyleSheet.hairlineWidth,
     elevation: 0,
+    paddingTop: 5,
     shadowColor: '#7CFF00',
     shadowOpacity: 0.16,
     shadowRadius: 8,
-  },
-  tabLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.2,
   },
 });
 

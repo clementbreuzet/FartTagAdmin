@@ -1,26 +1,19 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { BadgeDetailsModal } from '../../../features/badges/components/BadgeDetailsModal';
+import { BadgeFilterBar } from '../../../features/badges/components/BadgeFilterBar';
+import { BadgeHexagon } from '../../../features/badges/components/BadgeHexagon';
+import { useBadgesStore } from '../../../features/badges/badgesStore';
+import { FeedState } from '../../../features/feed/components/FeedState';
+import { colors } from '../../../theme/colors';
 
-import { BadgeDetailsModal } from '../../features/badges/components/BadgeDetailsModal';
-import { BadgeFilterBar } from '../../features/badges/components/BadgeFilterBar';
-import { BadgeHexagon } from '../../features/badges/components/BadgeHexagon';
-import { useBadgesStore } from '../../features/badges/badgesStore';
-import { FeedState } from '../../features/feed/components/FeedState';
-import type { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
-
-type BadgesScreenProps = NativeStackScreenProps<RootStackParamList, 'BadgesScreen'>;
-
-export const BadgesScreen = ({ navigation }: BadgesScreenProps) => {
+export const ProfileBadgesTab = () => {
   const badges = useBadgesStore((state) => state.badges);
   const error = useBadgesStore((state) => state.error);
   const filter = useBadgesStore((state) => state.filter);
@@ -33,12 +26,6 @@ export const BadgesScreen = ({ navigation }: BadgesScreenProps) => {
   const selectBadge = useBadgesStore((state) => state.selectBadge);
   const setFilter = useBadgesStore((state) => state.setFilter);
 
-  useEffect(() => {
-    if (!hasLoaded && !isLoading) {
-      void loadBadges();
-    }
-  }, [hasLoaded, isLoading, loadBadges]);
-
   const visibleBadges = useMemo(
     () => badges.filter((badge) => filter === 'all' || badge.rarity === filter),
     [badges, filter],
@@ -49,31 +36,28 @@ export const BadgesScreen = ({ navigation }: BadgesScreenProps) => {
 
   if (isLoading && badges.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <BadgesHeader onBack={navigation.goBack} />
+      <View style={styles.safeArea}>
         <FeedState description="Chargement du catalogue et de ta progression." loading title="Chargement des badges" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && badges.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <BadgesHeader onBack={navigation.goBack} />
+      <View style={styles.safeArea}>
         <FeedState actionLabel="Réessayer" description={error} onAction={() => void loadBadges()} title="Badges indisponibles" tone="purple" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <FlatList
         ListEmptyComponent={
           <FeedState description="Aucun badge ne correspond à cette rareté." title="Aucun badge" />
         }
         ListHeaderComponent={
           <>
-            <BadgesHeader onBack={navigation.goBack} />
             <View style={styles.progressCard}>
               <View>
                 <Text style={styles.progressValue}>{unlockedCount} / {badges.length}</Text>
@@ -102,22 +86,9 @@ export const BadgesScreen = ({ navigation }: BadgesScreenProps) => {
         showsVerticalScrollIndicator={false}
       />
       <BadgeDetailsModal badge={selectedBadge} onClose={() => selectBadge(null)} />
-    </SafeAreaView>
+    </View>
   );
 };
-
-const BadgesHeader = ({ onBack }: { onBack: () => void }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Badges</Text>
-      <Text style={styles.subtitle}>Collectionne les hexagones les plus rares.</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.back}>
-      <Text style={styles.backText}>RETOUR</Text>
-    </Pressable>
-  </View>
-);
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -151,18 +122,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 10,
     marginTop: 5,
-  },
-  back: {
-    borderColor: colors.neonCyan,
-    borderRadius: 11,
-    borderWidth: 1,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-  },
-  backText: {
-    color: colors.neonCyan,
-    fontSize: 8,
-    fontWeight: '900',
   },
   progressCard: {
     alignItems: 'center',
@@ -203,5 +162,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BadgesScreen;
+export default ProfileBadgesTab;
 

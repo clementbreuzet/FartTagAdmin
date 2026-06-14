@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -13,14 +13,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScreenHeader, SubmenuTabs } from '../../shared/components';
 import { FartFeedCard } from '../../features/feed/components/FartFeedCard';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFeedStore } from '../../features/feed/feedStore';
 import type { FartReactionType, PublicFartEvent } from '../../features/feed/types';
+import { useFriendsStore } from '../../features/friends/friendsStore';
 import type { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 
 export const HomeFeedScreen = () => {
+  const [feedTab, setFeedTab] = useState<'forYou' | 'following' | 'friends'>('forYou');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const error = useFeedStore((state) => state.error);
   const events = useFeedStore((state) => state.events);
@@ -31,12 +34,32 @@ export const HomeFeedScreen = () => {
   const loadFeed = useFeedStore((state) => state.loadFeed);
   const refreshFeed = useFeedStore((state) => state.refreshFeed);
   const reactToEvent = useFeedStore((state) => state.reactToEvent);
+  const friends = useFriendsStore((state) => state.friends);
+  const friendsHaveLoaded = useFriendsStore((state) => state.hasLoaded);
+  const loadFriends = useFriendsStore((state) => state.loadFriends);
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
       void loadFeed();
     }
   }, [hasLoaded, isLoading, loadFeed]);
+
+  useEffect(() => {
+    if (!friendsHaveLoaded) {
+      void loadFriends();
+    }
+  }, [friendsHaveLoaded, loadFriends]);
+
+  const visibleEvents = useMemo(() => {
+    if (feedTab === 'following') {
+      return [];
+    }
+    if (feedTab === 'friends') {
+      const friendIds = new Set(friends.map((friend) => friend.userId));
+      return events.filter((event) => friendIds.has(event.user.id));
+    }
+    return events;
+  }, [events, feedTab, friends]);
 
   const replayEvent = useCallback(async (event: PublicFartEvent) => {
     if (!event.audioReplayUrl) {
@@ -105,14 +128,29 @@ export const HomeFeedScreen = () => {
         ListEmptyComponent={
           <FeedState
             actionLabel="Actualiser"
-            description="Les prochains farts publics apparaîtront ici."
+            description={
+              feedTab === 'following'
+                ? "Le suivi d'utilisateurs n'est pas encore disponible."
+                : feedTab === 'friends'
+                  ? "Aucun fart public de tes amis pour le moment."
+                  : "Les prochains farts publics apparaîtront ici."
+            }
             onAction={() => void refreshFeed()}
-            title="Le feed est encore silencieux"
+            title={feedTab === 'following' ? 'Aucun abonnement' : 'Le feed est encore silencieux'}
           />
         }
         ListHeaderComponent={
           <>
             <FeedHeader />
+            <SubmenuTabs
+              activeTab={feedTab}
+              onChange={setFeedTab}
+              tabs={[
+                { label: 'Pour toi', value: 'forYou' },
+                { label: 'Following', value: 'following' },
+                { label: 'Amis', value: 'friends' },
+              ]}
+            />
             {error ? (
               <Pressable onPress={() => void refreshFeed()} style={styles.errorBanner}>
                 <Text numberOfLines={2} style={styles.errorText}>{error}</Text>
@@ -122,7 +160,7 @@ export const HomeFeedScreen = () => {
           </>
         }
         contentContainerStyle={styles.content}
-        data={events}
+        data={visibleEvents}
         keyExtractor={(event) => event.id}
         refreshControl={
           <RefreshControl
@@ -150,17 +188,16 @@ export const HomeFeedScreen = () => {
 };
 
 const FeedHeader = () => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.eyebrow}>FARTTAG SOCIAL</Text>
-      <Text style={styles.title}>Home Feed</Text>
-      <Text style={styles.subtitle}>Les farts publics qui font du bruit.</Text>
-    </View>
-    <View style={styles.liveBadge}>
-      <View style={styles.liveDot} />
-      <Text style={styles.liveText}>PUBLIC</Text>
-    </View>
-  </View>
+  <ScreenHeader
+    action={
+      <View style={styles.liveBadge}>
+        <View style={styles.liveDot} />
+        <Text style={styles.liveText}>PUBLIC</Text>
+      </View>
+    }
+    subtitle="Les farts publics qui font du bruit."
+    title="Home Feed"
+  />
 );
 
 const styles = StyleSheet.create({

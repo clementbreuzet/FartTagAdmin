@@ -1,25 +1,18 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   FlatList,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
-import { FeedState } from '../../features/feed/components/FeedState';
-import { InventoryDetailModal } from '../../features/inventory/components/InventoryDetailModal';
-import { InventoryFilterBar, type InventoryFilter } from '../../features/inventory/components/InventoryFilterBar';
-import { InventoryHexCard } from '../../features/inventory/components/InventoryHexCard';
-import { useInventoryStore } from '../../features/inventory/inventoryStore';
-import type { InventoryItem } from '../../features/profile/types';
-import type { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme/colors';
-
-type InventoryScreenProps = NativeStackScreenProps<RootStackParamList, 'InventoryScreen'>;
+import { FeedState } from '../../../features/feed/components/FeedState';
+import { InventoryDetailModal } from '../../../features/inventory/components/InventoryDetailModal';
+import { InventoryFilterBar, type InventoryFilter } from '../../../features/inventory/components/InventoryFilterBar';
+import { InventoryHexCard } from '../../../features/inventory/components/InventoryHexCard';
+import { useInventoryStore } from '../../../features/inventory/inventoryStore';
+import type { InventoryItem } from '../../../features/profile/types';
+import { colors } from '../../../theme/colors';
 
 const inventoryFilterMap: Record<InventoryFilter, (item: InventoryItem) => boolean> = {
   all: () => true,
@@ -30,7 +23,7 @@ const inventoryFilterMap: Record<InventoryFilter, (item: InventoryItem) => boole
   mythic: (item) => item.type === 'mythic' || item.rarity === 'mythic',
 };
 
-export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
+export const ProfileInventoryTab = () => {
   const [filter, setFilter] = useState<InventoryFilter>('all');
 
   const error = useInventoryStore((state) => state.error);
@@ -44,12 +37,6 @@ export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
   const equipItem = useInventoryStore((state) => state.equipItem);
   const selectedItemId = useInventoryStore((state) => state.selectedItemId);
   const selectItem = useInventoryStore((state) => state.selectItem);
-
-  useEffect(() => {
-    if (!hasLoaded) {
-      void loadInventory();
-    }
-  }, [hasLoaded, loadInventory]);
 
   const selectedItem = useMemo(
     () => inventory.find((item) => item.id === selectedItemId) ?? null,
@@ -66,15 +53,15 @@ export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
 
   if (isLoading && !hasLoaded) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <FeedState loading description="Chargement de vos objets cosmetiques..." title="Inventaire" tone="purple" />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (error && !hasLoaded) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <FeedState
           actionLabel="Recharger"
           description={error}
@@ -84,12 +71,12 @@ export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
           title="Inventaire indisponible"
           tone="purple"
         />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <FlatList
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.content}
@@ -108,7 +95,6 @@ export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
         }
         ListHeaderComponent={
           <>
-            <Header onBack={navigation.goBack} title="Inventaire" />
             <Text style={styles.kicker}>FARTTAG ADMIN</Text>
             <Text style={styles.subtitle}>
               Objets cosmetiques gagnes, equipes et prets a etre exposes.
@@ -138,21 +124,9 @@ export const InventoryScreen = ({ navigation }: InventoryScreenProps) => {
           void equipItem(item.id);
         }}
       />
-    </SafeAreaView>
+    </View>
   );
 };
-
-const Header = ({ onBack, title }: { onBack: () => void; title: string }) => (
-  <View style={styles.header}>
-    <View>
-      <Text style={styles.kicker}>FARTTAG ADMIN</Text>
-      <Text style={styles.title}>{title}</Text>
-    </View>
-    <Pressable onPress={onBack} style={styles.back}>
-      <Text style={styles.backText}>RETOUR</Text>
-    </Pressable>
-  </View>
-);
 
 const Stat = ({ label, value }: { label: string; value: string }) => (
   <View style={styles.statCard}>
@@ -191,19 +165,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '900',
     marginTop: 4,
-  },
-  back: {
-    borderColor: colors.neonCyan,
-    borderRadius: 11,
-    borderWidth: 1,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-  },
-  backText: {
-    color: colors.neonCyan,
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.8,
   },
   subtitle: {
     color: colors.textSecondary,
