@@ -1,4 +1,4 @@
-import { apiRequest, getAccessToken } from '../../api/apiClient';
+import { apiRequest, getAccessToken, getApiUrl } from '../../api/apiClient';
 import type { BackendAudioUpload, BackendFartEvent } from '../../api/backendContracts';
 import { mapOfficialFartResult } from '../../api/backendMappers';
 import type { CreateFartEventRequest, OfficialFartResult } from './types';
@@ -28,20 +28,14 @@ const uploadAudio = async (
   uri: string,
   durationMs: number,
 ): Promise<BackendAudioUpload> => {
-  console.log('========================');
-  console.log('UPLOAD AUDIO CALLED');
-  console.log('URI:', uri);
-  console.log('DURATION:', durationMs);
 
   const token = getAccessToken();
   const extension = getFileExtension(uri);
   const mimeType = getMimeType(extension);
-
-  console.log('HAS TOKEN:', !!token);
-  console.log('MIME TYPE:', mimeType);
-try{
+  const url = getApiUrl() + '/api/fart-events/audio';
+try {
 const response = await uploadAsync(
-  'http://192.168.1.126:50385/api/fart-events/audio',
+  url,
   uri,
   {
     httpMethod: 'POST',
@@ -57,10 +51,6 @@ const response = await uploadAsync(
     },
   },
 );
-
-  console.log('UPLOAD STATUS:', response.status);
-  console.log('UPLOAD BODY:', response.body);
-
   if (response.status < 200 || response.status >= 300) {
     throw new Error(response.body || `Upload failed (${response.status})`);
   }

@@ -14,6 +14,8 @@ export const setApiAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
+export const getApiUrl = () => API_URL;
+
 export const resolveApiUrl = (path: string | null): string | null => {
   if (!path) {
     return null;
