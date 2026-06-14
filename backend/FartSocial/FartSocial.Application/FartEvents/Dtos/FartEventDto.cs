@@ -1,4 +1,5 @@
 using FartSocial.Domain.FartEvents;
+using FartSocial.Application.Social.Dtos;
 
 namespace FartSocial.Application.FartEvents.Dtos;
 
@@ -6,7 +7,10 @@ public sealed record FartEventDto(
     Guid Id,
     Guid UserId,
     Guid DeviceId,
+    string DeviceName,
+    string DeviceModel,
     Guid? AudioFileId,
+    string? AudioReplayUrl,
     DateTimeOffset Timestamp,
     int AudioLevel,
     int GasLevel,
@@ -20,4 +24,5 @@ public sealed record FartEventDto(
     FartVisibility Visibility,
     IReadOnlyCollection<FartRewardDto> Rewards,
     IReadOnlyCollection<string> Badges,
-    FartReactionSummaryDto Reactions);
+    FartReactionSummaryDto Reactions,
+    IReadOnlyCollection<CommentDto> Comments);

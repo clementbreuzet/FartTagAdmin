@@ -115,22 +115,33 @@
             </summary>
             <param name="fartEventService">The fart event command service.</param>
             <param name="fartEventReadService">The fart event query service.</param>
+            <param name="dbContext">The persistence context used for audio files.</param>
         </member>
-        <member name="M:FartSocial.Api.Controllers.FartEventsController.#ctor(FartSocial.Application.FartEvents.IFartEventService,FartSocial.Application.FartEvents.IFartEventReadService)">
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.#ctor(FartSocial.Application.FartEvents.IFartEventService,FartSocial.Application.FartEvents.IFartEventReadService,FartSocial.Infrastructure.Persistence.FartSocialDbContext)">
             <summary>
             Creates and manages detected fart events for the authenticated user.
             </summary>
             <param name="fartEventService">The fart event command service.</param>
             <param name="fartEventReadService">The fart event query service.</param>
+            <param name="dbContext">The persistence context used for audio files.</param>
         </member>
         <member name="M:FartSocial.Api.Controllers.FartEventsController.Create(FartSocial.Application.FartEvents.Dtos.CreateFartEventRequestDto,System.Threading.CancellationToken)">
             <summary>Creates a fart event and returns the backend-calculated official result.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.UploadAudio(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Threading.CancellationToken)">
+            <summary>Uploads a phone microphone recording before creating its fart event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetAudio(System.Guid,System.Threading.CancellationToken)">
+            <summary>Streams an uploaded recording to its owner or viewers of a public event.</summary>
         </member>
         <member name="M:FartSocial.Api.Controllers.FartEventsController.GetMyHistory(System.Threading.CancellationToken)">
             <summary>Gets the authenticated user's fart event history.</summary>
         </member>
         <member name="M:FartSocial.Api.Controllers.FartEventsController.GetById(System.Guid,System.Threading.CancellationToken)">
             <summary>Gets an accessible fart event by its identifier.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetComments(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets comments for an accessible fart event.</summary>
         </member>
         <member name="M:FartSocial.Api.Controllers.FartEventsController.UpdateVisibility(System.Guid,FartSocial.Application.FartEvents.Dtos.UpdateFartVisibilityRequestDto,System.Threading.CancellationToken)">
             <summary>Updates the public visibility of an owned fart event.</summary>
@@ -254,6 +265,27 @@
         </member>
         <member name="M:FartSocial.Api.Controllers.MeController.GetMe(System.Threading.CancellationToken)">
             <summary>Gets the authenticated user's identity, roles, and permissions.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.ProfilesController">
+            <summary>
+            Provides full profile summaries and user discovery for FartTag Social.
+            </summary>
+            <param name="socialService">The social query service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.#ctor(FartSocial.Application.Social.ISocialService)">
+            <summary>
+            Provides full profile summaries and user discovery for FartTag Social.
+            </summary>
+            <param name="socialService">The social query service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.GetMine(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's full social profile.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.GetById(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets a user's public social profile.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.Search(System.String,System.Threading.CancellationToken)">
+            <summary>Searches active users by username.</summary>
         </member>
         <member name="T:FartSocial.Api.Controllers.WalletController">
             <summary>

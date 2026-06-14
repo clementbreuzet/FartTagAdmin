@@ -1,7 +1,7 @@
 namespace FartSocial.Application.FartEvents.Dtos;
 
 public sealed record CreateFartEventRequestDto(
-    Guid DeviceId,
+    Guid? DeviceId,
     DateTimeOffset Timestamp,
     int AudioLevel,
     int GasLevel,

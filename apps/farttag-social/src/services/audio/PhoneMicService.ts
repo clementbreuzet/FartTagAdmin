@@ -1,13 +1,17 @@
 import {
   AudioModule,
   RecordingPresets,
+  createAudioPlayer,
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
+  type AudioPlayer,
   type AudioRecorder,
 } from 'expo-audio';
 
 let activeRecorder: AudioRecorder | null = null;
 let collectedLevels: number[] = [];
+let meteringTimer: ReturnType<typeof setInterval> | null = null;
+let activePlayer: AudioPlayer | null = null;
 
 const normalizeMetering = (metering?: number) => {
   if (metering === undefined) {
@@ -50,6 +54,12 @@ export const PhoneMicService = {
     recorder.record();
     activeRecorder = recorder;
     collectedLevels = [];
+    meteringTimer = setInterval(() => {
+      if (!activeRecorder) {
+        return;
+      }
+      collectedLevels.push(normalizeMetering(activeRecorder.getStatus().metering));
+    }, 150);
   },
 
   async getCurrentLevel(): Promise<{ durationMs: number; level: number }> {
@@ -74,6 +84,10 @@ export const PhoneMicService = {
 
     const recorder = activeRecorder;
     const status = recorder.getStatus();
+    if (meteringTimer) {
+      clearInterval(meteringTimer);
+      meteringTimer = null;
+    }
     await recorder.stop();
     activeRecorder = null;
     await setAudioModeAsync({ allowsRecording: false });
@@ -93,5 +107,11 @@ export const PhoneMicService = {
       peakLevel: collectedLevels.length > 0 ? Math.max(...collectedLevels) : averageLevel,
       uri: recorder.uri,
     };
+  },
+
+  play(uri: string): void {
+    activePlayer?.release();
+    activePlayer = createAudioPlayer(uri);
+    activePlayer.play();
   },
 };

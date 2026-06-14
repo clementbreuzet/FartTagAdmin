@@ -5,6 +5,8 @@ namespace FartSocial.Application.Social;
 public interface ISocialService
 {
     Task<IReadOnlyCollection<FeedItemDto>> GetFeedAsync(Guid viewerUserId, CancellationToken cancellationToken);
+    Task<UserProfileDto?> GetProfileAsync(Guid viewerUserId, Guid profileUserId, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<UserSearchResultDto>> SearchUsersAsync(Guid userId, string query, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<FriendDto>> GetFriendsAsync(Guid userId, CancellationToken cancellationToken);
     Task<FriendRequestsResponseDto> GetFriendRequestsAsync(Guid userId, CancellationToken cancellationToken);
     Task<FriendRequestDto?> RequestFriendAsync(Guid userId, Guid targetUserId, CancellationToken cancellationToken);

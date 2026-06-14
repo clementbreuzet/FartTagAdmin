@@ -16,7 +16,10 @@ export type BackendFartEvent = {
   id: string;
   userId: string;
   deviceId: string;
+  deviceName: string;
+  deviceModel: string;
   audioFileId: string | null;
+  audioReplayUrl: string | null;
   timestamp: string;
   audioLevel: number;
   gasLevel: number;
@@ -31,10 +34,12 @@ export type BackendFartEvent = {
   rewards: BackendFartReward[];
   badges: string[];
   reactions: BackendReactionSummary;
+  comments: BackendComment[];
 };
 
 export type BackendFartHistoryItem = {
   id: string;
+  audioReplayUrl: string | null;
   timestamp: string;
   officialScore: number;
   durationMs: number;
@@ -45,6 +50,11 @@ export type BackendFartHistoryItem = {
   category: string;
   visibility: string;
   reactions: BackendReactionSummary;
+};
+
+export type BackendAudioUpload = {
+  id: string;
+  replayUrl: string;
 };
 
 export type BackendFeedItem = {
@@ -60,8 +70,19 @@ export type BackendFeedItem = {
   timestamp: string;
   isAuthenticated: boolean;
   category: string;
+  audioReplayUrl: string | null;
   reactions: BackendReactionSummary;
   commentsCount: number;
+};
+
+export type BackendComment = {
+  id: string;
+  fartEventId: string;
+  userId: string;
+  userName: string;
+  avatarUrl: string | null;
+  content: string;
+  commentedAt: string;
 };
 
 export type BackendLeaderboardEntry = {
@@ -213,4 +234,48 @@ export type BackendMe = {
   email: string;
   roles: string[];
   permissions: string[];
+};
+
+export type BackendUserProfile = {
+  id: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  equippedTitle: string | null;
+  equippedFrame: {
+    id: string;
+    name: string;
+    assetKey: string | null;
+  } | null;
+  level: number;
+  levelProgressPercent: number;
+  globalStats: {
+    totalFarts: number;
+    publicFarts: number;
+    legendaryFarts: number;
+    averageOfficialScore: number;
+    totalReactionsReceived: number;
+  };
+  bestFart: {
+    id: string;
+    officialScore: number;
+    occurredAt: string;
+  } | null;
+  recentBadges: {
+    id: string;
+    name: string;
+    description: string;
+    unlockedAt: string;
+  }[];
+};
+
+export type BackendUserSearchResult = {
+  userId: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  equippedTitle: string | null;
+  featuredBadgeRarity: string | null;
+  isFriend: boolean;
+  hasPendingRequest: boolean;
 };

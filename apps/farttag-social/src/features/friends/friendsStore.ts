@@ -91,7 +91,16 @@ export const useFriendsStore = create<FriendsState>((set, get) => ({
 
     set({ error: null, isAddingFriend: true });
     try {
-      await friendsApi.requestFriend(target);
+      const isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(target);
+      const targetUserId = isGuid
+        ? target
+        : (await friendsApi.searchUsers(target)).find(
+            (user) => user.userName.toLowerCase() === target.toLowerCase(),
+          )?.userId;
+      if (!targetUserId) {
+        throw new Error('Utilisateur introuvable.');
+      }
+      await friendsApi.requestFriend(targetUserId);
     } catch (error) {
       set({ error: getErrorMessage(error) });
     } finally {

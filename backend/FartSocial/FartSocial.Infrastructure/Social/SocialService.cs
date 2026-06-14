@@ -35,7 +35,8 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                     fartEvent.Temperature,
                     fartEvent.OccurredAt,
                     fartEvent.IsAuthenticated,
-                    fartEvent.Category))
+                    fartEvent.Category,
+                    fartEvent.AudioFileId))
             .ToListAsync(cancellationToken);
 
         var fartEventIds = snapshots.Select(x => x.Id).ToArray();
@@ -90,6 +91,7 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 snapshot.Timestamp,
                 snapshot.IsAuthenticated,
                 snapshot.Category,
+                snapshot.AudioFileId.HasValue ? $"/api/fart-events/audio/{snapshot.AudioFileId.Value}" : null,
                 reactionSummary,
                 comments.Count(comment => comment.FartEventId == snapshot.Id),
                 (recentComments ?? new List<CommentSnapshot>()).Select(comment => new CommentDto(
@@ -100,6 +102,120 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                     comment.AvatarUrl,
                     comment.Content,
                     comment.CommentedAt)).ToList());
+        }).ToList();
+    }
+
+    public async Task<UserProfileDto?> GetProfileAsync(Guid viewerUserId, Guid profileUserId, CancellationToken cancellationToken)
+    {
+        var user = await dbContext.Users.AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == profileUserId && item.IsActive, cancellationToken);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var isOwner = viewerUserId == profileUserId;
+        var events = await dbContext.FartEvents.AsNoTracking()
+            .Where(item => item.UserId == profileUserId && (isOwner || item.Visibility == FartVisibility.Public))
+            .ToListAsync(cancellationToken);
+        var eventIds = events.Select(item => item.Id).ToArray();
+        var totalReactions = eventIds.Length == 0
+            ? 0
+            : await dbContext.Reactions.CountAsync(item => eventIds.Contains(item.FartEventId), cancellationToken);
+
+        var title = user.EquippedTitleInventoryItemId.HasValue
+            ? await dbContext.InventoryItems.AsNoTracking()
+                .Where(item => item.Id == user.EquippedTitleInventoryItemId.Value)
+                .Select(item => item.Name)
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+        var frame = user.EquippedProfileFrameInventoryItemId.HasValue
+            ? await dbContext.InventoryItems.AsNoTracking()
+                .Where(item => item.Id == user.EquippedProfileFrameInventoryItemId.Value)
+                .Select(item => new EquippedFrameDto(item.Id, item.Name, item.AssetKey))
+                .FirstOrDefaultAsync(cancellationToken)
+            : null;
+        var recentBadges = await dbContext.UserBadges.AsNoTracking()
+            .Where(item => item.UserId == profileUserId)
+            .OrderByDescending(item => item.EarnedAt)
+            .Take(5)
+            .Select(item => new UserProfileBadgeDto(
+                item.BadgeId,
+                item.Badge!.Name,
+                item.Badge.Description,
+                item.EarnedAt))
+            .ToListAsync(cancellationToken);
+
+        var totalFarts = events.Count;
+        var level = Math.Max(1, totalFarts / 10 + 1);
+        var best = events.OrderByDescending(item => item.OfficialScore).ThenByDescending(item => item.OccurredAt).FirstOrDefault();
+        return new UserProfileDto(
+            user.Id,
+            user.UserName,
+            user.UserName,
+            user.AvatarUrl,
+            title,
+            frame,
+            level,
+            totalFarts % 10 * 10,
+            new UserProfileStatsDto(
+                totalFarts,
+                events.Count(item => item.Visibility == FartVisibility.Public),
+                events.Count(item => item.Category is "legendary" or "mythic"),
+                totalFarts == 0 ? 0 : Math.Round((decimal)events.Average(item => item.OfficialScore), 1),
+                totalReactions),
+            best is null ? null : new UserProfileBestFartDto(best.Id, best.OfficialScore, best.OccurredAt),
+            recentBadges);
+    }
+
+    public async Task<IReadOnlyCollection<UserSearchResultDto>> SearchUsersAsync(Guid userId, string query, CancellationToken cancellationToken)
+    {
+        var normalizedQuery = query.Trim().ToUpperInvariant();
+        if (normalizedQuery.Length < 2)
+        {
+            return Array.Empty<UserSearchResultDto>();
+        }
+
+        var users = await dbContext.Users.AsNoTracking()
+            .Where(item => item.IsActive && item.Id != userId && item.NormalizedUserName.Contains(normalizedQuery))
+            .OrderBy(item => item.UserName)
+            .Take(20)
+            .ToListAsync(cancellationToken);
+        var resultUserIds = users.Select(item => item.Id).ToArray();
+        var friendships = await dbContext.Friendships.AsNoTracking()
+            .Where(item =>
+                (item.UserId == userId && resultUserIds.Contains(item.FriendUserId)) ||
+                (item.FriendUserId == userId && resultUserIds.Contains(item.UserId)))
+            .ToListAsync(cancellationToken);
+        var requests = await dbContext.FriendRequests.AsNoTracking()
+            .Where(item => item.Status == FriendRequestStatus.Pending &&
+                ((item.RequesterUserId == userId && resultUserIds.Contains(item.RecipientUserId)) ||
+                 (item.RecipientUserId == userId && resultUserIds.Contains(item.RequesterUserId))))
+            .ToListAsync(cancellationToken);
+        var titleIds = users.Where(item => item.EquippedTitleInventoryItemId.HasValue)
+            .Select(item => item.EquippedTitleInventoryItemId!.Value).ToArray();
+        var titles = await dbContext.InventoryItems.AsNoTracking()
+            .Where(item => titleIds.Contains(item.Id))
+            .ToDictionaryAsync(item => item.Id, item => item.Name, cancellationToken);
+        var badges = await dbContext.UserBadges.AsNoTracking()
+            .Where(item => resultUserIds.Contains(item.UserId))
+            .Include(item => item.Badge)
+            .OrderByDescending(item => item.Badge!.Rarity)
+            .ToListAsync(cancellationToken);
+
+        return users.Select(user =>
+        {
+            titles.TryGetValue(user.EquippedTitleInventoryItemId ?? Guid.Empty, out var equippedTitle);
+            var badgeRarity = badges.FirstOrDefault(item => item.UserId == user.Id)?.Badge?.Rarity.ToString().ToLowerInvariant();
+            return new UserSearchResultDto(
+                user.Id,
+                user.UserName,
+                user.UserName,
+                user.AvatarUrl,
+                equippedTitle,
+                badgeRarity,
+                friendships.Any(item => item.UserId == user.Id || item.FriendUserId == user.Id),
+                requests.Any(item => item.RequesterUserId == user.Id || item.RecipientUserId == user.Id));
         }).ToList();
     }
 
@@ -350,7 +466,8 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
         decimal Temperature,
         DateTimeOffset Timestamp,
         bool IsAuthenticated,
-        string Category);
+        string Category,
+        Guid? AudioFileId);
 
     private sealed record CommentSnapshot(
         Guid Id,

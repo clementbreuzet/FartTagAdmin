@@ -129,6 +129,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
     try {
       const capture = await PhoneMicService.stopRecording();
       const provisionalEvent: DetectedFartEvent = {
+        audioUri: capture.uri,
         audioLevel: capture.averageLevel,
         capturedAt: new Date().toISOString(),
         durationMs: capture.durationMs || 1_800,
@@ -150,8 +151,8 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
 
   uploadLastEvent: async () => {
     const { device, inputMode, lastEvent } = get();
-    const deviceId = device?.id ?? (inputMode === 'phone-mic' ? 'PHONE-MIC-TEST' : null);
-    if (!deviceId || !lastEvent) {
+    const deviceId = inputMode === 'phone-mic' ? null : device?.id ?? null;
+    if (!lastEvent || (inputMode === 'ble' && !deviceId)) {
       return;
     }
 
@@ -165,6 +166,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         durationMs: lastEvent.durationMs,
         gasLevel: lastEvent.gasLevel,
         provisionalScore: lastEvent.provisionalScore,
+        audioUri: lastEvent.audioUri,
       });
       set({ officialResult, uploadStatus: 'uploaded' });
     } catch (error) {

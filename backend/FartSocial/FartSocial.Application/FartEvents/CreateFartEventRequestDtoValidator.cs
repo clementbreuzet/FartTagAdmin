@@ -7,7 +7,7 @@ public sealed class CreateFartEventRequestDtoValidator : AbstractValidator<Creat
 {
     public CreateFartEventRequestDtoValidator()
     {
-        RuleFor(x => x.DeviceId).NotEmpty();
+        RuleFor(x => x.DeviceId).NotEmpty().When(x => x.DeviceId.HasValue);
         RuleFor(x => x.Timestamp).NotEmpty();
         RuleFor(x => x.AudioLevel).InclusiveBetween(0, 200);
         RuleFor(x => x.GasLevel).InclusiveBetween(0, 1000);

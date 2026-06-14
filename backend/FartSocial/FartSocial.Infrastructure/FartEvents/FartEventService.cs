@@ -17,8 +17,9 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
 
     public async Task<FartEventDto> CreateAsync(Guid userId, CreateFartEventRequestDto request, CancellationToken cancellationToken)
     {
+        var deviceId = request.DeviceId ?? await GetOrCreatePhoneMicrophoneDeviceAsync(userId, cancellationToken);
         var deviceIsOwned = await dbContext.DeviceOwnerships.AnyAsync(
-            ownership => ownership.DeviceId == request.DeviceId && ownership.UserId == userId && ownership.IsActive,
+            ownership => ownership.DeviceId == deviceId && ownership.UserId == userId && ownership.IsActive,
             cancellationToken);
         if (!deviceIsOwned)
         {
@@ -45,7 +46,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             AuthenticityScore = calculated.Authenticity,
             BadgesJson = JsonSerializer.Serialize(calculated.Badges, JsonOptions),
             Category = calculated.Category,
-            DeviceId = request.DeviceId,
+            DeviceId = deviceId,
             DurationMs = request.DurationMs,
             GasLevel = request.GasLevel,
             IsAuthenticated = calculated.IsAuthenticated,
@@ -78,6 +79,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
         {
             history.Add(new FartHistoryItemDto(
                 eventItem.Id,
+                eventItem.AudioFileId.HasValue ? $"/api/fart-events/audio/{eventItem.AudioFileId.Value}" : null,
                 eventItem.OccurredAt,
                 eventItem.OfficialScore,
                 eventItem.DurationMs,
@@ -96,6 +98,19 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
     public async Task<FartEventDto?> GetByIdAsync(Guid userId, Guid fartEventId, CancellationToken cancellationToken)
     {
         return await MapDtoAsync(fartEventId, userId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<CommentDto>?> GetCommentsAsync(Guid userId, Guid fartEventId, CancellationToken cancellationToken)
+    {
+        var canAccess = await dbContext.FartEvents.AsNoTracking().AnyAsync(
+            item => item.Id == fartEventId && (item.UserId == userId || item.Visibility == FartVisibility.Public),
+            cancellationToken);
+        if (!canAccess)
+        {
+            return null;
+        }
+
+        return await MapCommentsAsync(fartEventId, cancellationToken);
     }
 
     public async Task<FartEventDto?> UpdateVisibilityAsync(Guid userId, Guid fartEventId, UpdateFartVisibilityRequestDto request, CancellationToken cancellationToken)
@@ -199,11 +214,15 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
 
         var rewards = DeserializeRewards(fartEvent.RewardsJson);
         var badges = DeserializeBadges(fartEvent.BadgesJson);
+        var device = await dbContext.Devices.AsNoTracking().FirstAsync(item => item.Id == fartEvent.DeviceId, cancellationToken);
         return new FartEventDto(
             fartEvent.Id,
             fartEvent.UserId,
             fartEvent.DeviceId,
+            device.Name,
+            device.Model,
             fartEvent.AudioFileId,
+            fartEvent.AudioFileId.HasValue ? $"/api/fart-events/audio/{fartEvent.AudioFileId.Value}" : null,
             fartEvent.OccurredAt,
             fartEvent.AudioLevel,
             fartEvent.GasLevel,
@@ -217,7 +236,28 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             fartEvent.Visibility,
             rewards,
             badges,
-            await GetReactionSummaryAsync(fartEvent.Id, viewerUserId, cancellationToken));
+            await GetReactionSummaryAsync(fartEvent.Id, viewerUserId, cancellationToken),
+            await MapCommentsAsync(fartEvent.Id, cancellationToken));
+    }
+
+    private async Task<IReadOnlyCollection<CommentDto>> MapCommentsAsync(Guid fartEventId, CancellationToken cancellationToken)
+    {
+        return await dbContext.Comments.AsNoTracking()
+            .Where(comment => comment.FartEventId == fartEventId)
+            .OrderBy(comment => comment.CommentedAt)
+            .Join(
+                dbContext.Users.AsNoTracking(),
+                comment => comment.UserId,
+                user => user.Id,
+                (comment, user) => new CommentDto(
+                    comment.Id,
+                    comment.FartEventId,
+                    comment.UserId,
+                    user.UserName,
+                    user.AvatarUrl,
+                    comment.Content,
+                    comment.CommentedAt))
+            .ToListAsync(cancellationToken);
     }
 
     private static (int OfficialScore, int Authenticity, string Category, bool IsAuthenticated, List<FartRewardDto> Rewards, List<string> Badges) CalculateClassification(CreateFartEventRequestDto request)
@@ -286,5 +326,44 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
 
     private static IReadOnlyCollection<string> DeserializeBadges(string json) =>
         JsonSerializer.Deserialize<List<string>>(json, JsonOptions) ?? [];
+
+    private async Task<Guid> GetOrCreatePhoneMicrophoneDeviceAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var serialNumber = $"PHONE-MIC-{userId:N}";
+        var device = await dbContext.Devices.FirstOrDefaultAsync(
+            item => item.SerialNumber == serialNumber,
+            cancellationToken);
+        if (device is null)
+        {
+            device = new Device
+            {
+                IsActive = true,
+                Model = "Phone Microphone",
+                Name = "Micro du téléphone",
+                SerialNumber = serialNumber,
+            };
+            dbContext.Devices.Add(device);
+            dbContext.DeviceOwnerships.Add(new DeviceOwnership
+            {
+                Device = device,
+                IsActive = true,
+                UserId = userId,
+            });
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else if (!await dbContext.DeviceOwnerships.AnyAsync(
+                     ownership => ownership.DeviceId == device.Id && ownership.UserId == userId && ownership.IsActive,
+                     cancellationToken))
+        {
+            dbContext.DeviceOwnerships.Add(new DeviceOwnership
+            {
+                DeviceId = device.Id,
+                IsActive = true,
+                UserId = userId,
+            });
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        return device.Id;
+    }
 
 }

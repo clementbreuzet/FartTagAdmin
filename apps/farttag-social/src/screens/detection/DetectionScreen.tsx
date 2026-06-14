@@ -1,35 +1,44 @@
-import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { DetectionMetric } from '../../features/detection/components/DetectionMetric';
+import { DailyProgressCard } from '../../features/detection/components/DailyProgressCard';
+import { DetectionModeSwitch } from '../../features/detection/components/DetectionModeSwitch';
+import { DetectionRadarCard } from '../../features/detection/components/DetectionRadarCard';
+import { DeviceStatusCard } from '../../features/detection/components/DeviceStatusCard';
+import { LastExploitCard } from '../../features/detection/components/LastExploitCard';
+import { QuickHistoryCard } from '../../features/detection/components/QuickHistoryCard';
 import { useDetectionStore } from '../../features/detection/detectionStore';
-import { LabelValueRow, SubmenuTabs } from '../../shared/components';
+import type { DetectedFartEvent, DetectionSource } from '../../features/detection/types';
+import { useHistoryStore } from '../../features/history/historyStore';
+import type { FartHistoryEvent } from '../../features/history/types';
+import type { DetectionStackParamList } from '../../navigation/types';
+import { PhoneMicService } from '../../services/audio/PhoneMicService';
 import { colors } from '../../theme/colors';
 
-const bleLabels = {
-  connected: 'BLE CONNECTÉ',
-  connecting: 'CONNEXION...',
-  disconnected: 'BLE DÉCONNECTÉ',
+const FALLBACK_EVENT: DetectedFartEvent = {
+  audioLevel: 72.6,
+  capturedAt: '2026-06-14T15:02:00.000Z',
+  durationMs: 2_800,
+  gasLevel: 98.4,
+  id: 'fallback-detection',
+  provisionalScore: 82,
+  source: 'ble',
 };
 
-const uploadLabels = {
-  error: 'ÉCHEC UPLOAD',
-  idle: 'NON ENVOYÉ',
-  pending: 'ENVOI...',
-  uploaded: 'VALIDÉ BACKEND',
-};
+const FALLBACK_HISTORY: FartHistoryEvent[] = [
+  { audioLevel: 72.6, audioReplayUrl: null, durationMs: 2_800, gasLevel: 98.4, id: 'fallback-history-1', isLegendary: false, occurredAt: '2026-06-14T15:02:00.000Z', officialScore: 82, visibility: 'private' },
+  { audioLevel: 68.2, audioReplayUrl: null, durationMs: 2_100, gasLevel: 84.6, id: 'fallback-history-2', isLegendary: false, occurredAt: '2026-06-14T13:47:00.000Z', officialScore: 64, visibility: 'private' },
+  { audioLevel: 55.1, audioReplayUrl: null, durationMs: 1_300, gasLevel: 60.2, id: 'fallback-history-3', isLegendary: false, occurredAt: '2026-06-14T11:23:00.000Z', officialScore: 49, visibility: 'private' },
+];
+
+const categoryForScore = (score: number) => score >= 92 ? 'Catégorie 5' : score >= 80 ? 'Catégorie 3' : 'Catégorie 2';
+const funLabelForScore = (score: number) => score >= 92 ? 'Légendaire' : score >= 70 ? 'Gros et fier' : 'Assassin silencieux';
 
 export const DetectionScreen = () => {
-  const [showDetails, setShowDetails] = useState(false);
-  const [section, setSection] = useState<'live' | 'official'>('live');
+  const navigation = useNavigation<NativeStackNavigationProp<DetectionStackParamList>>();
   const bleStatus = useDetectionStore((state) => state.bleStatus);
   const device = useDetectionStore((state) => state.device);
   const error = useDetectionStore((state) => state.error);
@@ -43,12 +52,21 @@ export const DetectionScreen = () => {
   const startPhoneMicTest = useDetectionStore((state) => state.startPhoneMicTest);
   const stopPhoneMicTest = useDetectionStore((state) => state.stopPhoneMicTest);
   const uploadLastEvent = useDetectionStore((state) => state.uploadLastEvent);
+  const historyEvents = useHistoryStore((state) => state.events);
+  const historyHasLoaded = useHistoryStore((state) => state.hasLoaded);
+  const loadHistory = useHistoryStore((state) => state.loadHistory);
+  const [mode, setMode] = useState<DetectionSource>(inputMode);
+
+  useEffect(() => {
+    if (!historyHasLoaded) {
+      void loadHistory();
+    }
+  }, [historyHasLoaded, loadHistory]);
 
   useEffect(() => {
     if (bleStatus !== 'connected') {
       return;
     }
-
     const firstEvent = setTimeout(simulateAutomaticEvent, 1_800);
     const stream = setInterval(simulateAutomaticEvent, 15_000);
     return () => {
@@ -57,183 +75,108 @@ export const DetectionScreen = () => {
     };
   }, [bleStatus, simulateAutomaticEvent]);
 
+  const displayedEvent = lastEvent ?? FALLBACK_EVENT;
+  const quickHistory = useMemo(
+    () => [...historyEvents, ...FALLBACK_HISTORY].filter((event, index, events) => events.findIndex((candidate) => candidate.id === event.id) === index).slice(0, 3),
+    [historyEvents],
+  );
+  const latestHistoryEvent = historyEvents[0] ?? null;
+  const dailyProgress = historyEvents.length > 0 ? Math.min(historyEvents.length, 10) : 7;
+  const flatulonsReward = officialResult?.flatulonsEarned ?? 15;
+  const isListening = mode === 'phone-mic' ? isPhoneMicRecording : bleStatus === 'connected';
+  const signalLabel = mode === 'phone-mic'
+    ? isPhoneMicRecording ? 'MICRO EN ÉCOUTE' : 'MICRO BÊTA PRÊT'
+    : bleStatus === 'connected' ? 'SIGNAL EXCELLENT' : 'SIGNAL FAIBLE';
+
+  const toggleMicrophone = () => {
+    void (isPhoneMicRecording ? stopPhoneMicTest() : startPhoneMicTest());
+  };
+
+  const replayLastEvent = async () => {
+    if (displayedEvent.audioUri) {
+      PhoneMicService.play(displayedEvent.audioUri);
+      return;
+    }
+    if (!latestHistoryEvent?.audioReplayUrl) {
+      return;
+    }
+    try {
+      await Linking.openURL(latestHistoryEvent.audioReplayUrl);
+    } catch {
+      Alert.alert('Replay indisponible', "L'audio n'a pas pu être ouvert.");
+    }
+  };
+
+  const openDetails = (eventId: string) => {
+    navigation.navigate('FartDetailsScreen', { fartEventId: eventId });
+  };
+
+  const openDeviceStatus = () => {
+    if (mode === 'ble' && bleStatus !== 'connected') {
+      void connectDevice();
+      return;
+    }
+    Alert.alert(
+      mode === 'phone-mic' ? 'Mode micro bêta' : device?.name ?? 'FartTag',
+      mode === 'phone-mic'
+        ? 'Le téléphone capture uniquement le signal audio, sans mesure du capteur gaz.'
+        : `${device?.batteryLevel ?? 0}% batterie · ${device?.rssi ?? 0} dBm`,
+    );
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <SubmenuTabs
-          activeTab={section}
-          onChange={setSection}
-          tabs={[
-            { label: 'Detection live', value: 'live' },
-            { label: 'Resultat officiel', value: 'official' },
-          ]}
+        <View style={styles.header}>
+          <View style={styles.titleLine}>
+            <View style={styles.lineStem} />
+            <View style={styles.lineDot} />
+          </View>
+          <Text style={styles.title}>
+            <Text style={styles.titleGreen}>CENTRE </Text>
+            <Text style={styles.titleCyan}>DE </Text>
+            <Text style={styles.titlePurple}>DÉTECTION</Text>
+          </Text>
+          <View style={[styles.titleLine, styles.titleLineRight]}>
+            <View style={[styles.lineStem, styles.lineStemPurple]} />
+            <View style={[styles.lineDot, styles.lineDotPurple]} />
+          </View>
+        </View>
+        <Text style={styles.subtitle}>Choisis ton mode de détection</Text>
+
+        <DetectionModeSwitch
+          bleStatus={bleStatus}
+          device={device}
+          isPhoneMicRecording={isPhoneMicRecording}
+          mode={mode}
+          onConnect={() => void connectDevice()}
+          onModeChange={setMode}
+          onToggleMicrophone={toggleMicrophone}
+        />
+        <DetectionRadarCard event={displayedEvent} isListening={isListening} mode={mode} signalLabel={signalLabel} />
+        <LastExploitCard
+          category={categoryForScore(displayedEvent.provisionalScore)}
+          event={displayedEvent}
+          flatulonsReward={flatulonsReward}
+          funLabel={funLabelForScore(displayedEvent.provisionalScore)}
+          onOpenDetails={() => openDetails(latestHistoryEvent?.id ?? displayedEvent.id)}
+          onReplay={() => void replayLastEvent()}
+          onUpload={() => void uploadLastEvent()}
+          replayAvailable={Boolean(displayedEvent.audioUri || latestHistoryEvent?.audioReplayUrl)}
+          uploadStatus={uploadStatus}
         />
 
-        {section === 'live' ? (
-          <>
-          <View style={[styles.card, styles.deviceCard]}>
-          <View style={styles.cardHeader}>
-            <View>
-              <Text style={styles.sectionEyebrow}>DEVICE</Text>
-              <Text style={styles.deviceName}>{device?.name ?? 'Aucun FartTag connecté'}</Text>
-            </View>
-            <View style={[styles.statusPill, bleStatus === 'connected' && styles.statusPillActive]}>
-              <View style={[styles.statusDot, bleStatus === 'connected' && styles.statusDotActive]} />
-              <Text style={[styles.statusText, bleStatus === 'connected' && styles.statusTextActive]}>
-                {bleLabels[bleStatus]}
-              </Text>
-            </View>
-          </View>
+        <View style={styles.secondaryGrid}>
+          <QuickHistoryCard
+            events={quickHistory}
+            onOpen={(event) => openDetails(event.id)}
+            onSeeAll={() => Alert.alert('Historique complet', 'Retrouve tout ton historique dans ton profil.')}
+          />
+          <DailyProgressCard goal={10} progress={dailyProgress} reward={25} />
+        </View>
 
-          {device ? (
-            <Text style={styles.deviceMeta}>
-              {device.id} · {device.batteryLevel}% BAT · {device.rssi} dBm
-            </Text>
-          ) : (
-            <Pressable
-              disabled={bleStatus === 'connecting'}
-              onPress={() => void connectDevice()}
-              style={styles.primaryButton}
-            >
-              {bleStatus === 'connecting' ? (
-                <ActivityIndicator color={colors.background} size="small" />
-              ) : (
-                <Text style={styles.primaryButtonText}>CONNECTER DEVICE</Text>
-              )}
-            </Pressable>
-          )}
-
-          <View style={styles.phoneMicBlock}>
-            <Text style={styles.phoneMicCaption}>MODE TEST TEMPORAIRE</Text>
-            <Text style={styles.phoneMicDescriptionInline}>
-              Enregistre avec le micro du téléphone et passe par la même interception que le BLE.
-            </Text>
-            <Pressable
-              onPress={() => void (isPhoneMicRecording ? stopPhoneMicTest() : startPhoneMicTest())}
-              style={[
-                styles.secondaryButton,
-                styles.phoneMicButtonInline,
-                isPhoneMicRecording && styles.phoneMicRecordingButton,
-              ]}
-            >
-              {isPhoneMicRecording ? (
-                <ActivityIndicator color={colors.neonCyan} size="small" />
-              ) : (
-                <Text style={styles.secondaryButtonText}>
-                  ENREGISTRER AVEC LE MICRO
-                </Text>
-              )}
-            </Pressable>
-            <Text style={styles.phoneMicHint}>
-              {isPhoneMicRecording
-                ? 'Enregistrement en cours. Clique à nouveau pour arrêter et récupérer le son.'
-                : 'Mode test temporaire, pour enregistrer avec le micro du téléphone.'}
-            </Text>
-          </View>
-          </View>
-
-          <View style={[styles.card, styles.eventCard]}>
-          <View style={styles.cardHeader}>
-            <View>
-              <Text style={styles.sectionEyebrow}>DERNIER ÉVÉNEMENT</Text>
-              <Text style={styles.eventTitle}>
-                {lastEvent ? 'Fart détecté automatiquement' : 'En attente de détection'}
-              </Text>
-            </View>
-            <View style={styles.pulse}>
-              <View style={styles.pulseCore} />
-            </View>
-          </View>
-
-          {lastEvent ? (
-            <>
-              <View style={styles.metrics}>
-                <DetectionMetric accent="cyan" label="Audio" value={`${lastEvent.audioLevel.toFixed(1)} dB`} />
-                <DetectionMetric accent="green" label="Gaz" value={`${lastEvent.gasLevel.toFixed(1)} kΩ`} />
-                <DetectionMetric accent="purple" label="Score provisoire" value={`${lastEvent.provisionalScore}`} />
-                <DetectionMetric label="Durée" value={`${(lastEvent.durationMs / 1_000).toFixed(1)} s`} />
-              </View>
-
-              <View style={styles.uploadRow}>
-                <View>
-                  <Text style={styles.uploadLabel}>STATUT UPLOAD</Text>
-                  <Text style={styles.uploadValue}>{uploadLabels[uploadStatus]}</Text>
-                </View>
-                <Pressable
-                  disabled={uploadStatus === 'pending'}
-                  onPress={() => void uploadLastEvent()}
-                  style={styles.uploadButton}
-                >
-                  {uploadStatus === 'pending' ? (
-                    <ActivityIndicator color={colors.neonCyan} size="small" />
-                  ) : (
-                    <Text style={styles.uploadButtonText}>ENVOYER AU BACKEND</Text>
-                  )}
-                </Pressable>
-              </View>
-
-              <Pressable onPress={() => setShowDetails((visible) => !visible)} style={styles.detailButton}>
-                <Text style={styles.detailButtonText}>
-                  {showDetails ? 'MASQUER LE DÉTAIL' : 'VOIR DÉTAIL DU DERNIER FART'}
-                </Text>
-              </Pressable>
-
-              {showDetails ? (
-                <View style={styles.details}>
-                  <LabelValueRow compact divider="none" label="ID local" value={lastEvent.id} valueTone="secondary" />
-                  <LabelValueRow compact divider="none" label="Capture" value={new Date(lastEvent.capturedAt).toLocaleString()} valueTone="secondary" />
-                  <LabelValueRow
-                    compact
-                    divider="none"
-                    label="Origine"
-                    value={inputMode === 'phone-mic' ? 'Micro du téléphone (test)' : 'Détection automatique BLE'}
-                    valueTone="secondary"
-                  />
-                </View>
-              ) : null}
-            </>
-          ) : (
-            <Text style={styles.waitingText}>
-              La détection démarre automatiquement dès que le device est connecté. Aucune action utilisateur n'est requise.
-            </Text>
-          )}
-          </View>
-          </>
-        ) : null}
-
+        <DeviceStatusCard device={device} mode={mode} onPress={openDeviceStatus} />
         {error ? <Text style={styles.error}>{error}</Text> : null}
-
-        {section === 'official' ? <View style={[styles.card, styles.officialCard]}>
-          <Text style={styles.sectionEyebrow}>RÉSULTAT OFFICIEL BACKEND</Text>
-          {officialResult ? (
-            <>
-              <View style={styles.officialScoreRow}>
-                <View>
-                  <Text style={styles.officialLabel}>SCORE OFFICIEL</Text>
-                  <Text style={styles.officialScore}>{officialResult.officialScore}</Text>
-                </View>
-                <View style={styles.flatulons}>
-                  <Text style={styles.flatulonsValue}>+{officialResult.flatulonsEarned}</Text>
-                  <Text style={styles.flatulonsLabel}>FLATULONS</Text>
-                </View>
-              </View>
-              <Text style={styles.rewardText}>
-                Badges débloqués : {officialResult.unlockedBadges.length > 0
-                  ? officialResult.unlockedBadges.map((badge) => badge.name).join(', ')
-                  : 'aucun'}
-              </Text>
-              <Text style={styles.rewardText}>
-                Classement : {officialResult.ranking
-                  ? `#${officialResult.ranking.position} · ${officialResult.ranking.scope}`
-                  : 'non classé'}
-              </Text>
-            </>
-          ) : (
-            <Text style={styles.waitingText}>
-              Le backend attribuera le score officiel, les Flatulons, badges et classement après l'envoi.
-            </Text>
-          )}
-        </View> : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -241,100 +184,21 @@ export const DetectionScreen = () => {
 
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
-  content: { padding: 16, paddingBottom: 40 },
-  header: { display: 'none' },
-  eyebrow: { color: colors.neonGreen, fontSize: 11, fontWeight: '900', letterSpacing: 2.2 },
-  title: { color: colors.textPrimary, fontSize: 29, fontWeight: '800', marginTop: 3 },
-  subtitle: { color: colors.textSecondary, fontSize: 11, marginTop: 5 },
-  card: { backgroundColor: colors.surface, borderRadius: 21, borderWidth: 1, marginBottom: 16, padding: 16 },
-  deviceCard: { borderColor: colors.neonCyan },
-  eventCard: { borderColor: colors.neonPurple },
-  officialCard: { borderColor: colors.neonGreen },
-  cardHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  sectionEyebrow: { color: colors.textMuted, fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
-  deviceName: { color: colors.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 5 },
-  deviceMeta: { color: colors.textSecondary, fontSize: 10, marginTop: 12 },
-  statusPill: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 13,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 7,
-  },
-  statusPillActive: { borderColor: colors.neonGreen },
-  statusDot: { backgroundColor: colors.textMuted, borderRadius: 4, height: 6, width: 6 },
-  statusDotActive: { backgroundColor: colors.neonGreen },
-  statusText: { color: colors.textMuted, fontSize: 7, fontWeight: '900' },
-  statusTextActive: { color: colors.neonGreen },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.neonGreen,
-    borderRadius: 13,
-    justifyContent: 'center',
-    marginTop: 16,
-    minHeight: 46,
-  },
-  primaryButtonText: { color: colors.background, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
-  secondaryButton: {
-    alignItems: 'center',
-    borderColor: colors.neonCyan,
-    borderRadius: 13,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  secondaryButtonText: { color: colors.neonCyan, fontSize: 9, fontWeight: '900', letterSpacing: 0.8 },
-  phoneMicRecordingButton: { borderColor: colors.neonPurple, shadowColor: colors.neonPurple },
-  phoneMicBlock: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    marginTop: 14,
-    paddingTop: 14,
-  },
-  phoneMicCaption: { color: colors.neonPurple, fontSize: 8, fontWeight: '900', letterSpacing: 1.1 },
-  phoneMicDescriptionInline: { color: colors.textSecondary, fontSize: 10, lineHeight: 16, marginTop: 6 },
-  phoneMicButtonInline: { marginTop: 12 },
-  phoneMicHint: { color: colors.textMuted, fontSize: 9, lineHeight: 14, marginTop: 8 },
-  eventTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '800', marginTop: 5 },
-  pulse: {
-    alignItems: 'center',
-    borderColor: colors.neonPurple,
-    borderRadius: 17,
-    borderWidth: 1,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  pulseCore: { backgroundColor: colors.neonPurple, borderRadius: 5, height: 9, width: 9 },
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: 9, marginTop: 16 },
-  uploadRow: {
-    alignItems: 'center',
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingTop: 14,
-  },
-  uploadLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 0.8 },
-  uploadValue: { color: colors.neonCyan, fontSize: 11, fontWeight: '900', marginTop: 4 },
-  uploadButton: { borderColor: colors.neonCyan, borderRadius: 12, borderWidth: 1, minWidth: 140, paddingHorizontal: 12, paddingVertical: 10 },
-  uploadButtonText: { color: colors.neonCyan, fontSize: 8, fontWeight: '900', letterSpacing: 0.7, textAlign: 'center' },
-  detailButton: { borderColor: colors.neonPurple, borderRadius: 12, borderWidth: 1, marginTop: 12, paddingVertical: 11 },
-  detailButtonText: { color: colors.neonPurple, fontSize: 9, fontWeight: '900', letterSpacing: 0.8, textAlign: 'center' },
-  details: { backgroundColor: colors.surfaceElevated, borderRadius: 13, marginTop: 10, padding: 12 },
-  waitingText: { color: colors.textSecondary, fontSize: 11, lineHeight: 18, marginTop: 14 },
-  error: { color: colors.danger, fontSize: 11, marginBottom: 16, textAlign: 'center' },
-  officialScoreRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
-  officialLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1 },
-  officialScore: { color: colors.neonGreen, fontSize: 40, fontWeight: '900', marginTop: 2 },
-  flatulons: { alignItems: 'flex-end' },
-  flatulonsValue: { color: colors.neonPurple, fontSize: 25, fontWeight: '900' },
-  flatulonsLabel: { color: colors.textMuted, fontSize: 8, fontWeight: '900', letterSpacing: 1, marginTop: 2 },
-  rewardText: { color: colors.textSecondary, fontSize: 11, marginTop: 9 },
+  content: { padding: 16, paddingBottom: 48 },
+  header: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 1 },
+  titleLine: { alignItems: 'center', flexDirection: 'row', width: 29 },
+  titleLineRight: { flexDirection: 'row-reverse' },
+  lineStem: { backgroundColor: colors.neonGreen, height: 1, opacity: 0.55, width: 22 },
+  lineStemPurple: { backgroundColor: colors.neonPurple },
+  lineDot: { borderColor: colors.neonGreen, borderRadius: 3, borderWidth: 1, height: 5, width: 5 },
+  lineDotPurple: { borderColor: colors.neonPurple },
+  title: { fontSize: 17, fontWeight: '900', letterSpacing: 0.3, textAlign: 'center' },
+  titleGreen: { color: colors.neonGreen },
+  titleCyan: { color: colors.neonCyan },
+  titlePurple: { color: colors.neonPurple },
+  subtitle: { color: colors.textSecondary, fontSize: 9, marginBottom: 12, marginTop: 3, textAlign: 'center' },
+  secondaryGrid: { flexDirection: 'row', gap: 10 },
+  error: { color: colors.danger, fontSize: 10, marginTop: 14, textAlign: 'center' },
 });
 
 export default DetectionScreen;

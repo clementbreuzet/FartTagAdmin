@@ -58,6 +58,9 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.EquippedDetectionEffectInventoryItemId);
             builder.HasIndex(x => x.NormalizedUserName).IsUnique();
             builder.HasIndex(x => x.NormalizedEmail).IsUnique();
+            builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedTitleInventoryItemId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedProfileFrameInventoryItemId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedDetectionEffectInventoryItemId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Role>(builder =>
@@ -140,6 +143,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.DeviceId, x.IsActive });
             builder.HasIndex(x => new { x.UserId, x.IsActive });
             builder.HasOne(x => x.Device).WithMany(x => x.Ownerships).HasForeignKey(x => x.DeviceId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<DeviceCalibration>(builder =>
@@ -154,6 +158,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.CalibratedAt).IsRequired();
             builder.HasIndex(x => x.DeviceId);
             builder.HasOne(x => x.Device).WithMany(x => x.Calibrations).HasForeignKey(x => x.DeviceId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.CalibratedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<DeviceLog>(builder =>
@@ -175,14 +180,15 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.ToTable("FartAudioFiles");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.UserId).IsRequired();
-            builder.Property(x => x.StorageKey).HasMaxLength(250).IsRequired();
             builder.Property(x => x.FileName).HasMaxLength(250).IsRequired();
             builder.Property(x => x.ContentType).HasMaxLength(120).IsRequired();
             builder.Property(x => x.SizeBytes).IsRequired();
             builder.Property(x => x.DurationMs).IsRequired();
-            builder.Property(x => x.PublicUrl).HasMaxLength(500);
+            builder.Property(x => x.BlobData).HasColumnType("varbinary(max)");
+            builder.Property(x => x.Sha256).HasMaxLength(64);
             builder.Property(x => x.UploadedAt).IsRequired();
             builder.HasIndex(x => x.UserId);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<FartEvent>(builder =>
@@ -213,6 +219,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.UserId, x.GasLevel });
             builder.HasOne(x => x.Device).WithMany().HasForeignKey(x => x.DeviceId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(x => x.AudioFile).WithOne(x => x.FartEvent).HasForeignKey<FartEvent>(x => x.AudioFileId).OnDelete(DeleteBehavior.SetNull);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Reaction>(builder =>
@@ -226,6 +233,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.FartEventId, x.UserId }).IsUnique();
             builder.HasIndex(x => x.FartEventId);
             builder.HasOne(x => x.FartEvent).WithMany(x => x.Reactions).HasForeignKey(x => x.FartEventId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Comment>(builder =>
@@ -240,6 +248,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.FartEventId, x.CommentedAt });
             builder.HasIndex(x => x.UserId);
             builder.HasOne<FartEvent>().WithMany().HasForeignKey(x => x.FartEventId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<FriendRequest>(builder =>
@@ -256,6 +265,8 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => x.RecipientUserId);
             builder.HasIndex(x => new { x.RecipientUserId, x.Status });
             builder.HasIndex(x => new { x.RequesterUserId, x.Status });
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.RequesterUserId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.RecipientUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Wallet>(builder =>
@@ -265,6 +276,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.UserId).IsRequired();
             builder.Property(x => x.Currency).HasMaxLength(32).IsRequired();
             builder.HasIndex(x => x.UserId).IsUnique();
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<WalletTransaction>(builder =>
@@ -282,6 +294,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => x.WalletId);
             builder.HasIndex(x => new { x.WalletId, x.TransactionAt });
             builder.HasOne(x => x.Wallet).WithMany(x => x.Transactions).HasForeignKey(x => x.WalletId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Badge>(builder =>
@@ -308,6 +321,8 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.UserId, x.BadgeId }).IsUnique();
             builder.HasIndex(x => x.UserId);
             builder.HasOne(x => x.Badge).WithMany(x => x.UserBadges).HasForeignKey(x => x.BadgeId).OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<FartEvent>().WithMany().HasForeignKey(x => x.SourceFartEventId).OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<LootBox>(builder =>
@@ -365,6 +380,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => x.LootBoxRewardId);
             builder.HasOne(x => x.InventoryItem).WithMany(x => x.UserItems).HasForeignKey(x => x.InventoryItemId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne(x => x.LootBoxReward).WithMany().HasForeignKey(x => x.LootBoxRewardId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Friendship>(builder =>
@@ -377,6 +393,8 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasIndex(x => new { x.UserId, x.FriendUserId }).IsUnique();
             builder.HasIndex(x => x.UserId);
             builder.HasIndex(x => x.FriendUserId);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.FriendUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<User>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");

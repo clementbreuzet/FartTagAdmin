@@ -17,6 +17,7 @@ export type DetectedFartEvent = {
   gasLevel: number;
   provisionalScore: number;
   source?: DetectionSource;
+  audioUri?: string;
 };
 
 export type OfficialFartResult = {
@@ -35,10 +36,11 @@ export type OfficialFartResult = {
 
 export type CreateFartEventRequest = {
   clientEventId: string;
-  deviceId: string;
+  deviceId: string | null;
   capturedAt: string;
   durationMs: number;
   audioLevel: number;
   gasLevel: number;
   provisionalScore: number;
+  audioUri?: string;
 };

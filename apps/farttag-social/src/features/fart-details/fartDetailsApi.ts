@@ -1,5 +1,5 @@
 import { apiRequest } from '../../api/apiClient';
-import type { BackendFartEvent } from '../../api/backendContracts';
+import type { BackendComment, BackendFartEvent } from '../../api/backendContracts';
 import {
   mapFartDetails,
   mapReactionResponse,
@@ -15,6 +15,16 @@ import type {
 } from './types';
 
 export const fartDetailsApi = {
+  getComments(id: string) {
+    return apiRequest<BackendComment[]>(`/api/fart-events/${id}/comments`);
+  },
+
+  addComment(id: string, content: string) {
+    return apiRequest<BackendComment>(`/api/fart-events/${id}/comments`, {
+      body: JSON.stringify({ content }),
+      method: 'POST',
+    });
+  },
   getById(id: string) {
     return apiRequest<BackendFartEvent>(`/api/fart-events/${id}`).then(mapFartDetails).catch(() => {
       return mockFartDetailsById[id] ?? mockFartDetailsById['fart-best-001'];

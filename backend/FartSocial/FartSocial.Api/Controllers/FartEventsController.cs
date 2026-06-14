@@ -1,9 +1,13 @@
 using System.Security.Claims;
+using System.Security.Cryptography;
 using FartSocial.Application.FartEvents;
 using FartSocial.Application.FartEvents.Dtos;
 using FartSocial.Application.Social.Dtos;
+using FartSocial.Domain.FartEvents;
+using FartSocial.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace FartSocial.Api.Controllers;
 
@@ -12,13 +16,26 @@ namespace FartSocial.Api.Controllers;
 /// </summary>
 /// <param name="fartEventService">The fart event command service.</param>
 /// <param name="fartEventReadService">The fart event query service.</param>
+/// <param name="dbContext">The persistence context used for audio files.</param>
 [ApiController]
 [Authorize]
 [Route("api/fart-events")]
 public sealed class FartEventsController(
     IFartEventService fartEventService,
-    IFartEventReadService fartEventReadService) : ControllerBase
+    IFartEventReadService fartEventReadService,
+    FartSocialDbContext dbContext) : ControllerBase
 {
+    private const long MaxAudioFileSize = 15 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedAudioTypes =
+    [
+        "audio/aac",
+        "audio/m4a",
+        "audio/mp4",
+        "audio/mpeg",
+        "audio/wav",
+        "audio/x-m4a",
+    ];
+
     /// <summary>Creates a fart event and returns the backend-calculated official result.</summary>
     [HttpPost]
     public async Task<ActionResult<FartEventDto>> Create([FromBody] CreateFartEventRequestDto request, CancellationToken cancellationToken)
@@ -31,6 +48,81 @@ public sealed class FartEventsController(
 
         var response = await fartEventService.CreateAsync(userId.Value, request, cancellationToken);
         return Ok(response);
+    }
+
+    /// <summary>Uploads a phone microphone recording before creating its fart event.</summary>
+    [HttpPost("audio")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(MaxAudioFileSize)]
+    public async Task<ActionResult<AudioUploadDto>> UploadAudio(
+        [FromForm] IFormFile file,
+        [FromForm] int durationMs,
+        CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+        if (file.Length is <= 0 or > MaxAudioFileSize)
+        {
+            return BadRequest("Le fichier audio doit peser entre 1 octet et 15 Mo.");
+        }
+        if (!AllowedAudioTypes.Contains(file.ContentType.ToLowerInvariant()))
+        {
+            return BadRequest("Le format audio fourni n'est pas accepté.");
+        }
+        if (durationMs is < 1 or > 600_000)
+        {
+            return BadRequest("La durée audio est invalide.");
+        }
+
+        await using var input = file.OpenReadStream();
+        await using var buffer = new MemoryStream((int)file.Length);
+        await input.CopyToAsync(buffer, cancellationToken);
+        var blobData = buffer.ToArray();
+
+        var audioFile = new FartAudioFile
+        {
+            BlobData = blobData,
+            ContentType = file.ContentType,
+            DurationMs = durationMs,
+            FileName = Path.GetFileName(file.FileName),
+            SizeBytes = file.Length,
+            Sha256 = Convert.ToHexString(SHA256.HashData(blobData)).ToLowerInvariant(),
+            UserId = userId.Value,
+        };
+        dbContext.FartAudioFiles.Add(audioFile);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(new AudioUploadDto(audioFile.Id, $"/api/fart-events/audio/{audioFile.Id}"));
+    }
+
+    /// <summary>Streams an uploaded recording to its owner or viewers of a public event.</summary>
+    [HttpGet("audio/{id:guid}")]
+    public async Task<IActionResult> GetAudio(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var audioFile = await dbContext.FartAudioFiles.AsNoTracking().FirstOrDefaultAsync(file => file.Id == id, cancellationToken);
+        if (audioFile is null)
+        {
+            return NotFound();
+        }
+        var canAccess = audioFile.UserId == userId.Value || await dbContext.FartEvents.AnyAsync(
+            fartEvent => fartEvent.AudioFileId == id && fartEvent.Visibility == FartVisibility.Public,
+            cancellationToken);
+        if (!canAccess)
+        {
+            return Forbid();
+        }
+
+        return audioFile.BlobData is { Length: > 0 }
+            ? File(audioFile.BlobData, audioFile.ContentType, enableRangeProcessing: true)
+            : NotFound();
     }
 
     /// <summary>Gets the authenticated user's fart event history.</summary>
@@ -59,6 +151,20 @@ public sealed class FartEventsController(
 
         var fartEvent = await fartEventReadService.GetByIdAsync(userId.Value, id, cancellationToken);
         return fartEvent is null ? NotFound() : Ok(fartEvent);
+    }
+
+    /// <summary>Gets comments for an accessible fart event.</summary>
+    [HttpGet("{id:guid}/comments")]
+    public async Task<ActionResult<IReadOnlyCollection<CommentDto>>> GetComments(Guid id, CancellationToken cancellationToken)
+    {
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var comments = await fartEventReadService.GetCommentsAsync(userId.Value, id, cancellationToken);
+        return comments is null ? NotFound() : Ok(comments);
     }
 
     /// <summary>Updates the public visibility of an owned fart event.</summary>

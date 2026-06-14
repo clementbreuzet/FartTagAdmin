@@ -3,12 +3,18 @@ import type {
   BackendFriend,
   BackendFriendRequest,
   BackendFriendRequestsResponse,
+  BackendUserSearchResult,
 } from '../../api/backendContracts';
 import { mapFriend, mapFriendRequest } from '../../api/backendMappers';
 import { mockFriendRequestsIncoming, mockFriendRequestsOutgoing, mockFriends } from '../mockData';
 import type { FriendCard, FriendRequestsResponse } from './types';
 
 export const friendsApi = {
+  searchUsers(query: string) {
+    return apiRequest<BackendUserSearchResult[]>(
+      `/api/profiles/search?query=${encodeURIComponent(query.trim())}`,
+    );
+  },
   async getFriends(): Promise<FriendCard[]> {
     try {
       const response = await apiRequest<BackendFriend[]>('/api/friends');

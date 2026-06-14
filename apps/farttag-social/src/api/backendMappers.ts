@@ -23,8 +23,10 @@ import type {
   BackendOpenLootBoxResult,
   BackendReactionSummary,
   BackendUserBadge,
+  BackendUserProfile,
   BackendWallet,
 } from './backendContracts';
+import { resolveApiUrl } from './apiClient';
 
 const badgeRarities: BadgeRarity[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
 const reactionTypes: FartReactionType[] = ['fire', 'laugh', 'shock'];
@@ -81,7 +83,7 @@ export const mapFeedItem = (item: BackendFeedItem): PublicFartEvent => ({
   audioLevelDb: item.audioLevel,
   gasLevelKohms: item.gasLevel,
   isAuthenticated: item.isAuthenticated,
-  audioReplayUrl: null,
+  audioReplayUrl: resolveApiUrl(item.audioReplayUrl),
   reactions: mapReactionSummary(item.reactions),
   commentsCount: item.commentsCount,
 });
@@ -252,6 +254,26 @@ export const mapMeToProfile = (me: BackendMe, fallback: UserProfile): UserProfil
   displayName: me.userName,
 });
 
+export const mapUserProfile = (profile: BackendUserProfile): UserProfile => ({
+  id: profile.id,
+  username: profile.userName,
+  displayName: profile.displayName,
+  avatarUrl: profile.avatarUrl,
+  equippedTitle: profile.equippedTitle,
+  equippedFrame: profile.equippedFrame
+    ? {
+        id: profile.equippedFrame.id,
+        name: profile.equippedFrame.name,
+        accentColor: profile.equippedFrame.assetKey ?? '#00E5FF',
+      }
+    : null,
+  level: profile.level,
+  levelProgressPercent: profile.levelProgressPercent,
+  globalStats: profile.globalStats,
+  bestFart: profile.bestFart,
+  recentBadges: profile.recentBadges,
+});
+
 export const mapHistoryItem = (item: BackendFartHistoryItem): FartHistoryEvent => ({
   id: item.id,
   occurredAt: item.timestamp,
@@ -261,7 +283,7 @@ export const mapHistoryItem = (item: BackendFartHistoryItem): FartHistoryEvent =
   gasLevel: item.gasLevel,
   visibility: normalizeVisibility(item.visibility),
   isLegendary: item.category.toLowerCase() === 'legendary' || item.category.toLowerCase() === 'mythic',
-  audioReplayUrl: null,
+  audioReplayUrl: resolveApiUrl(item.audioReplayUrl),
 });
 
 export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
@@ -274,11 +296,11 @@ export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
   durationMs: event.durationMs,
   temperatureCelsius: event.temperature,
   visibility: normalizeVisibility(event.visibility),
-  audioReplayUrl: null,
+  audioReplayUrl: resolveApiUrl(event.audioReplayUrl),
   device: {
     id: event.deviceId,
-    name: 'FartTag',
-    model: 'FartTag',
+    name: event.deviceName,
+    model: event.deviceModel,
   },
   rewards: {
     flatulons: event.rewards
@@ -287,7 +309,12 @@ export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
     badges: event.badges.map((name, index) => ({ id: `${event.id}-badge-${index}`, name })),
   },
   reactions: mapReactionSummary(event.reactions),
-  comments: [],
+  comments: event.comments.map((comment) => ({
+    id: comment.id,
+    authorDisplayName: comment.userName,
+    message: comment.content,
+    createdAt: comment.commentedAt,
+  })),
 });
 
 export const mapOfficialFartResult = (event: BackendFartEvent): OfficialFartResult => ({
