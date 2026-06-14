@@ -5,9 +5,6 @@ import type { CreateFartEventRequest, OfficialFartResult } from './types';
 
 const getFileExtension = (uri: string) => uri.split('.').pop()?.toLowerCase() || 'm4a';
 
-const getFileExtension = (uri: string) =>
-  uri.split('.').pop()?.toLowerCase() || 'm4a';
-
 const getMimeType = (extension: string) => {
   switch (extension) {
     case 'wav':
