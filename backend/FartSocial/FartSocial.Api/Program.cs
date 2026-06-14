@@ -1,4 +1,5 @@
 using System.Text;
+using Azure.Identity;
 using FartSocial.Application.Auth;
 using FartSocial.Application.Authorization;
 using FartSocial.Application.Economy;
@@ -18,6 +19,12 @@ using Microsoft.IdentityModel.Tokens;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUri = builder.Configuration["KeyVault:Uri"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+}
 
 builder.Host.UseSerilog((context, services, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration)

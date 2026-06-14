@@ -5,7 +5,9 @@ SET NOCOUNT ON;
 IF DB_ID(N'$(DatabaseName)') IS NULL
 BEGIN
     PRINT N'Creating database [$(DatabaseName)]...';
-    EXEC(N'CREATE DATABASE [' + REPLACE(N'$(DatabaseName)', N']', N']]') + N']');
+    DECLARE @CreateDatabaseSql nvarchar(max) =
+        N'CREATE DATABASE [' + REPLACE(N'$(DatabaseName)', N']', N']]') + N']';
+    EXEC sys.sp_executesql @CreateDatabaseSql;
 END
 ELSE
 BEGIN

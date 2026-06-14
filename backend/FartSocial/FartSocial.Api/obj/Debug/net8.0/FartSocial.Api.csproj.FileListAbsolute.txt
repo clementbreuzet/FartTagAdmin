@@ -104,3 +104,17 @@ C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net8.0\FartS
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net8.0\FartSocial.Api.pdb
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net8.0\FartSocial.Api.genruntimeconfig.cache
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net8.0\ref\FartSocial.Api.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Azure.Extensions.AspNetCore.Configuration.Secrets.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Azure.Security.KeyVault.Secrets.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\System.ClientModel.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.Configuration.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.Hosting.Abstractions.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\Microsoft.Extensions.Primitives.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\System.Diagnostics.DiagnosticSource.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\System.IO.Pipelines.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\System.Text.Encodings.Web.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\System.Text.Json.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\bin\Debug\net8.0\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll

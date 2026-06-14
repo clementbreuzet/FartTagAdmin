@@ -8,6 +8,7 @@ import type {
   ConnectedFartTag,
   DetectedFartEvent,
   OfficialFartResult,
+  AudioSaveStatus,
   UploadStatus,
 } from './types';
 
@@ -18,10 +19,12 @@ type DetectionState = {
   lastEvent: DetectedFartEvent | null;
   officialResult: OfficialFartResult | null;
   isPhoneMicRecording: boolean;
+  audioSaveStatus: AudioSaveStatus;
   inputMode: 'ble' | 'phone-mic';
   uploadStatus: UploadStatus;
   connectDevice: () => Promise<void>;
   receiveAutomaticEvent: (event: DetectedFartEvent) => void;
+  saveLastAudio: () => Promise<void>;
   startPhoneMicTest: () => Promise<void>;
   stopPhoneMicTest: () => Promise<void>;
   simulateAutomaticEvent: () => void;
@@ -63,6 +66,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
   inputMode: 'ble',
   officialResult: mockOfficialDetectionResult,
   isPhoneMicRecording: false,
+  audioSaveStatus: 'idle',
   uploadStatus: 'uploaded',
 
   connectDevice: async () => {
@@ -90,6 +94,30 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
     });
   },
 
+  saveLastAudio: async () => {
+    const lastEvent = get().lastEvent;
+    if (!lastEvent?.audioUri || lastEvent.audioFileId) {
+      return;
+    }
+
+    set({ audioSaveStatus: 'saving', error: null });
+    try {
+      const uploadedAudio = await detectionApi.uploadAudio(lastEvent.audioUri, lastEvent.durationMs);
+      set((state) => ({
+        audioSaveStatus: 'saved',
+        lastEvent: state.lastEvent?.id === lastEvent.id
+          ? {
+              ...state.lastEvent,
+              audioFileId: uploadedAudio.id,
+              audioReplayUrl: uploadedAudio.replayUrl,
+            }
+          : state.lastEvent,
+      }));
+    } catch (error) {
+      set({ audioSaveStatus: 'error', error: getErrorMessage(error) });
+    }
+  },
+
   simulateAutomaticEvent: () => {
     if (get().bleStatus !== 'connected') {
       return;
@@ -102,7 +130,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
       return;
     }
 
-    set({ error: null, isPhoneMicRecording: true });
+    set({ audioSaveStatus: 'idle', error: null });
 
     try {
       const granted = await PhoneMicService.requestPermission();
@@ -111,6 +139,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
       }
 
       await PhoneMicService.startRecording();
+      set({ isPhoneMicRecording: true });
     } catch (error) {
       set({
         error: getErrorMessage(error),
@@ -128,6 +157,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
 
     try {
       const capture = await PhoneMicService.stopRecording();
+      set({ isPhoneMicRecording: false });
       const provisionalEvent: DetectedFartEvent = {
         audioUri: capture.uri,
         audioLevel: capture.averageLevel,
@@ -140,8 +170,10 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
       };
 
       get().receiveAutomaticEvent(provisionalEvent);
+      await get().saveLastAudio();
     } catch (error) {
       set({
+        audioSaveStatus: 'error',
         error: getErrorMessage(error),
       });
     } finally {
@@ -166,6 +198,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         durationMs: lastEvent.durationMs,
         gasLevel: lastEvent.gasLevel,
         provisionalScore: lastEvent.provisionalScore,
+        audioFileId: lastEvent.audioFileId,
         audioUri: lastEvent.audioUri,
       });
       set({ officialResult, uploadStatus: 'uploaded' });

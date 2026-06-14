@@ -14,7 +14,6 @@ type DetectionModeSwitchProps = {
   mode: DetectionSource;
   onConnect: () => void;
   onModeChange: (mode: DetectionSource) => void;
-  onToggleMicrophone: () => void;
 };
 
 export const DetectionModeSwitch = ({
@@ -23,7 +22,6 @@ export const DetectionModeSwitch = ({
   mode,
   onConnect,
   onModeChange,
-  onToggleMicrophone,
 }: DetectionModeSwitchProps) => {
   const isBle = mode === 'ble';
 
@@ -36,10 +34,6 @@ export const DetectionModeSwitch = ({
   };
 
   const selectMicrophone = () => {
-    if (!isBle) {
-      onToggleMicrophone();
-      return;
-    }
     onModeChange('phone-mic');
   };
 

@@ -9,6 +9,7 @@ import {
 } from 'expo-audio';
 
 let activeRecorder: AudioRecorder | null = null;
+let activeRecordingUri: string | null = null;
 let collectedLevels: number[] = [];
 let meteringTimer: ReturnType<typeof setInterval> | null = null;
 let activePlayer: AudioPlayer | null = null;
@@ -51,6 +52,11 @@ export const PhoneMicService = {
     });
 
     await recorder.prepareToRecordAsync();
+    if (!recorder.uri) {
+      throw new Error("Le fichier audio n'a pas pu être préparé.");
+    }
+
+    activeRecordingUri = recorder.uri;
     recorder.record();
     activeRecorder = recorder;
     collectedLevels = [];
@@ -83,6 +89,7 @@ export const PhoneMicService = {
     }
 
     const recorder = activeRecorder;
+    const recordingUri = activeRecordingUri ?? recorder.uri;
     const status = recorder.getStatus();
     if (meteringTimer) {
       clearInterval(meteringTimer);
@@ -90,9 +97,10 @@ export const PhoneMicService = {
     }
     await recorder.stop();
     activeRecorder = null;
+    activeRecordingUri = null;
     await setAudioModeAsync({ allowsRecording: false });
 
-    if (!recorder.uri) {
+    if (!recordingUri) {
       throw new Error("Le fichier audio n'a pas pu être sauvegardé.");
     }
 
@@ -105,7 +113,7 @@ export const PhoneMicService = {
       averageLevel,
       durationMs: status.durationMillis,
       peakLevel: collectedLevels.length > 0 ? Math.max(...collectedLevels) : averageLevel,
-      uri: recorder.uri,
+      uri: recordingUri,
     };
   },
 

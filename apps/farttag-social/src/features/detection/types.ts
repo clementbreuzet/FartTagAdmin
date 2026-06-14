@@ -1,5 +1,6 @@
 export type BleStatus = 'disconnected' | 'connecting' | 'connected';
 export type UploadStatus = 'idle' | 'pending' | 'uploaded' | 'error';
+export type AudioSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 export type DetectionSource = 'ble' | 'phone-mic';
 
 export type ConnectedFartTag = {
@@ -17,6 +18,8 @@ export type DetectedFartEvent = {
   gasLevel: number;
   provisionalScore: number;
   source?: DetectionSource;
+  audioFileId?: string;
+  audioReplayUrl?: string;
   audioUri?: string;
 };
 
@@ -42,5 +45,6 @@ export type CreateFartEventRequest = {
   audioLevel: number;
   gasLevel: number;
   provisionalScore: number;
+  audioFileId?: string;
   audioUri?: string;
 };

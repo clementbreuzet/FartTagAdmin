@@ -15,7 +15,7 @@ data.
 From `database/scripts`:
 
 ```powershell
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i deploy.sql
+sqlcmd -S "localhost\SQLEXPRESS" -E -b -i deploy.sql
 ```
 
 Deploy with a different database name:
@@ -66,7 +66,7 @@ recordings created by the previous disk-based implementation, run the optional
 script after deployment:
 
 ```powershell
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b `
+sqlcmd -S "localhost\SQLEXPRESS" -E -b `
   -v LegacyAudioRoot="C:\path\to\FartSocial.Api\App_Data" `
   -i 006_import_legacy_audio_blobs.sql
 ```

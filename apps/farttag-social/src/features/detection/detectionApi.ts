@@ -5,7 +5,7 @@ import type { CreateFartEventRequest, OfficialFartResult } from './types';
 
 const getFileExtension = (uri: string) => uri.split('.').pop()?.toLowerCase() || 'm4a';
 
-const uploadAudio = async (uri: string, durationMs: number): Promise<string> => {
+const uploadAudio = async (uri: string, durationMs: number): Promise<BackendAudioUpload> => {
   const extension = getFileExtension(uri);
   const form = new FormData();
   form.append('durationMs', String(durationMs));
@@ -15,16 +15,20 @@ const uploadAudio = async (uri: string, durationMs: number): Promise<string> => 
     uri,
   } as unknown as Blob);
 
-  const uploaded = await apiRequest<BackendAudioUpload>('/api/fart-events/audio', {
+  return apiRequest<BackendAudioUpload>('/api/fart-events/audio', {
     body: form,
     method: 'POST',
   });
-  return uploaded.id;
 };
 
 export const detectionApi = {
+  uploadAudio,
+
   async uploadEvent(event: CreateFartEventRequest): Promise<OfficialFartResult> {
-    const audioFileId = event.audioUri ? await uploadAudio(event.audioUri, event.durationMs) : null;
+    const uploadedAudio = !event.audioFileId && event.audioUri
+      ? await uploadAudio(event.audioUri, event.durationMs)
+      : null;
+    const audioFileId = event.audioFileId ?? uploadedAudio?.id ?? null;
     return apiRequest<BackendFartEvent>('/api/fart-events', {
       body: JSON.stringify({
         audioFileId,

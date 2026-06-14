@@ -9,6 +9,7 @@ import { DetectionModeSwitch } from '../../features/detection/components/Detecti
 import { DetectionRadarCard } from '../../features/detection/components/DetectionRadarCard';
 import { DeviceStatusCard } from '../../features/detection/components/DeviceStatusCard';
 import { LastExploitCard } from '../../features/detection/components/LastExploitCard';
+import { MicrophoneRecorderCard } from '../../features/detection/components/MicrophoneRecorderCard';
 import { QuickHistoryCard } from '../../features/detection/components/QuickHistoryCard';
 import { useDetectionStore } from '../../features/detection/detectionStore';
 import type { DetectedFartEvent, DetectionSource } from '../../features/detection/types';
@@ -40,6 +41,7 @@ const funLabelForScore = (score: number) => score >= 92 ? 'Légendaire' : score 
 export const DetectionScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<DetectionStackParamList>>();
   const bleStatus = useDetectionStore((state) => state.bleStatus);
+  const audioSaveStatus = useDetectionStore((state) => state.audioSaveStatus);
   const device = useDetectionStore((state) => state.device);
   const error = useDetectionStore((state) => state.error);
   const inputMode = useDetectionStore((state) => state.inputMode);
@@ -49,6 +51,7 @@ export const DetectionScreen = () => {
   const uploadStatus = useDetectionStore((state) => state.uploadStatus);
   const connectDevice = useDetectionStore((state) => state.connectDevice);
   const simulateAutomaticEvent = useDetectionStore((state) => state.simulateAutomaticEvent);
+  const saveLastAudio = useDetectionStore((state) => state.saveLastAudio);
   const startPhoneMicTest = useDetectionStore((state) => state.startPhoneMicTest);
   const stopPhoneMicTest = useDetectionStore((state) => state.stopPhoneMicTest);
   const uploadLastEvent = useDetectionStore((state) => state.uploadLastEvent);
@@ -151,8 +154,17 @@ export const DetectionScreen = () => {
           mode={mode}
           onConnect={() => void connectDevice()}
           onModeChange={setMode}
-          onToggleMicrophone={toggleMicrophone}
         />
+        {mode === 'phone-mic' ? (
+          <MicrophoneRecorderCard
+            isRecording={isPhoneMicRecording}
+            onReplay={() => void replayLastEvent()}
+            onSave={() => void saveLastAudio()}
+            onToggleRecording={toggleMicrophone}
+            replayAvailable={Boolean(lastEvent?.audioUri)}
+            saveStatus={audioSaveStatus}
+          />
+        ) : null}
         <DetectionRadarCard event={displayedEvent} isListening={isListening} mode={mode} signalLabel={signalLabel} />
         <LastExploitCard
           category={categoryForScore(displayedEvent.provisionalScore)}

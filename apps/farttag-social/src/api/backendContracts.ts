@@ -57,6 +57,20 @@ export type BackendAudioUpload = {
   replayUrl: string;
 };
 
+export type BackendAuthResponse = {
+  accessToken: string;
+  accessTokenExpiresAt: string;
+  refreshToken: string;
+  refreshTokenExpiresAt: string;
+  user: {
+    id: string;
+    userName: string;
+    email: string;
+    roles: string[];
+    permissions: string[];
+  };
+};
+
 export type BackendFeedItem = {
   id: string;
   userId: string;

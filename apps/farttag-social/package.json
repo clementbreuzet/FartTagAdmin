@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "android": "expo run:android",
+    "android:usb": "adb reverse tcp:5000 tcp:5000 && expo run:android",
     "ios": "expo run:ios",
     "start": "expo start",
+    "start:usb": "adb reverse tcp:5000 tcp:5000 && expo start",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -37,7 +37,9 @@ public static class DependencyInjection
 
         services.AddDbContext<FartSocialDbContext>(options =>
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException(
+                    "ConnectionStrings:DefaultConnection is required. Configure it locally or provide the Key Vault secret ConnectionStrings--DefaultConnection.");
             options.UseSqlServer(connectionString, sql =>
             {
                 sql.MigrationsAssembly(typeof(FartSocialDbContext).Assembly.FullName);

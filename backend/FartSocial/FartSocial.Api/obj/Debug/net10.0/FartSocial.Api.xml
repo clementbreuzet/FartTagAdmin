@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>FartSocial.Api</name>
+    </assembly>
+    <members>
+        <member name="T:FartSocial.Api.Controllers.AdminDevicesController">
+            <summary>
+            Exposes administrative operations for inspecting and calibrating FartTag devices.
+            </summary>
+            <param name="deviceService">The device management service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminDevicesController.#ctor(FartSocial.Application.Devices.IDeviceService)">
+            <summary>
+            Exposes administrative operations for inspecting and calibrating FartTag devices.
+            </summary>
+            <param name="deviceService">The device management service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminDevicesController.GetAll(System.Threading.CancellationToken)">
+            <summary>Gets every registered device.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminDevicesController.GetById(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets a registered device by its identifier.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminDevicesController.CreateCalibration(System.Guid,FartSocial.Application.Devices.Dtos.CreateDeviceCalibrationRequestDto,System.Threading.CancellationToken)">
+            <summary>Creates and stores a new calibration for a device.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminDevicesController.GetLogs(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets the diagnostic logs recorded for a device.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.AdminWalletController">
+            <summary>
+            Exposes administrative access to user wallets and their transactions.
+            </summary>
+            <param name="economyService">The economy service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminWalletController.#ctor(FartSocial.Application.Economy.IEconomyService)">
+            <summary>
+            Exposes administrative access to user wallets and their transactions.
+            </summary>
+            <param name="economyService">The economy service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminWalletController.GetWallet(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets a user's Flatulons wallet.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AdminWalletController.GetTransactions(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets the append-only transaction history for a user's wallet.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.AuthController">
+            <summary>
+            Handles user registration, authentication, token renewal, and logout.
+            </summary>
+            <param name="authService">The authentication service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AuthController.#ctor(FartSocial.Application.Auth.IAuthService)">
+            <summary>
+            Handles user registration, authentication, token renewal, and logout.
+            </summary>
+            <param name="authService">The authentication service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AuthController.Register(FartSocial.Application.Auth.Dtos.RegisterRequestDto,System.Threading.CancellationToken)">
+            <summary>Registers a new user and returns authentication tokens.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AuthController.Login(FartSocial.Application.Auth.Dtos.LoginRequestDto,System.Threading.CancellationToken)">
+            <summary>Authenticates a user and returns authentication tokens.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AuthController.Refresh(FartSocial.Application.Auth.Dtos.RefreshTokenRequestDto,System.Threading.CancellationToken)">
+            <summary>Renews authentication tokens using a valid refresh token.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.AuthController.Logout(FartSocial.Application.Auth.Dtos.LogoutRequestDto,System.Threading.CancellationToken)">
+            <summary>Revokes the supplied refresh token.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.BadgesController">
+            <summary>
+            Provides the badge catalog and badges earned by the authenticated user.
+            </summary>
+            <param name="badgeService">The badge service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.BadgesController.#ctor(FartSocial.Application.Badges.IBadgeService)">
+            <summary>
+            Provides the badge catalog and badges earned by the authenticated user.
+            </summary>
+            <param name="badgeService">The badge service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.BadgesController.GetAll(System.Threading.CancellationToken)">
+            <summary>Gets the active badge catalog.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.BadgesController.GetMine(System.Threading.CancellationToken)">
+            <summary>Gets badges earned by the authenticated user.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.DevicesController">
+            <summary>
+            Manages FartTag devices owned by the authenticated user.
+            </summary>
+            <param name="deviceService">The device management service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.DevicesController.#ctor(FartSocial.Application.Devices.IDeviceService)">
+            <summary>
+            Manages FartTag devices owned by the authenticated user.
+            </summary>
+            <param name="deviceService">The device management service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.DevicesController.Register(FartSocial.Application.Devices.Dtos.RegisterDeviceRequestDto,System.Threading.CancellationToken)">
+            <summary>Registers a FartTag and associates it with the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.DevicesController.GetMyDevices(System.Threading.CancellationToken)">
+            <summary>Gets devices owned by the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.DevicesController.GetById(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets an owned device by its identifier.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.FartEventsController">
+            <summary>
+            Creates and manages detected fart events for the authenticated user.
+            </summary>
+            <param name="fartEventService">The fart event command service.</param>
+            <param name="fartEventReadService">The fart event query service.</param>
+            <param name="dbContext">The persistence context used for audio files.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.#ctor(FartSocial.Application.FartEvents.IFartEventService,FartSocial.Application.FartEvents.IFartEventReadService,FartSocial.Infrastructure.Persistence.FartSocialDbContext)">
+            <summary>
+            Creates and manages detected fart events for the authenticated user.
+            </summary>
+            <param name="fartEventService">The fart event command service.</param>
+            <param name="fartEventReadService">The fart event query service.</param>
+            <param name="dbContext">The persistence context used for audio files.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.Create(FartSocial.Application.FartEvents.Dtos.CreateFartEventRequestDto,System.Threading.CancellationToken)">
+            <summary>Creates a fart event and returns the backend-calculated official result.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.UploadAudio(Microsoft.AspNetCore.Http.IFormFile,System.Int32,System.Threading.CancellationToken)">
+            <summary>Uploads a phone microphone recording before creating its fart event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetAudio(System.Guid,System.Threading.CancellationToken)">
+            <summary>Streams an uploaded recording to its owner or viewers of a public event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetMyHistory(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's fart event history.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetById(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets an accessible fart event by its identifier.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.GetComments(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets comments for an accessible fart event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.UpdateVisibility(System.Guid,FartSocial.Application.FartEvents.Dtos.UpdateFartVisibilityRequestDto,System.Threading.CancellationToken)">
+            <summary>Updates the public visibility of an owned fart event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.React(System.Guid,FartSocial.Application.FartEvents.Dtos.ReactToFartRequestDto,System.Threading.CancellationToken)">
+            <summary>Adds or replaces the authenticated user's reaction to a fart event.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FartEventsController.Comment(System.Guid,FartSocial.Application.Social.Dtos.CreateCommentRequestDto,System.Threading.CancellationToken)">
+            <summary>Adds a comment to an accessible fart event.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.FeedController">
+            <summary>
+            Provides the public social feed for the authenticated user.
+            </summary>
+            <param name="socialService">The social service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FeedController.#ctor(FartSocial.Application.Social.ISocialService)">
+            <summary>
+            Provides the public social feed for the authenticated user.
+            </summary>
+            <param name="socialService">The social service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FeedController.GetFeed(System.Threading.CancellationToken)">
+            <summary>Gets recent public fart events with reactions and comments.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.FriendsController">
+            <summary>
+            Manages friendships and friend requests for the authenticated user.
+            </summary>
+            <param name="socialService">The social service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.#ctor(FartSocial.Application.Social.ISocialService)">
+            <summary>
+            Manages friendships and friend requests for the authenticated user.
+            </summary>
+            <param name="socialService">The social service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.GetFriends(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's friends.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.GetRequests(System.Threading.CancellationToken)">
+            <summary>Gets incoming and outgoing pending friend requests.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.RequestFriend(System.Guid,System.Threading.CancellationToken)">
+            <summary>Sends a friend request to another user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.AcceptFriendRequest(System.Guid,System.Threading.CancellationToken)">
+            <summary>Accepts an incoming friend request.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.RejectFriendRequest(System.Guid,System.Threading.CancellationToken)">
+            <summary>Rejects an incoming friend request.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.FriendsController.DeleteFriend(System.Guid,System.Threading.CancellationToken)">
+            <summary>Removes an existing friendship.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.InventoryController">
+            <summary>
+            Provides and manages cosmetic inventory owned by the authenticated user.
+            </summary>
+            <param name="inventoryService">The inventory service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.InventoryController.#ctor(FartSocial.Application.Inventory.IInventoryService)">
+            <summary>
+            Provides and manages cosmetic inventory owned by the authenticated user.
+            </summary>
+            <param name="inventoryService">The inventory service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.InventoryController.GetMyInventory(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's inventory and equipped items.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.InventoryController.Equip(System.Guid,System.Threading.CancellationToken)">
+            <summary>Equips an owned title, profile frame, or detection effect.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.LeaderboardsController">
+            <summary>
+            Provides backend-calculated global and friend leaderboards.
+            </summary>
+            <param name="leaderboardService">The leaderboard service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LeaderboardsController.#ctor(FartSocial.Application.Leaderboards.ILeaderboardService)">
+            <summary>
+            Provides backend-calculated global and friend leaderboards.
+            </summary>
+            <param name="leaderboardService">The leaderboard service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LeaderboardsController.GetGlobal(System.Threading.CancellationToken)">
+            <summary>Gets global score, weekly, longest, and toxic leaderboards.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LeaderboardsController.GetFriends(System.Threading.CancellationToken)">
+            <summary>Gets leaderboards scoped to the authenticated user and their friends.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.LootBoxesController">
+            <summary>
+            Provides loot boxes and performs server-authoritative reward draws.
+            </summary>
+            <param name="lootBoxService">The loot box service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LootBoxesController.#ctor(FartSocial.Application.LootBoxes.ILootBoxService)">
+            <summary>
+            Provides loot boxes and performs server-authoritative reward draws.
+            </summary>
+            <param name="lootBoxService">The loot box service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LootBoxesController.GetAll(System.Threading.CancellationToken)">
+            <summary>Gets all active loot boxes and their backend-defined probabilities.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.LootBoxesController.Open(System.Guid,System.Threading.CancellationToken)">
+            <summary>Opens a loot box and returns the server-selected reward.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.MeController">
+            <summary>
+            Provides identity and authorization information for the authenticated user.
+            </summary>
+            <param name="authService">The authentication service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.MeController.#ctor(FartSocial.Application.Auth.IAuthService)">
+            <summary>
+            Provides identity and authorization information for the authenticated user.
+            </summary>
+            <param name="authService">The authentication service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.MeController.GetMe(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's identity, roles, and permissions.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.ProfilesController">
+            <summary>
+            Provides full profile summaries and user discovery for FartTag Social.
+            </summary>
+            <param name="socialService">The social query service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.#ctor(FartSocial.Application.Social.ISocialService)">
+            <summary>
+            Provides full profile summaries and user discovery for FartTag Social.
+            </summary>
+            <param name="socialService">The social query service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.GetMine(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's full social profile.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.GetById(System.Guid,System.Threading.CancellationToken)">
+            <summary>Gets a user's public social profile.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.ProfilesController.Search(System.String,System.Threading.CancellationToken)">
+            <summary>Searches active users by username.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Controllers.WalletController">
+            <summary>
+            Provides the authenticated user's Flatulons wallet and transaction history.
+            </summary>
+            <param name="economyService">The economy service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.WalletController.#ctor(FartSocial.Application.Economy.IEconomyService)">
+            <summary>
+            Provides the authenticated user's Flatulons wallet and transaction history.
+            </summary>
+            <param name="economyService">The economy service.</param>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.WalletController.GetWallet(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's Flatulons wallet.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.WalletController.GetTransactions(System.Threading.CancellationToken)">
+            <summary>Gets the authenticated user's append-only wallet transactions.</summary>
+        </member>
+        <member name="T:FartSocial.Api.Middleware.ExceptionHandlingMiddleware">
+            <summary>
+            Converts unhandled application exceptions into consistent HTTP error responses.
+            </summary>
+            <param name="logger">The middleware logger.</param>
+        </member>
+        <member name="M:FartSocial.Api.Middleware.ExceptionHandlingMiddleware.#ctor(Microsoft.Extensions.Logging.ILogger{FartSocial.Api.Middleware.ExceptionHandlingMiddleware})">
+            <summary>
+            Converts unhandled application exceptions into consistent HTTP error responses.
+            </summary>
+            <param name="logger">The middleware logger.</param>
+        </member>
+        <member name="M:FartSocial.Api.Middleware.ExceptionHandlingMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext,Microsoft.AspNetCore.Http.RequestDelegate)">
+            <summary>Executes the next middleware and handles any exception it throws.</summary>
+        </member>
+        <member name="T:Program">
+            <summary>
+            Auto-generated public partial Program class for top-level statement apps.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,5 +1,17 @@
 # FartTag Social Backend Connection Audit
 
+## USB Android Development
+
+The local development API defaults to `http://localhost:5000`. Before testing
+on a physical Android phone connected through USB, forward the API port:
+
+```powershell
+adb reverse tcp:5000 tcp:5000
+```
+
+The `npm run android:usb` and `npm run start:usb` commands configure this
+forwarding automatically.
+
 Audited against the current working tree on 2026-06-14.
 
 ## Summary
