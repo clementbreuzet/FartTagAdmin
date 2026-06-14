@@ -100,3 +100,4 @@ C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net10.0\Fart
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net10.0\FartSocial.Api.pdb
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net10.0\FartSocial.Api.genruntimeconfig.cache
 C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net10.0\ref\FartSocial.Api.dll
+C:\Users\cbbre\Fart_Tag\backend\FartSocial\FartSocial.Api\obj\Debug\net10.0\staticwebassets.upToDateCheck.txt

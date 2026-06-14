@@ -1,13 +1,14 @@
-using System.Security.Claims;
-using System.Security.Cryptography;
 using FartSocial.Application.FartEvents;
 using FartSocial.Application.FartEvents.Dtos;
+using FartSocial.Application.FartEvents.Requests;
 using FartSocial.Application.Social.Dtos;
 using FartSocial.Domain.FartEvents;
 using FartSocial.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Security.Cryptography;
 
 namespace FartSocial.Api.Controllers;
 
@@ -55,8 +56,7 @@ public sealed class FartEventsController(
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(MaxAudioFileSize)]
     public async Task<ActionResult<AudioUploadDto>> UploadAudio(
-        [FromForm] IFormFile file,
-        [FromForm] int durationMs,
+        UploadAudioRequest uploadAudioRequest,
         CancellationToken cancellationToken)
     {
         var userId = GetUserId();

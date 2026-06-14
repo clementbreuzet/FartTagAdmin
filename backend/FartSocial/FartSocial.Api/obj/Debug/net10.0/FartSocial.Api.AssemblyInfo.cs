@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FartSocial.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2c31d37e943dcd234eb154ee4144ddf309c51b90")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ab0b9a310cef430cd793b9c00eab7f9d75f11de2")]
 [assembly: System.Reflection.AssemblyProductAttribute("FartSocial.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FartSocial.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

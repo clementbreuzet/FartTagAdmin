@@ -4,7 +4,7 @@ declare const process: {
   };
 };
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.1.126:50385';
 
 let accessToken: string | null = null;
 
