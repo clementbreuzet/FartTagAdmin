@@ -1,9 +1,14 @@
-import { apiRequest } from '../../api/apiClient';
+import { apiRequest, getAccessToken } from '../../api/apiClient';
 import type { BackendAudioUpload, BackendFartEvent } from '../../api/backendContracts';
 import { mapOfficialFartResult } from '../../api/backendMappers';
 import type { CreateFartEventRequest, OfficialFartResult } from './types';
+import {
+  uploadAsync,
+  FileSystemUploadType,
+} from 'expo-file-system/legacy';
 
-const getFileExtension = (uri: string) => uri.split('.').pop()?.toLowerCase() || 'm4a';
+const getFileExtension = (uri: string) =>
+  uri.split('.').pop()?.toLowerCase() || 'm4a';
 
 const getMimeType = (extension: string) => {
   switch (extension) {
@@ -23,44 +28,95 @@ const uploadAudio = async (
   uri: string,
   durationMs: number,
 ): Promise<BackendAudioUpload> => {
+  console.log('========================');
+  console.log('UPLOAD AUDIO CALLED');
+  console.log('URI:', uri);
+  console.log('DURATION:', durationMs);
+
+  const token = getAccessToken();
   const extension = getFileExtension(uri);
+  const mimeType = getMimeType(extension);
 
-  const form = new FormData();
+  console.log('HAS TOKEN:', !!token);
+  console.log('MIME TYPE:', mimeType);
+try{
+const response = await uploadAsync(
+  'http://192.168.1.126:50385/api/fart-events/audio',
+  uri,
+  {
+    httpMethod: 'POST',
+    fieldName: 'file',
+    mimeType,
+    uploadType: FileSystemUploadType.MULTIPART,
+    parameters: {
+      durationMs: String(durationMs),
+    },
+    headers: {
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  },
+);
 
-  form.append('DurationMs', String(durationMs));
+  console.log('UPLOAD STATUS:', response.status);
+  console.log('UPLOAD BODY:', response.body);
 
-  form.append('File', {
-    uri,
-    name: `phone-mic-${Date.now()}.${extension}`,
-    type: getMimeType(extension),
-  } as any);
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(response.body || `Upload failed (${response.status})`);
+  }
 
-  return apiRequest<BackendAudioUpload>('/api/fart-events/audio', {
-    method: 'POST',
-    body: form,
-  });
+  return JSON.parse(response.body) as BackendAudioUpload;
+}
+catch (error) {
+  console.error('UPLOAD ERROR:', error);
+  throw error;
+}
+  
 };
 
 export const detectionApi = {
   uploadAudio,
 
   async uploadEvent(event: CreateFartEventRequest): Promise<OfficialFartResult> {
-    const uploadedAudio = !event.audioFileId && event.audioUri
-      ? await uploadAudio(event.audioUri, event.durationMs)
+    console.log('========================');
+    console.log('UPLOAD EVENT CALLED');
+    console.log('EVENT:', event);
+
+    const shouldUploadAudio = !event.audioFileId && !!event.audioUri;
+
+    console.log('SHOULD UPLOAD AUDIO:', shouldUploadAudio);
+    console.log('AUDIO FILE ID:', event.audioFileId);
+    console.log('AUDIO URI:', event.audioUri);
+
+    const uploadedAudio = shouldUploadAudio
+      ? await uploadAudio(event.audioUri!, event.durationMs)
       : null;
+
     const audioFileId = event.audioFileId ?? uploadedAudio?.id ?? null;
-    return apiRequest<BackendFartEvent>('/api/fart-events', {
-      body: JSON.stringify({
-        audioFileId,
-        audioLevel: Math.round(event.audioLevel),
-        deviceId: event.deviceId,
-        durationMs: event.durationMs,
-        gasLevel: Math.round(event.gasLevel),
-        localScore: event.provisionalScore,
-        temperature: 24,
-        timestamp: event.capturedAt,
-      }),
+
+    console.log('FINAL AUDIO FILE ID:', audioFileId);
+
+    const payload = {
+      audioFileId,
+      audioLevel: Math.round(event.audioLevel),
+      deviceId: event.deviceId,
+      durationMs: event.durationMs,
+      gasLevel: Math.round(event.gasLevel),
+      localScore: event.provisionalScore,
+      temperature: 24,
+      timestamp: event.capturedAt,
+    };
+
+    console.log('FART EVENT PAYLOAD:', payload);
+
+    const backendResult = await apiRequest<BackendFartEvent>('/api/fart-events', {
+      body: JSON.stringify(payload),
       method: 'POST',
-    }).then(mapOfficialFartResult);
+    });
+
+    console.log('UPLOAD EVENT SUCCESS');
+    console.log('BACKEND RESULT:', backendResult);
+
+    return mapOfficialFartResult(backendResult);
   },
 };
