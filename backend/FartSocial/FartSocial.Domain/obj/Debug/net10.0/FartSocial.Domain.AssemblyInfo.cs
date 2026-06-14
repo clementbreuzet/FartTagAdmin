@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ab0b9a310cef430cd793b9c00eab7f9d75f11de2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4a9491615b98b13ac133de8e815200ce1f36b3c4")]
 [assembly: System.Reflection.AssemblyProductAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FartSocial.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

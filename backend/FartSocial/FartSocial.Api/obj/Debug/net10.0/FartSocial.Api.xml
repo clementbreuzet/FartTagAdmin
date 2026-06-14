@@ -266,6 +266,24 @@
         <member name="M:FartSocial.Api.Controllers.MeController.GetMe(System.Threading.CancellationToken)">
             <summary>Gets the authenticated user's identity, roles, and permissions.</summary>
         </member>
+        <member name="T:FartSocial.Api.Controllers.NotificationsController">
+            <summary>Manages push tokens and notification preferences for the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.NotificationsController.#ctor(FartSocial.Infrastructure.Persistence.FartSocialDbContext)">
+            <summary>Manages push tokens and notification preferences for the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.NotificationsController.RegisterToken(FartSocial.Application.Notifications.Dtos.RegisterPushTokenRequestDto,System.Threading.CancellationToken)">
+            <summary>Registers or refreshes an Expo push token.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.NotificationsController.RevokeToken(FartSocial.Application.Notifications.Dtos.RevokePushTokenRequestDto,System.Threading.CancellationToken)">
+            <summary>Revokes an Expo push token owned by the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.NotificationsController.GetPreferences(System.Threading.CancellationToken)">
+            <summary>Gets notification preferences for the authenticated user.</summary>
+        </member>
+        <member name="M:FartSocial.Api.Controllers.NotificationsController.UpdatePreferences(FartSocial.Application.Notifications.Dtos.NotificationPreferenceDto,System.Threading.CancellationToken)">
+            <summary>Updates notification preferences for the authenticated user.</summary>
+        </member>
         <member name="T:FartSocial.Api.Controllers.ProfilesController">
             <summary>
             Provides full profile summaries and user discovery for FartTag Social.

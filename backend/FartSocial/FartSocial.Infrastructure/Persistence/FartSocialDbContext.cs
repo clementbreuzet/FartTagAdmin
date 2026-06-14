@@ -6,6 +6,7 @@ using FartSocial.Domain.Badges;
 using FartSocial.Domain.LootBoxes;
 using FartSocial.Domain.Social;
 using FartSocial.Domain.Security;
+using FartSocial.Domain.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace FartSocial.Infrastructure.Persistence;
@@ -36,6 +37,8 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
     public DbSet<FriendRequest> FriendRequests => Set<FriendRequest>();
     public DbSet<Reaction> Reactions => Set<Reaction>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -61,6 +64,27 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedTitleInventoryItemId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedProfileFrameInventoryItemId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedDetectionEffectInventoryItemId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserPushToken>(builder =>
+        {
+            builder.ToTable("UserPushTokens");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.Token).HasMaxLength(512).IsRequired();
+            builder.Property(x => x.Platform).HasMaxLength(20).IsRequired();
+            builder.Property(x => x.DeviceName).HasMaxLength(200);
+            builder.Property(x => x.LastSeenAt).IsRequired();
+            builder.HasIndex(x => x.Token).IsUnique();
+            builder.HasIndex(x => x.UserId);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<NotificationPreference>(builder =>
+        {
+            builder.ToTable("NotificationPreferences");
+            builder.HasKey(x => x.UserId);
+            builder.Property(x => x.UpdatedAt).IsRequired();
+            builder.HasOne<User>().WithOne().HasForeignKey<NotificationPreference>(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Role>(builder =>

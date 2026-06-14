@@ -3,9 +3,18 @@
     "name": "FartTag Social",
     "slug": "farttag-social",
     "version": "0.1.0",
+    "icon": "./src/assets/branding/logo-app.png",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/branding/logo-app.png",
+          "color": "#9CFF00",
+          "defaultChannel": "fartsocial-v2"
+        }
+      ],
       [
         "expo-audio",
         {
@@ -14,9 +23,18 @@
       ]
     ],
     "android": {
+      "icon": "./src/assets/branding/logo-app-android.png",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/branding/logo-app-android.png",
+        "backgroundColor": "#030508"
+      },
       "package": "com.farttag.social",
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
     },
     "ios": {
@@ -24,6 +42,12 @@
       "infoPlist": {
         "NSMicrophoneUsageDescription": "FartTag Social uses the microphone for the temporary test mode when BLE is not connected."
       }
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "827ec2b7-4f53-464d-a1f0-0ada4d30b3c7"
+      }
+    },
+    "owner": "cptbreuz"
   }
 }

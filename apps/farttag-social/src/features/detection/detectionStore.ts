@@ -4,6 +4,8 @@ import { detectionApi } from './detectionApi';
 import { PhoneMicService } from '../../services/audio/PhoneMicService';
 import { mockDetectedEvent, mockOfficialDetectionResult } from '../mockData';
 import { useHistoryStore } from '../history/historyStore';
+import { useNotificationStore } from '../notifications/notificationStore';
+import { NotificationService } from '../../services/notifications/NotificationService';
 import type {
   BleStatus,
   ConnectedFartTag,
@@ -41,6 +43,18 @@ const wait = (durationMs: number) =>
 const refreshHistoryAfterInsert = () => {
   console.log('[detection] FartEvent created, refreshing history');
   void useHistoryStore.getState().refreshHistory();
+};
+
+const notifyForOfficialResult = (result: OfficialFartResult) => {
+  const { permissionStatus, preferences } = useNotificationStore.getState();
+  if (preferences.rewardsEnabled && permissionStatus === 'granted') {
+    void NotificationService.showFartDetectedNotification(result.officialScore, result.flatulonsEarned)
+      .catch((error: unknown) => console.log('[notifications] Fart notification failed:', error));
+    result.unlockedBadges.forEach((badge) => {
+      void NotificationService.showRewardNotification(badge.name)
+        .catch((error: unknown) => console.log('[notifications] Reward notification failed:', error));
+    });
+  }
 };
 
 const createProvisionalEvent = (source: 'ble' | 'phone-mic'): DetectedFartEvent => {
@@ -149,6 +163,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         lastEvent: state.lastEvent,
       }));
       refreshHistoryAfterInsert();
+      notifyForOfficialResult(officialResult);
     } catch (error) {
       set({ audioSaveStatus: 'error', error: getErrorMessage(error), uploadStatus: 'error' });
     }
@@ -239,6 +254,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
       });
       set({ officialResult, uploadStatus: 'uploaded' });
       refreshHistoryAfterInsert();
+      notifyForOfficialResult(officialResult);
     } catch (error) {
       set({ error: getErrorMessage(error), uploadStatus: 'error' });
     }

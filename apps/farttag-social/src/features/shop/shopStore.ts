@@ -5,6 +5,8 @@ import { useProfileStore } from '../profile/profileStore';
 import type { Wallet } from '../profile/types';
 import { shopApi } from './shopApi';
 import type { LootboxDefinition, LootboxReward } from './types';
+import { useNotificationStore } from '../notifications/notificationStore';
+import { NotificationService } from '../../services/notifications/NotificationService';
 
 type ShopState = {
   error: string | null;
@@ -60,6 +62,11 @@ export const useShopStore = create<ShopState>((set, get) => ({
         revealVisible: true,
       });
       useProfileStore.setState({ wallet: result.wallet });
+      const notifications = useNotificationStore.getState();
+      if (notifications.preferences.rewardsEnabled && notifications.permissionStatus === 'granted') {
+        void NotificationService.showLootBoxNotification(result.reward.name, result.reward.rarity)
+          .catch((error: unknown) => console.log('[notifications] Loot box notification failed:', error));
+      }
     } catch (error) {
       set({ error: getErrorMessage(error) });
     } finally {
