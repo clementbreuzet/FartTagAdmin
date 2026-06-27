@@ -62,10 +62,15 @@ logs/
 # React Native
 # ------------------------------------------
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Expo
 .expo/
 .expo-shared/
+.expo/*
+web-build/
 
 # Metro
 .metro-health-check*
@@ -77,9 +82,16 @@ build/
 # ------------------------------------------
 # Android
 # ------------------------------------------
-android/.gradle/
-android/build/
-android/app/build/
+**/android/.gradle/
+**/android/build/
+**/android/app/build/
+**/android/.idea/
+**/android/local.properties
+**/android/app/debug/
+**/android/app/release/
+
+.gradle/
+.kotlin/
 
 *.keystore
 *.jks
@@ -151,8 +163,8 @@ temp/
 # ------------------------------------------
 # React Native generated
 # ------------------------------------------
-android/app/debug/
-android/app/release/
+*.jsbundle
+*.hprof
 
 # ------------------------------------------
 # Firebase / Secrets
