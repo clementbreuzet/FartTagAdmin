@@ -25,6 +25,50 @@ public sealed class AuthSeeder(
         await SeedDefaultSuperAdminAsync(cancellationToken);
     }
 
+    public async Task SeedDevelopmentUserAsync(CancellationToken cancellationToken)
+    {
+        const string userName = "usb-tester";
+        const string email = "usb-tester@farttag.local";
+        const string password = "UsbTest!2026";
+
+        var normalizedUserName = userName.ToUpperInvariant();
+        var normalizedEmail = email.ToUpperInvariant();
+        var userByName = await dbContext.Users.FirstOrDefaultAsync(x => x.NormalizedUserName == normalizedUserName, cancellationToken);
+        var userByEmail = await dbContext.Users.FirstOrDefaultAsync(x => x.NormalizedEmail == normalizedEmail, cancellationToken);
+        if (userByName is not null && userByEmail is not null && userByName.Id != userByEmail.Id)
+        {
+            throw new InvalidOperationException("Cannot seed development user because username and email belong to different users.");
+        }
+
+        var user = userByName ?? userByEmail;
+
+        if (user is null)
+        {
+            user = new User
+            {
+                Email = email,
+                NormalizedEmail = normalizedEmail,
+                NormalizedUserName = normalizedUserName,
+                UserName = userName,
+            };
+            dbContext.Users.Add(user);
+        }
+        else
+        {
+            user.Email = email;
+            user.NormalizedEmail = normalizedEmail;
+            user.NormalizedUserName = normalizedUserName;
+            user.UserName = userName;
+            user.IsActive = true;
+            user.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, password);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await AssignRoleAsync(user.Id, "User", cancellationToken);
+    }
+
     private async Task SeedPermissionsAsync(CancellationToken cancellationToken)
     {
         foreach (var permissionName in PermissionCatalog.All)
@@ -162,6 +206,23 @@ public sealed class AuthSeeder(
             UserId = user.Id,
         });
 
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task AssignRoleAsync(Guid userId, string roleName, CancellationToken cancellationToken)
+    {
+        var role = await dbContext.Roles.FirstAsync(x => x.NormalizedName == roleName.ToUpperInvariant(), cancellationToken);
+        var hasRole = await dbContext.UserRoles.AnyAsync(x => x.UserId == userId && x.RoleId == role.Id, cancellationToken);
+        if (hasRole)
+        {
+            return;
+        }
+
+        dbContext.UserRoles.Add(new UserRole
+        {
+            RoleId = role.Id,
+            UserId = userId,
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

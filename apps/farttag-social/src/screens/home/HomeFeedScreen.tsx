@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SubmenuTabs } from '../../shared/components';
+import { ScreenTitle, SubmenuTabs } from '../../shared/components';
 import { FartFeedCard } from '../../features/feed/components/FartFeedCard';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useFeedStore } from '../../features/feed/feedStore';
@@ -96,32 +96,38 @@ export const HomeFeedScreen = () => {
 
   if (isLoading && events.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FeedState
-          description="Les meilleurs événements publics arrivent."
-          loading
-          title="Chargement du feed"
-        />
+      <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
+        <View style={styles.stateContent}>
+          <ScreenTitle title="ACCUEIL" />
+          <FeedState
+            description="Les meilleurs événements publics arrivent."
+            loading
+            title="Chargement du feed"
+          />
+        </View>
       </SafeAreaView>
     );
   }
 
   if (error && events.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FeedState
-          actionLabel="Réessayer"
-          description={error}
-          onAction={() => void loadFeed()}
-          title="Feed indisponible"
-          tone="purple"
-        />
+      <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
+        <View style={styles.stateContent}>
+          <ScreenTitle title="ACCUEIL" />
+          <FeedState
+            actionLabel="Réessayer"
+            description={error}
+            onAction={() => void loadFeed()}
+            title="Feed indisponible"
+            tone="purple"
+          />
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <FlatList
         ListEmptyComponent={
           <FeedState
@@ -139,10 +145,7 @@ export const HomeFeedScreen = () => {
         }
         ListHeaderComponent={
           <>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>PUBLIC</Text>
-            </View>
+            <ScreenTitle title="ACCUEIL" />
             <SubmenuTabs
               activeTab={feedTab}
               onChange={setFeedTab}
@@ -197,52 +200,12 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     paddingBottom: 36,
+    paddingTop: 0,
   },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    paddingTop: 4,
-  },
-  eyebrow: {
-    color: colors.neonGreen,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 2.2,
-  },
-  title: {
-    color: colors.textPrimary,
-    fontSize: 29,
-    fontWeight: '800',
-    marginTop: 3,
-  },
-  subtitle: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    marginTop: 5,
-  },
-  liveBadge: {
-    alignItems: 'center',
-    borderColor: colors.neonCyan,
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  liveDot: {
-    backgroundColor: colors.neonCyan,
-    borderRadius: 4,
-    height: 6,
-    width: 6,
-  },
-  liveText: {
-    color: colors.neonCyan,
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 1,
+  stateContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 0,
   },
   errorBanner: {
     alignItems: 'center',

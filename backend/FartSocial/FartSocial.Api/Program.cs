@@ -1,22 +1,17 @@
-using System.Text;
 using Azure.Identity;
-using FartSocial.Application.Auth;
+using FartSocial.Api.Middleware;
 using FartSocial.Application.Authorization;
-using FartSocial.Application.Economy;
-using FartSocial.Application.Devices;
 using FartSocial.Application.Validation;
 using FartSocial.Infrastructure;
 using FartSocial.Infrastructure.Configuration;
 using FartSocial.Infrastructure.Persistence;
 using FartSocial.Infrastructure.Seeding;
-using FartSocial.Api.Middleware;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +62,27 @@ builder.Services
             ClockSkew = TimeSpan.FromSeconds(30),
             NameClaimType = "unique_name",
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                Log.Warning(
+                    context.Exception,
+                    "JWT authentication failed for {Path}",
+                    context.Request.Path);
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Log.Warning(
+                    "JWT challenge for {Path}. HasAuthorizationHeader={HasAuthorizationHeader}. Error={Error}. ErrorDescription={ErrorDescription}",
+                    context.Request.Path,
+                    context.Request.Headers.ContainsKey("Authorization"),
+                    context.Error,
+                    context.ErrorDescription);
+                return Task.CompletedTask;
+            },
         };
     });
 
@@ -142,6 +158,10 @@ await using (var scope = app.Services.CreateAsyncScope())
 
     var seeder = scope.ServiceProvider.GetRequiredService<AuthSeeder>();
     await seeder.SeedAsync(CancellationToken.None);
+    if (app.Environment.IsDevelopment())
+    {
+        await seeder.SeedDevelopmentUserAsync(CancellationToken.None);
+    }
 }
 
 app.Run();

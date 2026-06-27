@@ -10,6 +10,7 @@ import { RevealModal } from '../../features/shop/components/RevealModal';
 import { useShopStore } from '../../features/shop/shopStore';
 import type { LootboxDefinition } from '../../features/shop/types';
 import type { RootStackParamList } from '../../navigation/types';
+import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type ShopScreenProps = NativeStackScreenProps<RootStackParamList, 'ShopScreen'>;
@@ -91,6 +92,7 @@ export const ShopScreen = (_props: ShopScreenProps) => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScreenTitle title="BOUTIQUE" />
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>TES FLATULONS</Text>
           <Text style={styles.balance}>{wallet.flatulons.toLocaleString()} <Text style={styles.balanceIcon}>◆</Text></Text>

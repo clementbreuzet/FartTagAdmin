@@ -181,4 +181,9 @@ dependencies {
     }
 }
 
-apply plugin: 'com.google.gms.google-services'
+def googleServicesJson = file("google-services.json")
+if (googleServicesJson.exists()) {
+    apply plugin: 'com.google.gms.google-services'
+} else {
+    logger.warn("google-services.json not found; skipping Google Services plugin. Push notifications will require this file.")
+}

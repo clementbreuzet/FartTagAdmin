@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SubmenuTabs } from '../../shared/components';
+import { ScreenTitle, SubmenuTabs } from '../../shared/components';
 import { useBadgesStore } from '../../features/badges/badgesStore';
 import { useHistoryStore } from '../../features/history/historyStore';
 import { useInventoryStore } from '../../features/inventory/inventoryStore';
@@ -65,6 +65,9 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.header}>
+        <ScreenTitle title="PROFIL" />
+      </View>
       <SubmenuTabs
         activeTab={activeTab}
         onChange={changeTab}

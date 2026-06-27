@@ -29,6 +29,7 @@ import {
 } from '../../features/social/components/FriendCard';
 import { TopFriendsCarousel } from '../../features/social/components/TopFriendsCarousel';
 import type { RootStackParamList } from '../../navigation/types';
+import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type SocialScreenProps = NativeStackScreenProps<RootStackParamList, 'SocialScreen'>;
@@ -192,8 +193,8 @@ export const SocialScreen = ({ navigation }: SocialScreenProps) => {
         }
         showsVerticalScrollIndicator={false}
       >
+        <ScreenTitle title="SOCIAL" />
         <View style={styles.hero}>
-          <Text style={styles.eyebrow}>👑 SOCIAL HUB</Text>
           <Text style={styles.heroTitle}>Le réseau prend vie.</Text>
           <Text style={styles.heroSubtitle}>
             Découvrez les exploits, défis et légendes de votre réseau.
@@ -322,12 +323,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     padding: 18,
-  },
-  eyebrow: {
-    color: colors.neonGreen,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1.8,
   },
   heroTitle: {
     color: colors.textPrimary,

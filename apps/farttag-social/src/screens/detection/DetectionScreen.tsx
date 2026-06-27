@@ -17,6 +17,7 @@ import { useHistoryStore } from '../../features/history/historyStore';
 import type { FartHistoryEvent } from '../../features/history/types';
 import type { DetectionStackParamList } from '../../navigation/types';
 import { PhoneMicService } from '../../services/audio/PhoneMicService';
+import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 const FALLBACK_EVENT: DetectedFartEvent = {
@@ -130,21 +131,7 @@ export const DetectionScreen = () => {
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.titleLine}>
-            <View style={styles.lineStem} />
-            <View style={styles.lineDot} />
-          </View>
-          <Text style={styles.title}>
-            <Text style={styles.titleGreen}>CENTRE </Text>
-            <Text style={styles.titleCyan}>DE </Text>
-            <Text style={styles.titlePurple}>DÉTECTION</Text>
-          </Text>
-          <View style={[styles.titleLine, styles.titleLineRight]}>
-            <View style={[styles.lineStem, styles.lineStemPurple]} />
-            <View style={[styles.lineDot, styles.lineDotPurple]} />
-          </View>
-        </View>
+        <ScreenTitle title="CENTRE DE DÉTECTION" />
         <Text style={styles.subtitle}>Choisis ton mode de détection</Text>
 
         <DetectionModeSwitch
@@ -197,17 +184,6 @@ export const DetectionScreen = () => {
 const styles = StyleSheet.create({
   safeArea: { backgroundColor: colors.background, flex: 1 },
   content: { padding: 16, paddingBottom: 48 },
-  header: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 1 },
-  titleLine: { alignItems: 'center', flexDirection: 'row', width: 29 },
-  titleLineRight: { flexDirection: 'row-reverse' },
-  lineStem: { backgroundColor: colors.neonGreen, height: 1, opacity: 0.55, width: 22 },
-  lineStemPurple: { backgroundColor: colors.neonPurple },
-  lineDot: { borderColor: colors.neonGreen, borderRadius: 3, borderWidth: 1, height: 5, width: 5 },
-  lineDotPurple: { borderColor: colors.neonPurple },
-  title: { fontSize: 17, fontWeight: '900', letterSpacing: 0.3, textAlign: 'center' },
-  titleGreen: { color: colors.neonGreen },
-  titleCyan: { color: colors.neonCyan },
-  titlePurple: { color: colors.neonPurple },
   subtitle: { color: colors.textSecondary, fontSize: 9, marginBottom: 12, marginTop: 3, textAlign: 'center' },
   secondaryGrid: { flexDirection: 'row', gap: 10 },
   error: { color: colors.danger, fontSize: 10, marginTop: 14, textAlign: 'center' },

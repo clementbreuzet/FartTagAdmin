@@ -44,6 +44,19 @@ a script fails.
 
 `deploy.sql` runs the complete sequence.
 
+## Optional Dev User
+
+For local mobile development, seed the known dev account after the security seed
+has created roles:
+
+```powershell
+sqlcmd -S "localhost\SQLEXPRESS" -E -b -i 030_seed_dev_user.sql
+```
+
+The script creates or repairs `usb-tester@farttag.local` with username
+`usb-tester` and password `UsbTest!2026`, then assigns the `User` role.
+Do not run it in production.
+
 ## User Data Covered
 
 The schema stores and protects the complete current user-data model:

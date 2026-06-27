@@ -33,6 +33,10 @@ const uploadAudio = async (
   const extension = getFileExtension(uri);
   const mimeType = getMimeType(extension);
   const url = getApiUrl() + '/api/fart-events/audio';
+  console.log('[audio-upload] POST /api/fart-events/audio', {
+    hasAccessToken: Boolean(token),
+    mimeType,
+  });
 try {
 const response = await uploadAsync(
   url,
