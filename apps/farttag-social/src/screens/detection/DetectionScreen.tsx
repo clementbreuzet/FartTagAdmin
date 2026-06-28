@@ -10,6 +10,7 @@ import { DeviceStatusCard } from '../../features/detection/components/DeviceStat
 import { LastExploitCard } from '../../features/detection/components/LastExploitCard';
 import { MicrophoneRecorderCard } from '../../features/detection/components/MicrophoneRecorderCard';
 import { useDetectionStore } from '../../features/detection/detectionStore';
+import { t } from '../../i18n/translations';
 import type { DetectedFartEvent, DetectionSource } from '../../features/detection/types';
 import type { DetectionStackParamList } from '../../navigation/types';
 import { PhoneMicService } from '../../services/audio/PhoneMicService';
@@ -62,6 +63,7 @@ export const DetectionScreen = () => {
 
   const displayedEvent = lastEvent ?? FALLBACK_EVENT;
   const flatulonsReward = officialResult?.flatulonsEarned ?? 15;
+  const xpReward = officialResult?.xpGained ?? 0;
   const isListening = mode === 'phone-mic' ? isPhoneMicRecording : bleStatus === 'connected';
   const signalLabel = mode === 'phone-mic'
     ? isPhoneMicRecording ? 'MICRO EN ÉCOUTE' : 'MICRO BÊTA PRÊT'
@@ -99,7 +101,7 @@ export const DetectionScreen = () => {
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <ScreenTitle title="CENTRE DE DÉTECTION" />
+        <ScreenTitle title={t('screens.detection.title')} />
         <Text style={styles.subtitle}>Choisis ton mode de détection</Text>
 
         <DetectionModeSwitch
@@ -126,11 +128,13 @@ export const DetectionScreen = () => {
           event={displayedEvent}
           flatulonsReward={flatulonsReward}
           funLabel={funLabelForScore(displayedEvent.provisionalScore)}
+          officialResult={officialResult}
           onOpenDetails={() => openDetails(displayedEvent.id)}
           onReplay={() => void replayLastEvent()}
           onUpload={() => void uploadLastEvent()}
           replayAvailable={Boolean(displayedEvent.audioUri)}
           uploadStatus={uploadStatus}
+          xpReward={xpReward}
         />
 
         <DeviceStatusCard device={device} mode={mode} onPress={openDeviceStatus} />

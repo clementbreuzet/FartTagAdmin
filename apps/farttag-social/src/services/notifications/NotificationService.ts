@@ -4,6 +4,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { apiRequest } from '../../api/apiClient';
+import { apiEndpoints } from '../../api/apiEndpoints';
 
 const ANDROID_NOTIFICATION_CHANNEL = 'fartsocial-v2';
 
@@ -40,15 +41,19 @@ export const requestNotificationPermissions = async (): Promise<NotificationPerm
   const result = current.status === 'granted'
     ? current
     : await Notifications.requestPermissionsAsync();
-  console.log('[notifications] Permission status:', result.status);
+  if (__DEV__) {
+    console.log('[notifications] Permission status:', result.status);
+  }
   return result.status;
 };
 
 export const getExpoPushToken = async (): Promise<string> => {
-  console.log('[notifications] Getting Expo push token', {
-    isDevice: Device.isDevice,
-    platform: Platform.OS,
-  });
+  if (__DEV__) {
+    console.log('[notifications] Getting Expo push token', {
+      isDevice: Device.isDevice,
+      platform: Platform.OS,
+    });
+  }
   if (!Device.isDevice) {
     throw new Error('Le token push Expo nécessite un appareil physique.');
   }
@@ -59,19 +64,25 @@ export const getExpoPushToken = async (): Promise<string> => {
     // TODO: Configure extra.eas.projectId after linking the project with EAS.
     throw new Error("Le projectId EAS n'est pas configuré.");
   }
-  console.log('[notifications] Using EAS projectId:', projectId);
+  if (__DEV__) {
+    console.log('[notifications] Using EAS projectId:', projectId);
+  }
   const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  console.log('[notifications] Expo push token:', token);
+  if (__DEV__) {
+    console.log('[notifications] Expo push token:', token);
+  }
   return token;
 };
 
 export const registerPushTokenWithBackend = async (token: string) => {
-  console.log('[notifications] POST /api/notifications/register-token', {
-    deviceName: Device.deviceName ?? null,
-    platform: Platform.OS,
-    tokenPrefix: token.slice(0, 24),
-  });
-  await apiRequest<void>('/api/notifications/register-token', {
+  if (__DEV__) {
+    console.log('[notifications] Register push token', {
+      deviceName: Device.deviceName ?? null,
+      platform: Platform.OS,
+      tokenPrefix: token.slice(0, 24),
+    });
+  }
+  await apiRequest<void>(apiEndpoints.notifications.registerToken, {
     body: JSON.stringify({
       deviceName: Device.deviceName ?? undefined,
       platform: Platform.OS,
@@ -79,20 +90,22 @@ export const registerPushTokenWithBackend = async (token: string) => {
     }),
     method: 'POST',
   });
-  console.log('[notifications] Backend token registration succeeded');
+  if (__DEV__) {
+    console.log('[notifications] Backend token registration succeeded');
+  }
 };
 
 export const unregisterPushTokenWithBackend = (token: string) =>
-  apiRequest<void>('/api/notifications/register-token', {
+  apiRequest<void>(apiEndpoints.notifications.registerToken, {
     body: JSON.stringify({ token }),
     method: 'DELETE',
   });
 
 export const getNotificationPreferences = () =>
-  apiRequest<NotificationPreferences>('/api/notifications/preferences');
+  apiRequest<NotificationPreferences>(apiEndpoints.notifications.preferences);
 
 export const updateNotificationPreferences = (preferences: NotificationPreferences) =>
-  apiRequest<NotificationPreferences>('/api/notifications/preferences', {
+  apiRequest<NotificationPreferences>(apiEndpoints.notifications.preferences, {
     body: JSON.stringify(preferences),
     method: 'PUT',
   });

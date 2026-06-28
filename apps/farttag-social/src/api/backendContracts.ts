@@ -12,6 +12,20 @@ export type BackendFartReward = {
   amount: number;
 };
 
+export type BackendFartRewards = {
+  xpGained: number;
+  flatulonsGained: number;
+  oldLevel: number;
+  newLevel: number;
+  leveledUp: boolean;
+  totalXp: number;
+  currentLevelXp: number;
+  requiredLevelXp: number;
+  progressPercent: number;
+  oldFlatulons: number;
+  newFlatulons: number;
+};
+
 export type BackendFartEvent = {
   id: string;
   userId: string;
@@ -31,7 +45,8 @@ export type BackendFartEvent = {
   isAuthenticated: boolean;
   category: string;
   visibility: string | number;
-  rewards: BackendFartReward[];
+  rewardItems: BackendFartReward[];
+  rewards: BackendFartRewards | null;
   badges: string[];
   reactions: BackendReactionSummary;
   comments: BackendComment[];
@@ -318,7 +333,12 @@ export type BackendPlayerProfile = {
   displayName: string;
   avatarUrl: string | null;
   level: number;
-  xp: number;
+  totalXp: number;
+  currentLevelXp: number;
+  requiredLevelXp: number;
+  progressPercent: number;
+  flatulons: number;
+  gems: number;
   stats: {
     totalFarts: number;
     bestScore: number;

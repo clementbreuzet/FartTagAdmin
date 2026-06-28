@@ -1,4 +1,5 @@
 import { apiRequest } from '../../api/apiClient';
+import { apiEndpoints } from '../../api/apiEndpoints';
 import type { BackendLeaderboardsResponse } from '../../api/backendContracts';
 import { mapLeaderboardBoard } from '../../api/backendMappers';
 import { mockLeaderboardFriends, mockLeaderboardGlobal } from '../mockData';
@@ -14,7 +15,7 @@ const fallbackBoards = (): LeaderboardBoards => ({
 export const leaderboardsApi = {
   async getGlobal(): Promise<LeaderboardBoards> {
     try {
-      const response = await apiRequest<BackendLeaderboardsResponse>('/api/leaderboards/global');
+      const response = await apiRequest<BackendLeaderboardsResponse>(apiEndpoints.leaderboards.global);
       const boards = {
         global: mapLeaderboardBoard(response.global),
         week: mapLeaderboardBoard(response.week),
@@ -29,7 +30,7 @@ export const leaderboardsApi = {
 
   async getFriends(): Promise<LeaderboardEntry[]> {
     try {
-      const response = await apiRequest<BackendLeaderboardsResponse>('/api/leaderboards/friends');
+      const response = await apiRequest<BackendLeaderboardsResponse>(apiEndpoints.leaderboards.friends);
       const items = mapLeaderboardBoard(response.global);
       return items.length > 0 ? items : mockLeaderboardFriends;
     } catch {

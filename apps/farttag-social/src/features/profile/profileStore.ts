@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 import { profileApi } from './profileApi';
+import type { OfficialFartResult } from '../detection/types';
+import { useUserStore } from '../../store/userStore';
 import type { InventoryItem, UserProfile, Wallet } from './types';
 
 type ProfileState = {
@@ -11,6 +13,7 @@ type ProfileState = {
   isRefreshing: boolean;
   profile: UserProfile | null;
   wallet: Wallet | null;
+  applyFartRewards: (rewards: OfficialFartResult) => void;
   loadProfile: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -31,7 +34,15 @@ export const useProfileStore = create<ProfileState>((set) => ({
     set({ error: null, isLoading: true });
     try {
       const profile = await profileApi.getProfile();
-      set({ hasLoaded: true, inventory: [], profile, wallet: null });
+      useUserStore.getState().setResources({
+        currentXp: profile.currentLevelXp,
+        flatulons: profile.flatulons,
+        gems: profile.gems,
+        level: profile.level,
+        requiredXp: profile.requiredLevelXp,
+        totalXp: profile.totalXp,
+      });
+      set({ hasLoaded: true, inventory: [], profile, wallet: { flatulons: profile.flatulons ?? 0 } });
     } catch (error) {
       set({ error: getErrorMessage(error), hasLoaded: true });
     } finally {
@@ -43,11 +54,40 @@ export const useProfileStore = create<ProfileState>((set) => ({
     set({ error: null, isRefreshing: true });
     try {
       const profile = await profileApi.getProfile();
-      set({ hasLoaded: true, inventory: [], profile, wallet: null });
+      useUserStore.getState().setResources({
+        currentXp: profile.currentLevelXp,
+        flatulons: profile.flatulons,
+        gems: profile.gems,
+        level: profile.level,
+        requiredXp: profile.requiredLevelXp,
+        totalXp: profile.totalXp,
+      });
+      set({ hasLoaded: true, inventory: [], profile, wallet: { flatulons: profile.flatulons ?? 0 } });
     } catch (error) {
       set({ error: getErrorMessage(error) });
     } finally {
       set({ isRefreshing: false });
     }
+  },
+
+  applyFartRewards: (rewards) => {
+    useUserStore.getState().applyFartRewards(rewards);
+    set((state) => ({
+      profile: state.profile
+        ? {
+            ...state.profile,
+            currentLevelXp: rewards.currentLevelXp,
+            flatulons: rewards.newFlatulons,
+            level: rewards.newLevel,
+            levelProgressPercent: rewards.progressPercent,
+            requiredLevelXp: rewards.requiredLevelXp,
+            totalXp: rewards.totalXp,
+            xp: rewards.totalXp,
+          }
+        : state.profile,
+      wallet: {
+        flatulons: rewards.newFlatulons,
+      },
+    }));
   },
 }));

@@ -26,6 +26,12 @@ type ShopState = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : 'La boutique ne peut pas être chargée.';
 
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.log(...args);
+  }
+};
+
 export const useShopStore = create<ShopState>((set, get) => ({
   error: null,
   hasLoaded: false,
@@ -65,7 +71,7 @@ export const useShopStore = create<ShopState>((set, get) => ({
       const notifications = useNotificationStore.getState();
       if (notifications.preferences.rewardsEnabled && notifications.permissionStatus === 'granted') {
         void NotificationService.showLootBoxNotification(result.reward.name, result.reward.rarity)
-          .catch((error: unknown) => console.log('[notifications] Loot box notification failed:', error));
+          .catch((error: unknown) => devLog('[notifications] Loot box notification failed:', error));
       }
     } catch (error) {
       set({ error: getErrorMessage(error) });

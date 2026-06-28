@@ -1,7 +1,8 @@
 using System.Text.Json;
-using FartSocial.Application.Badges;
 using FartSocial.Application.FartEvents;
 using FartSocial.Application.FartEvents.Dtos;
+using FartSocial.Application.Progression;
+using FartSocial.Application.Progression.Dtos;
 using FartSocial.Application.Social.Dtos;
 using FartSocial.Domain.Devices;
 using FartSocial.Domain.FartEvents;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FartSocial.Infrastructure.FartEvents;
 
-public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeService badgeService) : IFartEventService, IFartEventReadService
+public sealed class FartEventService(FartSocialDbContext dbContext, IProgressionService progressionService) : IFartEventService, IFartEventReadService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -38,6 +39,12 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             }
         }
 
+        var user = await dbContext.Users.FirstOrDefaultAsync(item => item.Id == userId && item.IsActive, cancellationToken);
+        if (user is null)
+        {
+            throw new UnauthorizedAccessException("Utilisateur invalide.");
+        }
+
         var calculated = CalculateClassification(request);
         var fartEvent = new FartEvent
         {
@@ -60,10 +67,9 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
         };
 
         dbContext.FartEvents.Add(fartEvent);
+        var fartRewards = progressionService.ApplyFartRewards(user, fartEvent);
         await dbContext.SaveChangesAsync(cancellationToken);
-        await badgeService.AwardAfterFartEventAsync(userId, fartEvent.Id, cancellationToken);
-
-        return await MapDtoAsync(fartEvent.Id, userId, cancellationToken)
+        return await MapDtoAsync(fartEvent.Id, userId, cancellationToken, fartRewards)
             ?? throw new InvalidOperationException("L'événement n'a pas pu être créé.");
     }
 
@@ -170,7 +176,11 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
         return Task.FromResult<CommentDto?>(null);
     }
 
-    private async Task<FartEventDto?> MapDtoAsync(Guid fartEventId, Guid viewerUserId, CancellationToken cancellationToken)
+    private async Task<FartEventDto?> MapDtoAsync(
+        Guid fartEventId,
+        Guid viewerUserId,
+        CancellationToken cancellationToken,
+        FartRewardsDto? fartRewards = null)
     {
         var fartEvent = await dbContext.FartEvents.FirstOrDefaultAsync(
             x => x.Id == fartEventId && (x.UserId == viewerUserId || x.Visibility == FartVisibility.Public),
@@ -203,6 +213,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             fartEvent.Category,
             fartEvent.Visibility,
             rewards,
+            fartRewards,
             badges,
             await GetReactionSummaryAsync(fartEvent.Id, viewerUserId, cancellationToken),
             Array.Empty<CommentDto>());

@@ -31,6 +31,18 @@ type HistoryState = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "L'opération n'a pas pu être effectuée.";
 
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.log(...args);
+  }
+};
+
+const devError = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.error(...args);
+  }
+};
+
 export const useHistoryStore = create<HistoryState>((set, get) => ({
   error: null,
   events: [],
@@ -44,41 +56,41 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   currentlyPlayingId: null,
 
   loadHistory: async () => {
-    console.log('[history-store] loadHistory started', {
+    devLog('[history-store] loadHistory started', {
       previousItemCount: get().items.length,
       previousHasLoaded: get().hasLoaded,
     });
     set({ error: null, isLoading: true });
     try {
       const items = await historyApi.getMyHistory();
-      console.log('[history-store] loadHistory succeeded', { itemCount: items.length });
+      devLog('[history-store] loadHistory succeeded', { itemCount: items.length });
       set({ events: items, items, hasLoaded: true });
     } catch (error) {
       const message = getErrorMessage(error);
-      console.error('[history-store] loadHistory failed', { error, message });
+      devError('[history-store] loadHistory failed', { error, message });
       set({ error: message, hasLoaded: true });
     } finally {
       set({ isLoading: false });
-      console.log('[history-store] loadHistory finished');
+      devLog('[history-store] loadHistory finished');
     }
   },
 
   refreshHistory: async () => {
-    console.log('[history-store] refreshHistory started', {
+    devLog('[history-store] refreshHistory started', {
       previousItemCount: get().items.length,
     });
     set({ error: null, isRefreshing: true });
     try {
       const items = await historyApi.getMyHistory();
-      console.log('[history-store] refreshHistory succeeded', { itemCount: items.length });
+      devLog('[history-store] refreshHistory succeeded', { itemCount: items.length });
       set({ events: items, items, hasLoaded: true });
     } catch (error) {
       const message = getErrorMessage(error);
-      console.error('[history-store] refreshHistory failed', { error, message });
+      devError('[history-store] refreshHistory failed', { error, message });
       set({ error: message });
     } finally {
       set({ isRefreshing: false });
-      console.log('[history-store] refreshHistory finished');
+      devLog('[history-store] refreshHistory finished');
     }
   },
 
@@ -105,8 +117,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       return;
     }
 
-    console.log('[history] Play audio:', event.id);
-    console.log('[history] Audio URL:', audioUrl);
+    devLog('[history] Play audio:', event.id);
+    devLog('[history] Audio URL:', audioUrl);
     set({ currentlyPlayingId: event.id, error: null, playbackStatus: 'loading' });
     try {
       await audioPlaybackService.play(
@@ -114,7 +126,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         audioUrl,
         () => set({ currentlyPlayingId: null, playbackStatus: 'idle' }),
         (message) => {
-          console.log('[history] Audio playback error:', message);
+          devLog('[history] Audio playback error:', message);
           set({ currentlyPlayingId: null, error: message, playbackStatus: 'error' });
         },
       );
@@ -122,7 +134,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
         set({ playbackStatus: 'playing' });
       }
     } catch (error) {
-      console.log('[history] Audio playback error:', error);
+      devLog('[history] Audio playback error:', error);
       audioPlaybackService.stop();
       set({
         currentlyPlayingId: null,

@@ -18,6 +18,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { HistoryEventCard } from '../../features/history/components/HistoryEventCard';
 import { useHistoryStore } from '../../features/history/historyStore';
 import type { FartHistoryEvent } from '../../features/history/types';
+import { t } from '../../i18n/translations';
 import { useNotificationStore } from '../../features/notifications/notificationStore';
 import { ProfileStat } from '../../features/profile/components/ProfileStat';
 import { useProfileStore } from '../../features/profile/profileStore';
@@ -104,7 +105,7 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="PROFIL" />
+          <ScreenTitle title={t('screens.profile.title')} />
           <FeedState description="Chargement du joueur." loading title="Profil" tone="purple" />
         </View>
       </SafeAreaView>
@@ -115,7 +116,7 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="PROFIL" />
+          <ScreenTitle title={t('screens.profile.title')} />
           <FeedState
             actionLabel="Reessayer"
             description={profileError ?? 'Profil indisponible.'}
@@ -142,7 +143,7 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenTitle title="PROFIL" />
+        <ScreenTitle title={t('screens.profile.title')} />
 
         <SurfaceCard accent="cyan" style={styles.identityCard}>
           <View style={styles.identityRow}>
@@ -280,11 +281,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 44,
-    paddingTop: 0,
   },
   stateContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   identityCard: {
     marginBottom: 20,

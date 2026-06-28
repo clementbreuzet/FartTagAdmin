@@ -290,7 +290,7 @@ export const mapPlayerProfile = (profile: BackendPlayerProfile): UserProfile => 
   equippedTitle: null,
   equippedFrame: null,
   level: profile.level,
-  levelProgressPercent: profile.xp % 1000 / 10,
+  levelProgressPercent: profile.progressPercent,
   globalStats: {
     totalFarts: profile.stats.totalFarts,
     publicFarts: 0,
@@ -300,7 +300,12 @@ export const mapPlayerProfile = (profile: BackendPlayerProfile): UserProfile => 
   },
   bestFart: null,
   recentBadges: [],
-  xp: profile.xp,
+  xp: profile.totalXp,
+  totalXp: profile.totalXp,
+  currentLevelXp: profile.currentLevelXp,
+  requiredLevelXp: profile.requiredLevelXp,
+  flatulons: profile.flatulons,
+  gems: profile.gems,
   stats: profile.stats,
   notifications: profile.notifications,
   connectedDevice: profile.connectedDevice,
@@ -340,7 +345,7 @@ export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
     model: event.deviceModel,
   },
   rewards: {
-    flatulons: event.rewards
+    flatulons: event.rewardItems
       .filter((reward) => reward.type.toLowerCase() === 'flatulons')
       .reduce((total, reward) => total + reward.amount, 0),
     badges: event.badges.map((name, index) => ({ id: `${event.id}-badge-${index}`, name })),
@@ -357,9 +362,17 @@ export const mapFartDetails = (event: BackendFartEvent): FartDetails => ({
 export const mapOfficialFartResult = (event: BackendFartEvent): OfficialFartResult => ({
   fartEventId: event.id,
   officialScore: event.officialScore,
-  flatulonsEarned: event.rewards
-    .filter((reward) => reward.type.toLowerCase() === 'flatulons')
-    .reduce((total, reward) => total + reward.amount, 0),
+  xpGained: event.rewards?.xpGained ?? 0,
+  flatulonsEarned: event.rewards?.flatulonsGained ?? 0,
+  oldLevel: event.rewards?.oldLevel ?? 1,
+  newLevel: event.rewards?.newLevel ?? 1,
+  leveledUp: event.rewards?.leveledUp ?? false,
+  totalXp: event.rewards?.totalXp ?? 0,
+  currentLevelXp: event.rewards?.currentLevelXp ?? 0,
+  requiredLevelXp: event.rewards?.requiredLevelXp ?? 100,
+  progressPercent: event.rewards?.progressPercent ?? 0,
+  oldFlatulons: event.rewards?.oldFlatulons ?? 0,
+  newFlatulons: event.rewards?.newFlatulons ?? 0,
   unlockedBadges: event.badges.map((name, index) => ({ id: `${event.id}-badge-${index}`, name })),
   ranking: null,
 });

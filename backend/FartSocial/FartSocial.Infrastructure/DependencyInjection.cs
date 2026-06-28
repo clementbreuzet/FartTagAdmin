@@ -7,6 +7,7 @@ using FartSocial.Application.Leaderboards;
 using FartSocial.Application.FartEvents;
 using FartSocial.Application.Social;
 using FartSocial.Application.LootBoxes;
+using FartSocial.Application.Progression;
 using FartSocial.Domain.Identity;
 using FartSocial.Infrastructure.Auth;
 using FartSocial.Infrastructure.Badges;
@@ -19,6 +20,7 @@ using FartSocial.Infrastructure.LootBoxes;
 using FartSocial.Infrastructure.Leaderboards;
 using FartSocial.Infrastructure.Social;
 using FartSocial.Infrastructure.Persistence;
+using FartSocial.Infrastructure.Progression;
 using FartSocial.Infrastructure.Seeding;
 using FartSocial.Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
@@ -59,6 +61,8 @@ public static class DependencyInjection
         services.AddScoped<IFartEventService, FartEventService>();
         services.AddScoped<IFartEventReadService, FartEventService>();
         services.AddScoped<ILootBoxService, LootBoxService>();
+        services.AddScoped<IProgressionService, ProgressionService>();
+        services.AddScoped<DatabaseScriptRunner>();
         services.AddScoped<AuthSeeder>();
 
         return services;

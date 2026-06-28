@@ -58,6 +58,9 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.PasswordHash).IsRequired();
             builder.Property(x => x.SecurityStamp).HasMaxLength(64).IsRequired();
             builder.Property(x => x.ConcurrencyStamp).HasMaxLength(64).IsRequired();
+            builder.Property(x => x.Level).HasDefaultValue(1).IsRequired();
+            builder.Property(x => x.TotalXp).HasDefaultValue(0).IsRequired();
+            builder.Property(x => x.Gems).HasDefaultValue(0).IsRequired();
             builder.Property(x => x.AvatarUrl).HasMaxLength(500);
             builder.Property(x => x.EquippedTitleInventoryItemId);
             builder.Property(x => x.EquippedProfileFrameInventoryItemId);

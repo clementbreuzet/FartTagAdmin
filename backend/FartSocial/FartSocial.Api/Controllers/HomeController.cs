@@ -1,4 +1,5 @@
 using FartSocial.Application.Home.Dtos;
+using FartSocial.Application.Progression;
 using FartSocial.Domain.Daily;
 using FartSocial.Domain.Economy;
 using FartSocial.Infrastructure.Persistence;
@@ -11,10 +12,11 @@ namespace FartSocial.Api.Controllers;
 
 /// <summary>Returns the V0 home dashboard for the authenticated user.</summary>
 /// <param name="dbContext">The persistence context used to aggregate home data.</param>
+/// <param name="progressionService">Calculates the persisted player progression snapshot.</param>
 [ApiController]
 [Authorize]
 [Route("api/home")]
-public sealed class HomeController(FartSocialDbContext dbContext) : ControllerBase
+public sealed class HomeController(FartSocialDbContext dbContext, IProgressionService progressionService) : ControllerBase
 {
     /// <summary>Gets the daily dashboard summary.</summary>
     [HttpGet]
@@ -27,6 +29,12 @@ public sealed class HomeController(FartSocialDbContext dbContext) : ControllerBa
         }
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(item => item.Id == userId.Value && item.IsActive, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
         var challenge = await GetOrCreateChallengeAsync(today, cancellationToken);
         var dailyReward = await GetOrCreateDailyRewardAsync(userId.Value, today, cancellationToken);
 
@@ -37,8 +45,7 @@ public sealed class HomeController(FartSocialDbContext dbContext) : ControllerBa
             item => item.OccurredAt >= todayStart && item.OccurredAt < tomorrowStart,
             cancellationToken);
 
-        var totalXp = await allUserEvents.SumAsync(item => (int?)item.OfficialScore, cancellationToken) ?? 0;
-        var level = Math.Max(1, (totalXp / 1000) + 1);
+        var progression = progressionService.GetSnapshot(user.TotalXp);
         var flatulons = await GetFlatulonsAsync(userId.Value, cancellationToken);
 
         var recentFarts = await allUserEvents
@@ -56,10 +63,10 @@ public sealed class HomeController(FartSocialDbContext dbContext) : ControllerBa
             .ToListAsync(cancellationToken);
 
         return Ok(new HomeDashboardDto(
-            level,
-            totalXp,
+            progression.Level,
+            progression.TotalXp,
             (int)Math.Floor(flatulons),
-            0,
+            user.Gems,
             new DailyChallengeDto(
                 challenge.Id,
                 challenge.Title,

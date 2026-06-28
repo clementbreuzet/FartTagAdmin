@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using FartSocial.Application.Notifications.Dtos;
+using FartSocial.Application.Progression;
 using FartSocial.Application.Social.Dtos;
+using FartSocial.Domain.Economy;
 using FartSocial.Domain.Notifications;
 using FartSocial.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +15,7 @@ namespace FartSocial.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/profile")]
-public sealed class ProfileController(FartSocialDbContext dbContext) : ControllerBase
+public sealed class ProfileController(FartSocialDbContext dbContext, IProgressionService progressionService) : ControllerBase
 {
     /// <summary>Gets the authenticated player's V0 profile.</summary>
     [HttpGet]
@@ -37,8 +39,8 @@ public sealed class ProfileController(FartSocialDbContext dbContext) : Controlle
             .ToListAsync(cancellationToken);
 
         var totalFarts = events.Count;
-        var xp = events.Sum(item => item.OfficialScore);
-        var level = Math.Max(1, (xp / 1000) + 1);
+        var progression = progressionService.GetSnapshot(user.TotalXp);
+        var flatulons = await GetFlatulonsAsync(user.Id, cancellationToken);
         var bestScore = totalFarts == 0 ? 0 : events.Max(item => item.OfficialScore);
         var averageScore = totalFarts == 0 ? 0 : Math.Round((decimal)events.Average(item => item.OfficialScore), 1);
         var totalDurationMs = events.Sum(item => item.DurationMs);
@@ -61,11 +63,40 @@ public sealed class ProfileController(FartSocialDbContext dbContext) : Controlle
             user.UserName,
             user.UserName,
             user.AvatarUrl,
-            level,
-            xp,
+            progression.Level,
+            progression.TotalXp,
+            progression.CurrentLevelXp,
+            progression.RequiredLevelXp,
+            progression.ProgressPercent,
+            flatulons,
+            user.Gems,
             new PlayerProfileStatsDto(totalFarts, bestScore, averageScore, totalDurationMs, totalGasLevel),
             Map(notificationPreference, activePushToken is not null),
             device));
+    }
+
+    private async Task<int> GetFlatulonsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var wallet = await dbContext.Wallets.FirstOrDefaultAsync(item => item.UserId == userId, cancellationToken);
+        if (wallet is null)
+        {
+            wallet = new Wallet
+            {
+                Currency = "FLATULONS",
+                UserId = userId,
+            };
+            dbContext.Wallets.Add(wallet);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return 0;
+        }
+
+        var balance = await dbContext.WalletTransactions
+            .Where(transaction => transaction.WalletId == wallet.Id)
+            .SumAsync(
+                transaction => transaction.Type == WalletTransactionType.Credit ? transaction.Amount : -transaction.Amount,
+                cancellationToken);
+
+        return (int)Math.Floor(balance);
     }
 
     private Guid? GetUserId()

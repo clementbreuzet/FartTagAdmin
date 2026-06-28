@@ -72,7 +72,7 @@ public sealed class FartEventsController(
         {
             return BadRequest("Le format audio fourni n'est pas accepté.");
         }
-        if (uploadAudioRequest.DurationMs is < 1 or > 600_000)
+        if (uploadAudioRequest.DurationMs is null or < 1 or > 600_000)
         {
             return BadRequest("La durée audio est invalide.");
         }
@@ -86,7 +86,7 @@ public sealed class FartEventsController(
         {
             BlobData = blobData,
             ContentType = uploadAudioRequest.File.ContentType,
-            DurationMs = uploadAudioRequest.DurationMs.Value!,
+            DurationMs = uploadAudioRequest.DurationMs.Value,
             FileName = Path.GetFileName(uploadAudioRequest.File.FileName),
             SizeBytes = uploadAudioRequest.File.Length,
             Sha256 = Convert.ToHexString(SHA256.HashData(blobData)).ToLowerInvariant(),

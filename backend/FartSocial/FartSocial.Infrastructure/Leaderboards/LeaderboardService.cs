@@ -1,6 +1,5 @@
 using FartSocial.Application.Leaderboards;
 using FartSocial.Application.Leaderboards.Dtos;
-using FartSocial.Domain.Social;
 using FartSocial.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -140,7 +139,7 @@ public sealed class LeaderboardService(FartSocialDbContext dbContext) : ILeaderb
             .Where(item => titleIds.Contains(item.Id))
             .ToDictionaryAsync(item => item.Id, item => item.Name, cancellationToken);
 
-        var badgeNames = await GetTopBadgesAsync(userIds, cancellationToken);
+        var badgeNames = new Dictionary<Guid, BadgeSnapshot>();
 
         return new LeaderboardsResponseDto(
             BuildBoard("global", "Score global", "Points", globalScores, users, titles, badgeNames),
@@ -190,43 +189,9 @@ public sealed class LeaderboardService(FartSocialDbContext dbContext) : ILeaderb
         return new LeaderboardBoardDto(key, title, metricLabel, entries);
     }
 
-    private async Task<IReadOnlyDictionary<Guid, BadgeSnapshot>> GetTopBadgesAsync(Guid[] userIds, CancellationToken cancellationToken)
+    private Task<IReadOnlyCollection<Guid>> GetFriendScopeUserIdsAsync(Guid userId, CancellationToken cancellationToken)
     {
-        if (userIds.Length == 0)
-        {
-            return new Dictionary<Guid, BadgeSnapshot>();
-        }
-
-        var badgeRows = await dbContext.UserBadges
-            .AsNoTracking()
-            .Where(userBadge => userIds.Contains(userBadge.UserId))
-            .Include(userBadge => userBadge.Badge)
-            .OrderByDescending(userBadge => userBadge.Badge!.Rarity)
-            .ThenByDescending(userBadge => userBadge.EarnedAt)
-            .ToListAsync(cancellationToken);
-
-        return badgeRows
-            .GroupBy(row => row.UserId)
-            .ToDictionary(
-                group => group.Key,
-                group =>
-                {
-                    var top = group.First();
-                    return new BadgeSnapshot(top.Badge!.Name, top.Badge.Rarity.ToString().ToLowerInvariant());
-                });
-    }
-
-    private async Task<IReadOnlyCollection<Guid>> GetFriendScopeUserIdsAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var friendIds = await dbContext.Friendships
-            .AsNoTracking()
-            .Where(friendship => friendship.UserId == userId || friendship.FriendUserId == userId)
-            .Select(friendship => friendship.UserId == userId ? friendship.FriendUserId : friendship.UserId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        friendIds.Add(userId);
-        return friendIds.Distinct().ToArray();
+        return Task.FromResult<IReadOnlyCollection<Guid>>(new[] { userId });
     }
 
     private sealed record LeaderboardAggregate(Guid UserId, int Score, int? DurationMs, int? GasLevel);

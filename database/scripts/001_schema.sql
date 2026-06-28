@@ -22,6 +22,9 @@ CREATE TABLE dbo.Users (
     IsActive bit NOT NULL,
     LastLoginAt datetimeoffset NULL,
     AvatarUrl nvarchar(500) NULL,
+    Level int NOT NULL CONSTRAINT DF_Users_Level DEFAULT 1,
+    TotalXp int NOT NULL CONSTRAINT DF_Users_TotalXp DEFAULT 0,
+    Gems int NOT NULL CONSTRAINT DF_Users_Gems DEFAULT 0,
     EquippedTitleInventoryItemId uniqueidentifier NULL,
     EquippedProfileFrameInventoryItemId uniqueidentifier NULL,
     EquippedDetectionEffectInventoryItemId uniqueidentifier NULL,
@@ -274,33 +277,6 @@ CREATE TABLE dbo.WalletTransactions (
     CONSTRAINT FK_WalletTransactions_Users_CreatedByUserId FOREIGN KEY (CreatedByUserId) REFERENCES dbo.Users(Id)
 );
 
-IF OBJECT_ID(N'dbo.Badges', N'U') IS NULL
-CREATE TABLE dbo.Badges (
-    Id uniqueidentifier NOT NULL CONSTRAINT PK_Badges PRIMARY KEY,
-    Code nvarchar(80) NOT NULL,
-    Name nvarchar(120) NOT NULL,
-    Description nvarchar(500) NOT NULL,
-    Rarity int NOT NULL,
-    IconKey nvarchar(250) NULL,
-    IsActive bit NOT NULL,
-    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_Badges_CreatedAt DEFAULT SYSUTCDATETIME(),
-    UpdatedAt datetimeoffset NULL
-);
-
-IF OBJECT_ID(N'dbo.UserBadges', N'U') IS NULL
-CREATE TABLE dbo.UserBadges (
-    Id uniqueidentifier NOT NULL CONSTRAINT PK_UserBadges PRIMARY KEY,
-    UserId uniqueidentifier NOT NULL,
-    BadgeId uniqueidentifier NOT NULL,
-    SourceFartEventId uniqueidentifier NULL,
-    EarnedAt datetimeoffset NOT NULL,
-    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_UserBadges_CreatedAt DEFAULT SYSUTCDATETIME(),
-    UpdatedAt datetimeoffset NULL,
-    CONSTRAINT FK_UserBadges_Badges_BadgeId FOREIGN KEY (BadgeId) REFERENCES dbo.Badges(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_UserBadges_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id),
-    CONSTRAINT FK_UserBadges_FartEvents_SourceFartEventId FOREIGN KEY (SourceFartEventId) REFERENCES dbo.FartEvents(Id) ON DELETE SET NULL
-);
-
 IF OBJECT_ID(N'dbo.LootBoxes', N'U') IS NULL
 CREATE TABLE dbo.LootBoxes (
     Id uniqueidentifier NOT NULL CONSTRAINT PK_LootBoxes PRIMARY KEY,
@@ -436,16 +412,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Walle
     CREATE INDEX IX_WalletTransactions_WalletId_TransactionAt ON dbo.WalletTransactions(WalletId, TransactionAt);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.WalletTransactions') AND name = N'IX_WalletTransactions_CreatedByUserId')
     CREATE INDEX IX_WalletTransactions_CreatedByUserId ON dbo.WalletTransactions(CreatedByUserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Badges') AND name = N'IX_Badges_Code')
-    CREATE UNIQUE INDEX IX_Badges_Code ON dbo.Badges(Code);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserBadges') AND name = N'IX_UserBadges_UserId_BadgeId')
-    CREATE UNIQUE INDEX IX_UserBadges_UserId_BadgeId ON dbo.UserBadges(UserId, BadgeId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserBadges') AND name = N'IX_UserBadges_UserId')
-    CREATE INDEX IX_UserBadges_UserId ON dbo.UserBadges(UserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserBadges') AND name = N'IX_UserBadges_BadgeId')
-    CREATE INDEX IX_UserBadges_BadgeId ON dbo.UserBadges(BadgeId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserBadges') AND name = N'IX_UserBadges_SourceFartEventId')
-    CREATE INDEX IX_UserBadges_SourceFartEventId ON dbo.UserBadges(SourceFartEventId);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.LootBoxes') AND name = N'IX_LootBoxes_Name')
     CREATE UNIQUE INDEX IX_LootBoxes_Name ON dbo.LootBoxes(Name);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.InventoryItems') AND name = N'IX_InventoryItems_Name')

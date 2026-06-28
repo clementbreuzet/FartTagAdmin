@@ -7,7 +7,12 @@ public sealed record PlayerProfileDto(
     string DisplayName,
     string? AvatarUrl,
     int Level,
-    int Xp,
+    int TotalXp,
+    int CurrentLevelXp,
+    int RequiredLevelXp,
+    int ProgressPercent,
+    int Flatulons,
+    int Gems,
     PlayerProfileStatsDto Stats,
     PlayerNotificationSettingsDto Notifications,
     ConnectedDeviceDto? ConnectedDevice);

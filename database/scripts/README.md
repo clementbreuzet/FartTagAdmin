@@ -38,9 +38,10 @@ a script fails.
 1. `000_create_database.sql`
 2. `001_schema.sql`
 3. `005_upgrade_user_data_and_audio_blob.sql`
-4. `010_seed_security_and_badges.sql`
-5. `020_seed_shop_catalog.sql`
-6. `900_verify_deployment.sql`
+4. `007_upgrade_user_progression.sql`
+5. `010_seed_security_and_badges.sql` (security only for V0)
+6. `020_seed_shop_catalog.sql`
+7. `900_verify_deployment.sql`
 
 `deploy.sql` runs the complete sequence.
 
@@ -57,17 +58,30 @@ The script creates or repairs `usb-tester@farttag.local` with username
 `usb-tester` and password `UsbTest!2026`, then assigns the `User` role.
 Do not run it in production.
 
+## User Progression Upgrade
+
+The backend startup runner applies this script automatically in order. For
+manual repair only, it can also be run directly:
+
+```powershell
+sqlcmd -S "localhost\SQLEXPRESS" -E -b -i 007_upgrade_user_progression.sql
+```
+
+The script only checks `dbo.Users` and adds `Level`, `TotalXp`, and `Gems`
+when they are missing.
+
 ## User Data Covered
 
-The schema stores and protects the complete current user-data model:
+The V0 schema stores and protects the minimal current user-data model:
 
 - Identity, password hashes, roles, permissions, and refresh tokens
 - Profile avatar and equipped cosmetics
 - Owned devices, ownership history, calibrations, and logs
 - Fart events, sensor measurements, rewards, visibility, and audio blobs
-- Reactions, comments, friendships, and friend requests
+- Public feed reactions
 - Wallets and append-only wallet transactions
-- Earned badges and inventory acquisitions
+- Loot boxes and minimal inventory acquisitions
+- Daily challenges, daily rewards, notification preferences, and push tokens
 
 User-owned rows are linked to `Users` by restrictive foreign keys so deleting a
 user cannot silently delete or orphan their recorded data.
@@ -92,14 +106,15 @@ any file cannot be imported.
 
 - Super-admin accounts are intentionally not created by SQL. Configure the API
   `Seed` settings so `AuthSeeder` hashes the password correctly.
-- The schema mirrors the current `FartSocialDbContext`, including relations that
-  protect all user-owned data with SQL foreign keys.
+- The schema is intentionally reduced for V0. Legacy controllers may remain in
+  code for compatibility, but comments, friends, and badges are not deployed.
 - New microphone recordings are stored directly in
   `FartAudioFiles.BlobData` (`varbinary(max)`) with a SHA-256 checksum.
 - Existing disk-based audio rows receive nullable blob columns during upgrade.
   Their file bytes must be imported before the old disk files are removed.
 - The legacy `StorageKey` column is made nullable during upgrade so new
   blob-only uploads are accepted by an existing database.
-- The API currently calls `EnsureCreatedAsync()`. Once EF migrations are added,
-  replace it with a controlled migration/deployment process.
+- The API applies the ordered idempotent startup scripts before seeding auth
+  data. Once EF migrations are added, replace this bootstrap runner with a
+  controlled migration/deployment process.
 - Back up an existing database before applying scripts in production.

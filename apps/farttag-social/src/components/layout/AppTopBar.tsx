@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     gap: 8,
-    paddingBottom: 7,
+    paddingBottom: 8,
     paddingHorizontal: 10,
     paddingTop: 6,
   },
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     gap: 6,
-    padding: 4,
+    padding: 5,
   },
   levelBadge: {
     alignItems: 'center',

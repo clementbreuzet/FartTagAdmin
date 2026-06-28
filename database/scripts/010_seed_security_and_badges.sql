@@ -107,41 +107,5 @@ WHERE NOT EXISTS (
     WHERE existing.RoleId = roleItem.Id AND existing.PermissionId = permissionItem.Id
 );
 
-DECLARE @Badges TABLE (
-    Id uniqueidentifier NOT NULL,
-    Code nvarchar(80) NOT NULL,
-    Name nvarchar(120) NOT NULL,
-    Description nvarchar(500) NOT NULL,
-    Rarity int NOT NULL,
-    IconKey nvarchar(250) NULL
-);
-
-INSERT INTO @Badges (Id, Code, Name, Description, Rarity, IconKey) VALUES
-('30000000-0000-0000-0000-000000000001', N'first-fart', N'Premier Fart', N'Attribue au premier fart enregistre.', 1, N'badge-first-fart'),
-('30000000-0000-0000-0000-000000000002', N'gaz-noble', N'Gaz Noble', N'Attribue aux farts particulierement riches en gaz.', 2, N'badge-gaz-noble'),
-('30000000-0000-0000-0000-000000000003', N'category-5', N'Categorie 5', N'Attribue aux farts de categorie mythique.', 3, N'badge-category-5'),
-('30000000-0000-0000-0000-000000000004', N'silent-assassin', N'Assassin Silencieux', N'Attribue aux farts discrets mais redoutables.', 4, N'badge-silent-assassin'),
-('30000000-0000-0000-0000-000000000005', N'king-of-farts', N'Roi du Fart', N'Attribue aux utilisateurs les plus prolifiques.', 5, N'badge-king-of-farts');
-
-UPDATE target
-SET Name = source.Name,
-    Description = source.Description,
-    Rarity = source.Rarity,
-    IconKey = source.IconKey,
-    IsActive = 1,
-    UpdatedAt = SYSUTCDATETIME()
-FROM dbo.Badges target
-JOIN @Badges source ON source.Code = target.Code
-WHERE target.Name <> source.Name
-   OR target.Description <> source.Description
-   OR target.Rarity <> source.Rarity
-   OR ISNULL(target.IconKey, N'') <> ISNULL(source.IconKey, N'')
-   OR target.IsActive = 0;
-
-INSERT INTO dbo.Badges (Id, Code, Name, Description, Rarity, IconKey, IsActive)
-SELECT source.Id, source.Code, source.Name, source.Description, source.Rarity, source.IconKey, 1
-FROM @Badges source
-WHERE NOT EXISTS (SELECT 1 FROM dbo.Badges target WHERE target.Code = source.Code);
-
 COMMIT TRANSACTION;
 GO

@@ -3,6 +3,7 @@ import { DarkTheme, NavigationContainer, type Theme } from '@react-navigation/na
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { appTheme } from '../theme/theme';
+import { routeNames } from './routeNames';
 import { TabNavigator } from './TabNavigator';
 import type { RootStackParamList } from './types';
 
@@ -24,7 +25,7 @@ const theme: Theme = {
 export const RootNavigator = () => (
   <NavigationContainer theme={theme}>
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen component={TabNavigator} name="MainTabs" />
+      <Stack.Screen component={TabNavigator} name={routeNames.mainTabs} />
     </Stack.Navigator>
   </NavigationContainer>
 );

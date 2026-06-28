@@ -1,4 +1,5 @@
 import { apiRequest } from '../../api/apiClient';
+import { apiEndpoints } from '../../api/apiEndpoints';
 import type {
   BackendFriend,
   BackendFriendRequest,
@@ -12,12 +13,12 @@ import type { FriendCard, FriendRequestsResponse } from './types';
 export const friendsApi = {
   searchUsers(query: string) {
     return apiRequest<BackendUserSearchResult[]>(
-      `/api/profiles/search?query=${encodeURIComponent(query.trim())}`,
+      apiEndpoints.friends.search(query.trim()),
     );
   },
   async getFriends(): Promise<FriendCard[]> {
     try {
-      const response = await apiRequest<BackendFriend[]>('/api/friends');
+      const response = await apiRequest<BackendFriend[]>(apiEndpoints.friends.list);
       const friends = response.map(mapFriend);
       return friends.length > 0 ? friends : mockFriends;
     } catch {
@@ -27,7 +28,7 @@ export const friendsApi = {
 
   async getRequests(): Promise<FriendRequestsResponse> {
     try {
-      const response = await apiRequest<BackendFriendRequestsResponse>('/api/friends/requests');
+      const response = await apiRequest<BackendFriendRequestsResponse>(apiEndpoints.friends.requests);
       const incoming = response.incoming.map((request) => mapFriendRequest(request, 'incoming'));
       const outgoing = response.outgoing.map((request) => mapFriendRequest(request, 'outgoing'));
       return {
@@ -43,25 +44,25 @@ export const friendsApi = {
   },
 
   requestFriend(userId: string) {
-    return apiRequest<BackendFriendRequest>(`/api/friends/${userId}/request`, {
+    return apiRequest<BackendFriendRequest>(apiEndpoints.friends.request(userId), {
       method: 'POST',
     });
   },
 
   acceptRequest(requestId: string) {
-    return apiRequest<BackendFriendRequest>(`/api/friends/${requestId}/accept`, {
+    return apiRequest<BackendFriendRequest>(apiEndpoints.friends.accept(requestId), {
       method: 'POST',
     });
   },
 
   declineRequest(requestId: string) {
-    return apiRequest<BackendFriendRequest>(`/api/friends/requests/${requestId}`, {
+    return apiRequest<BackendFriendRequest>(apiEndpoints.friends.reject(requestId), {
       method: 'DELETE',
     });
   },
 
   removeFriend(userId: string) {
-    return apiRequest<void>(`/api/friends/${userId}`, {
+    return apiRequest<void>(apiEndpoints.friends.byUserId(userId), {
       method: 'DELETE',
     });
   },

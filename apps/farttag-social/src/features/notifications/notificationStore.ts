@@ -28,6 +28,18 @@ const defaultPreferences: NotificationPreferences = {
 const messageFor = (error: unknown) =>
   error instanceof Error ? error.message : "Les notifications n'ont pas pu être configurées.";
 
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.log(...args);
+  }
+};
+
+const devError = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.error(...args);
+  }
+};
+
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   error: null,
   expoPushToken: null,
@@ -36,58 +48,58 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   preferences: defaultPreferences,
 
   initializeNotifications: async () => {
-    console.log('[notifications-store] Initialization started');
+    devLog('[notifications-store] Initialization started');
     set({ error: null });
     try {
       const permissionStatus = await NotificationService.requestNotificationPermissions();
       set({ permissionStatus });
       if (permissionStatus === 'granted') {
-        console.log('[notifications-store] Permission granted, registering token');
+        devLog('[notifications-store] Permission granted, registering token');
         await get().registerToken();
       } else {
-        console.log('[notifications-store] Token registration skipped:', permissionStatus);
+        devLog('[notifications-store] Token registration skipped:', permissionStatus);
       }
     } catch (error) {
       const message = messageFor(error);
-      console.error('[notifications-store] Initialization failed:', error);
+      devError('[notifications-store] Initialization failed:', error);
       set({ error: message });
     }
 
     try {
-      console.log('[notifications-store] Loading preferences');
+      devLog('[notifications-store] Loading preferences');
       const preferences = await NotificationService.getNotificationPreferences();
-      console.log('[notifications-store] Preferences loaded:', preferences);
+      devLog('[notifications-store] Preferences loaded:', preferences);
       set({ preferences });
     } catch (error) {
       const message = messageFor(error);
-      console.error('[notifications-store] Preferences loading failed:', error);
+      devError('[notifications-store] Preferences loading failed:', error);
       set({ error: message });
     }
   },
 
   registerToken: async () => {
-    console.log('[notifications-store] Token registration started');
+    devLog('[notifications-store] Token registration started');
     set({ error: null, isRegistering: true });
     try {
       const permissionStatus = await NotificationService.requestNotificationPermissions();
       set({ permissionStatus });
       if (permissionStatus !== 'granted') {
-        console.log('[notifications-store] Token registration stopped:', permissionStatus);
+        devLog('[notifications-store] Token registration stopped:', permissionStatus);
         return;
       }
-      console.log('[notifications-store] Requesting Expo push token');
+      devLog('[notifications-store] Requesting Expo push token');
       const expoPushToken = await NotificationService.getExpoPushToken();
-      console.log('[notifications-store] Registering token with backend');
+      devLog('[notifications-store] Registering token with backend');
       await NotificationService.registerPushTokenWithBackend(expoPushToken);
-      console.log('[notifications-store] Token registered with backend');
+      devLog('[notifications-store] Token registered with backend');
       set({ expoPushToken });
     } catch (error) {
       const message = messageFor(error);
-      console.error('[notifications-store] Token registration failed:', error);
+      devError('[notifications-store] Token registration failed:', error);
       set({ error: message });
     } finally {
       set({ isRegistering: false });
-      console.log('[notifications-store] Token registration finished');
+      devLog('[notifications-store] Token registration finished');
     }
   },
 

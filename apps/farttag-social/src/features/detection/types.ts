@@ -26,7 +26,17 @@ export type DetectedFartEvent = {
 export type OfficialFartResult = {
   fartEventId: string;
   officialScore: number;
+  xpGained: number;
   flatulonsEarned: number;
+  oldLevel: number;
+  newLevel: number;
+  leveledUp: boolean;
+  totalXp: number;
+  currentLevelXp: number;
+  requiredLevelXp: number;
+  progressPercent: number;
+  oldFlatulons: number;
+  newFlatulons: number;
   unlockedBadges: {
     id: string;
     name: string;

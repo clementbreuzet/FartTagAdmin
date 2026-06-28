@@ -36,14 +36,16 @@ export const FartHistoryScreen = ({ navigation }: FartHistoryScreenProps) => {
   );
 
   useEffect(() => {
-    console.log('[history-screen] Render state', {
-      error,
-      filter,
-      isLoading,
-      isRefreshing,
-      totalItemCount: events.length,
-      visibleItemCount: visibleEvents.length,
-    });
+    if (__DEV__) {
+      console.log('[history-screen] Render state', {
+        error,
+        filter,
+        isLoading,
+        isRefreshing,
+        totalItemCount: events.length,
+        visibleItemCount: visibleEvents.length,
+      });
+    }
   }, [error, events.length, filter, isLoading, isRefreshing, visibleEvents.length]);
 
   if (isLoading && events.length === 0) {

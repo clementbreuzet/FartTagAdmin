@@ -11,6 +11,11 @@ export type UserProfile = {
   } | null;
   level: number;
   levelProgressPercent: number;
+  totalXp?: number;
+  currentLevelXp?: number;
+  requiredLevelXp?: number;
+  flatulons?: number;
+  gems?: number;
   globalStats: {
     totalFarts: number;
     publicFarts: number;

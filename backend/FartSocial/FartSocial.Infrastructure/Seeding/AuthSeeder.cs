@@ -21,7 +21,6 @@ public sealed class AuthSeeder(
     {
         await SeedPermissionsAsync(cancellationToken);
         await SeedRolesAsync(cancellationToken);
-        await SeedBadgesAsync(cancellationToken);
         await SeedDefaultSuperAdminAsync(cancellationToken);
     }
 

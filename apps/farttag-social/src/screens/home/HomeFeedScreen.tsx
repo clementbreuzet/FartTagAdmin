@@ -15,6 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useHomeStore } from '../../features/home/homeStore';
 import type { HomeFartEvent } from '../../features/home/types';
+import { t } from '../../i18n/translations';
+import { routeNames } from '../../navigation/routeNames';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -48,21 +50,21 @@ export const HomeFeedScreen = () => {
   }, [hasLoaded, isLoading, loadHome]);
 
   const openHistory = () => {
-    navigation.navigate('MainTabs', {
-      params: { screen: 'ProfileScreen' },
-      screen: 'ProfileTab',
+    navigation.navigate(routeNames.mainTabs, {
+      params: { screen: routeNames.profile },
+      screen: routeNames.profileTab,
     });
   };
 
   const openDetails = (eventId: string) => {
-    navigation.navigate('FartDetailsScreen', { fartEventId: eventId });
+    navigation.navigate(routeNames.fartDetails, { fartEventId: eventId });
   };
 
   if (isLoading && !dashboard) {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="ACCUEIL" />
+          <ScreenTitle title={t('screens.home.title')} />
           <FeedState
             description="Preparation de ton tableau de bord quotidien."
             loading
@@ -77,7 +79,7 @@ export const HomeFeedScreen = () => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="ACCUEIL" />
+          <ScreenTitle title={t('screens.home.title')} />
           <FeedState
             actionLabel="Reessayer"
             description={error ?? "Impossible de charger l'accueil."}
@@ -104,7 +106,7 @@ export const HomeFeedScreen = () => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenTitle title="ACCUEIL" />
+        <ScreenTitle title={t('screens.home.title')} />
 
         <View style={styles.hero}>
           <Image resizeMode="contain" source={logo} style={styles.logo} />
@@ -216,12 +218,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 36,
-    paddingTop: 0,
   },
   stateContent: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 0,
+    padding: 16,
   },
   hero: {
     alignItems: 'center',

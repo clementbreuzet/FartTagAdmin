@@ -28,7 +28,7 @@ export const XpProgressBar = ({ currentXp, requiredXp }: XpProgressBarProps) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minWidth: 66,
+    minWidth: 84,
   },
   labelRow: {
     flexDirection: 'row',
@@ -36,13 +36,13 @@ const styles = StyleSheet.create({
   },
   label: {
     color: appTheme.colors.toxicGreen,
-    fontSize: 6,
+    fontSize: 7,
     fontWeight: '900',
     letterSpacing: 0.8,
   },
   value: {
     color: appTheme.colors.textMuted,
-    fontSize: 7,
+    fontSize: 8,
     fontWeight: '800',
   },
   track: {
@@ -50,8 +50,8 @@ const styles = StyleSheet.create({
     borderColor: appTheme.colors.borderGlow,
     borderRadius: 4,
     borderWidth: 1,
-    height: 6,
-    marginTop: 3,
+    height: 8,
+    marginTop: 4,
     overflow: 'hidden',
   },
   fill: {

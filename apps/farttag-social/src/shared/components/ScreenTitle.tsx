@@ -42,6 +42,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
     marginTop: 1,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
   lineDot: {
     borderColor: colors.neonGreen,

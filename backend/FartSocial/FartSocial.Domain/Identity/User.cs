@@ -14,6 +14,9 @@ public sealed class User : Entity
     public bool IsActive { get; set; } = true;
     public DateTimeOffset? LastLoginAt { get; set; }
     public string? AvatarUrl { get; set; }
+    public int Level { get; set; } = 1;
+    public int TotalXp { get; set; }
+    public int Gems { get; set; }
     public Guid? EquippedTitleInventoryItemId { get; set; }
     public Guid? EquippedProfileFrameInventoryItemId { get; set; }
     public Guid? EquippedDetectionEffectInventoryItemId { get; set; }

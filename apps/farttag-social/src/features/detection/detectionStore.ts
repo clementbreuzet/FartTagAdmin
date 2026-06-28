@@ -5,6 +5,7 @@ import { PhoneMicService } from '../../services/audio/PhoneMicService';
 import { mockDetectedEvent, mockOfficialDetectionResult } from '../mockData';
 import { useHistoryStore } from '../history/historyStore';
 import { useNotificationStore } from '../notifications/notificationStore';
+import { useProfileStore } from '../profile/profileStore';
 import { NotificationService } from '../../services/notifications/NotificationService';
 import type {
   BleStatus,
@@ -40,19 +41,29 @@ const getErrorMessage = (error: unknown) =>
 const wait = (durationMs: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, durationMs));
 
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.log(...args);
+  }
+};
+
 const refreshHistoryAfterInsert = () => {
-  console.log('[detection] FartEvent created, refreshing history');
+  devLog('[detection] FartEvent created, refreshing history');
   void useHistoryStore.getState().refreshHistory();
+};
+
+const applyProgressionAfterInsert = (result: OfficialFartResult) => {
+  useProfileStore.getState().applyFartRewards(result);
 };
 
 const notifyForOfficialResult = (result: OfficialFartResult) => {
   const { permissionStatus, preferences } = useNotificationStore.getState();
   if (preferences.rewardsEnabled && permissionStatus === 'granted') {
     void NotificationService.showFartDetectedNotification(result.officialScore, result.flatulonsEarned)
-      .catch((error: unknown) => console.log('[notifications] Fart notification failed:', error));
+      .catch((error: unknown) => devLog('[notifications] Fart notification failed:', error));
     result.unlockedBadges.forEach((badge) => {
       void NotificationService.showRewardNotification(badge.name)
-        .catch((error: unknown) => console.log('[notifications] Reward notification failed:', error));
+        .catch((error: unknown) => devLog('[notifications] Reward notification failed:', error));
     });
   }
 };
@@ -162,6 +173,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         uploadStatus: 'uploaded',
         lastEvent: state.lastEvent,
       }));
+      applyProgressionAfterInsert(officialResult);
       refreshHistoryAfterInsert();
       notifyForOfficialResult(officialResult);
     } catch (error) {
@@ -253,6 +265,7 @@ export const useDetectionStore = create<DetectionState>((set, get) => ({
         audioUri: lastEvent.audioUri,
       });
       set({ officialResult, uploadStatus: 'uploaded' });
+      applyProgressionAfterInsert(officialResult);
       refreshHistoryAfterInsert();
       notifyForOfficialResult(officialResult);
     } catch (error) {

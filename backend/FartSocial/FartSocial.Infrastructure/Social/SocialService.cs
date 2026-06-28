@@ -106,17 +106,6 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 .Select(item => new EquippedFrameDto(item.Id, item.Name, item.AssetKey))
                 .FirstOrDefaultAsync(cancellationToken)
             : null;
-        var recentBadges = await dbContext.UserBadges.AsNoTracking()
-            .Where(item => item.UserId == profileUserId)
-            .OrderByDescending(item => item.EarnedAt)
-            .Take(5)
-            .Select(item => new UserProfileBadgeDto(
-                item.BadgeId,
-                item.Badge!.Name,
-                item.Badge.Description,
-                item.EarnedAt))
-            .ToListAsync(cancellationToken);
-
         var totalFarts = events.Count;
         var level = Math.Max(1, totalFarts / 10 + 1);
         var best = events.OrderByDescending(item => item.OfficialScore).ThenByDescending(item => item.OccurredAt).FirstOrDefault();
@@ -136,7 +125,7 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 totalFarts == 0 ? 0 : Math.Round((decimal)events.Average(item => item.OfficialScore), 1),
                 totalReactions),
             best is null ? null : new UserProfileBestFartDto(best.Id, best.OfficialScore, best.OccurredAt),
-            recentBadges);
+            Array.Empty<UserProfileBadgeDto>());
     }
 
     public async Task<IReadOnlyCollection<UserSearchResultDto>> SearchUsersAsync(Guid userId, string query, CancellationToken cancellationToken)

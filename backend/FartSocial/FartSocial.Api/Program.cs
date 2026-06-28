@@ -153,8 +153,8 @@ app.MapControllers();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<FartSocialDbContext>();
-    await dbContext.Database.EnsureCreatedAsync();
+    var scriptRunner = scope.ServiceProvider.GetRequiredService<DatabaseScriptRunner>();
+    await scriptRunner.RunAsync(CancellationToken.None);
 
     var seeder = scope.ServiceProvider.GetRequiredService<AuthSeeder>();
     await seeder.SeedAsync(CancellationToken.None);

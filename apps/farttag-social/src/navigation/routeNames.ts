@@ -1,0 +1,15 @@
+export const routeNames = {
+  detection: 'DetectionScreen',
+  detectionTab: 'DetectionTab',
+  fartDetails: 'FartDetailsScreen',
+  home: 'HomeFeedScreen',
+  homeTab: 'HomeTab',
+  mainTabs: 'MainTabs',
+  profile: 'ProfileScreen',
+  profileTab: 'ProfileTab',
+  publicUserProfile: 'PublicUserProfileScreen',
+  shop: 'ShopScreen',
+  shopTab: 'ShopTab',
+  social: 'SocialScreen',
+  socialTab: 'SocialTab',
+} as const;

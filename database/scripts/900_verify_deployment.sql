@@ -11,7 +11,7 @@ INSERT INTO @ExpectedTables (Name) VALUES
 (N'RefreshTokens'), (N'Devices'), (N'DeviceOwnerships'), (N'DeviceCalibrations'),
 (N'DeviceLogs'), (N'FartAudioFiles'), (N'FartEvents'), (N'Reactions'),
 (N'Wallets'), (N'WalletTransactions'),
-(N'Badges'), (N'UserBadges'), (N'LootBoxes'), (N'InventoryItems'),
+(N'LootBoxes'), (N'InventoryItems'),
 (N'LootBoxRewards'), (N'UserInventoryItems'), (N'UserPushTokens'),
 (N'NotificationPreferences'), (N'DailyChallenges'), (N'DailyRewards');
 
@@ -43,7 +43,6 @@ INSERT INTO @ExpectedForeignKeys (Name) VALUES
 (N'FK_FartEvents_FartAudioFiles_AudioFileId'),
 (N'FK_Reactions_FartEvents_FartEventId'),
 (N'FK_WalletTransactions_Wallets_WalletId'),
-(N'FK_UserBadges_Badges_BadgeId'),
 (N'FK_LootBoxRewards_LootBoxes_LootBoxId'),
 (N'FK_LootBoxRewards_InventoryItems_InventoryItemId'),
 (N'FK_UserInventoryItems_InventoryItems_InventoryItemId'),
@@ -55,8 +54,6 @@ INSERT INTO @ExpectedForeignKeys (Name) VALUES
 (N'FK_Reactions_Users_UserId'),
 (N'FK_Wallets_Users_UserId'),
 (N'FK_WalletTransactions_Users_CreatedByUserId'),
-(N'FK_UserBadges_Users_UserId'),
-(N'FK_UserBadges_FartEvents_SourceFartEventId'),
 (N'FK_UserInventoryItems_Users_UserId'),
 (N'FK_Users_InventoryItems_EquippedTitleInventoryItemId'),
 (N'FK_Users_InventoryItems_EquippedProfileFrameInventoryItemId'),
@@ -77,8 +74,6 @@ IF (SELECT COUNT(*) FROM dbo.Permissions) < 9
     THROW 51001, N'Permission seed is incomplete.', 1;
 IF (SELECT COUNT(*) FROM dbo.Roles) < 5
     THROW 51002, N'Role seed is incomplete.', 1;
-IF (SELECT COUNT(*) FROM dbo.Badges WHERE IsActive = 1) < 5
-    THROW 51003, N'Badge seed is incomplete.', 1;
 IF (SELECT COUNT(*) FROM dbo.InventoryItems) < 5
     THROW 51004, N'Inventory catalog seed is incomplete.', 1;
 IF (SELECT COUNT(*) FROM dbo.LootBoxes WHERE IsActive = 1) < 5
@@ -129,7 +124,6 @@ SELECT
     (SELECT COUNT(*) FROM @ExpectedForeignKeys) AS ExpectedForeignKeys,
     (SELECT COUNT(*) FROM dbo.Permissions) AS Permissions,
     (SELECT COUNT(*) FROM dbo.Roles) AS Roles,
-    (SELECT COUNT(*) FROM dbo.Badges) AS Badges,
     (SELECT COUNT(*) FROM dbo.InventoryItems) AS InventoryItems,
     (SELECT COUNT(*) FROM dbo.LootBoxes) AS LootBoxes,
     (SELECT COUNT(*) FROM dbo.LootBoxRewards) AS LootBoxRewards,

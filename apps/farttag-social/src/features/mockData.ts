@@ -109,7 +109,7 @@ export const mockInventory: InventoryItem[] = [
 
 export const mockFeedEvents: PublicFartEvent[] = [
   {
-    audioReplayUrl: 'https://example.com/replay/1',
+    audioReplayUrl: null,
     audioLevelDb: 78.4,
     category: 'legendary',
     commentsCount: 8,
@@ -128,7 +128,7 @@ export const mockHistoryEvents: FartHistoryEvent[] = [
   {
     audioLevel: 77.1,
     audioFileId: null,
-    audioReplayUrl: 'https://example.com/replay/2',
+    audioReplayUrl: null,
     category: 'legendary',
     durationMs: 1680,
     gasLevel: 88.2,
@@ -345,7 +345,7 @@ export const mockFartDetailsById: Record<string, FartDetails> = {
   'fart-best-001': {
     audioLevel: 82.4,
     audioFileId: null,
-    audioReplayUrl: 'https://example.com/replay/details-1',
+    audioReplayUrl: null,
     category: 'legendary',
     comments: [
       {
@@ -379,12 +379,22 @@ export const mockFartDetailsById: Record<string, FartDetails> = {
 export const mockOfficialDetectionResult: OfficialFartResult = {
   fartEventId: 'local-demo-event',
   flatulonsEarned: 42,
+  currentLevelXp: 640,
+  leveledUp: false,
+  newFlatulons: 12522,
+  newLevel: 18,
+  oldFlatulons: 12480,
+  oldLevel: 18,
+  progressPercent: 64,
   ranking: {
     position: 12,
     scope: 'global',
   },
   officialScore: 86,
+  requiredLevelXp: 1000,
+  totalXp: 17640,
   unlockedBadges: [{ id: 'badge-first-public', name: 'First Public' }],
+  xpGained: 96,
 };
 
 export const mockDetectedEvent: DetectedFartEvent = {

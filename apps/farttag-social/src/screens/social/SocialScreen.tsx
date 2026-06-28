@@ -15,6 +15,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { ReactionBar } from '../../features/feed/components/ReactionBar';
 import { useFeedStore } from '../../features/feed/feedStore';
 import type { FartReactionType, PublicFartEvent } from '../../features/feed/types';
+import { t } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -61,7 +62,7 @@ export const SocialScreen = (_props: SocialScreenProps) => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="SOCIAL" />
+          <ScreenTitle title={t('screens.social.title')} />
           <FeedState description="Chargement du feed public." loading title="Feed public" tone="purple" />
         </View>
       </SafeAreaView>
@@ -82,7 +83,7 @@ export const SocialScreen = (_props: SocialScreenProps) => {
         }
         showsVerticalScrollIndicator={false}
       >
-        <ScreenTitle title="SOCIAL" />
+        <ScreenTitle title={t('screens.social.title')} />
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -162,11 +163,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 44,
-    paddingTop: 0,
   },
   stateContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   error: {
     color: colors.danger,

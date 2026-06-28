@@ -1,5 +1,6 @@
 import type { BackendAuthResponse } from './backendContracts';
 import { ApiError, apiRequest, setApiAccessToken } from './apiClient';
+import { apiEndpoints } from './apiEndpoints';
 
 const developmentUser = {
   email: 'usb-tester@farttag.local',
@@ -9,7 +10,7 @@ const developmentUser = {
 };
 
 const login = () =>
-  apiRequest<BackendAuthResponse>('/api/auth/login', {
+  apiRequest<BackendAuthResponse>(apiEndpoints.auth.login, {
     body: JSON.stringify({
       login: developmentUser.login,
       password: developmentUser.password,
@@ -31,7 +32,7 @@ export const initializeDevelopmentAuth = async (): Promise<void> => {
       throw error;
     }
 
-    response = await apiRequest<BackendAuthResponse>('/api/auth/register', {
+    response = await apiRequest<BackendAuthResponse>(apiEndpoints.auth.register, {
       body: JSON.stringify({
         email: developmentUser.email,
         password: developmentUser.password,

@@ -1,4 +1,5 @@
 import { apiRequest } from '../../api/apiClient';
+import { apiEndpoints } from '../../api/apiEndpoints';
 import type { BackendInventoryResponse } from '../../api/backendContracts';
 import { mapEquippedInventoryIds, mapInventory } from '../../api/backendMappers';
 import { mockInventory } from '../mockData';
@@ -16,7 +17,7 @@ export type EquipInventoryResponse = {
 export const inventoryApi = {
   async getInventory(): Promise<InventoryItem[]> {
     try {
-      const response = await apiRequest<BackendInventoryResponse>('/api/inventory');
+      const response = await apiRequest<BackendInventoryResponse>(apiEndpoints.inventory.list);
       const items = mapInventory(response);
       return items.length > 0 ? items : mockInventory;
     } catch {
@@ -25,7 +26,7 @@ export const inventoryApi = {
   },
 
   equipItem(itemId: string) {
-    return apiRequest<BackendInventoryResponse>(`/api/inventory/${itemId}/equip`, {
+    return apiRequest<BackendInventoryResponse>(apiEndpoints.inventory.equip(itemId), {
       method: 'POST',
     }).then((response): EquipInventoryResponse => ({
       itemId,

@@ -15,7 +15,9 @@ import { PublicUserProfileScreen } from '../screens/profile/PublicUserProfileScr
 import { ShopScreen } from '../screens/shop/ShopScreen';
 import { SocialScreen } from '../screens/social/SocialScreen';
 import { useUserStore } from '../store/userStore';
+import { t } from '../i18n/translations';
 import { appTheme } from '../theme/theme';
+import { routeNames } from './routeNames';
 import type {
   AppRouteParamList,
   RootTabParamList,
@@ -37,37 +39,37 @@ const stackOptions = {
 
 const HomeNavigator = () => (
   <HomeStack.Navigator screenOptions={stackOptions}>
-    <HomeStack.Screen component={HomeFeedScreen} name="HomeFeedScreen" />
-    <HomeStack.Screen component={FartDetailsScreen} name="FartDetailsScreen" />
-    <HomeStack.Screen component={PublicUserProfileScreen} name="PublicUserProfileScreen" />
+    <HomeStack.Screen component={HomeFeedScreen} name={routeNames.home} />
+    <HomeStack.Screen component={FartDetailsScreen} name={routeNames.fartDetails} />
+    <HomeStack.Screen component={PublicUserProfileScreen} name={routeNames.publicUserProfile} />
   </HomeStack.Navigator>
 );
 
 const DetectionNavigator = () => (
   <DetectionStack.Navigator screenOptions={stackOptions}>
-    <DetectionStack.Screen component={DetectionScreen} name="DetectionScreen" />
-    <DetectionStack.Screen component={FartDetailsScreen} name="FartDetailsScreen" />
+    <DetectionStack.Screen component={DetectionScreen} name={routeNames.detection} />
+    <DetectionStack.Screen component={FartDetailsScreen} name={routeNames.fartDetails} />
   </DetectionStack.Navigator>
 );
 
 const ShopNavigator = () => (
   <ShopStack.Navigator screenOptions={stackOptions}>
-    <ShopStack.Screen component={ShopScreen} name="ShopScreen" />
+    <ShopStack.Screen component={ShopScreen} name={routeNames.shop} />
   </ShopStack.Navigator>
 );
 
 const SocialNavigator = () => (
   <SocialStack.Navigator screenOptions={stackOptions}>
-    <SocialStack.Screen component={SocialScreen} name="SocialScreen" />
-    <SocialStack.Screen component={PublicUserProfileScreen} name="PublicUserProfileScreen" />
+    <SocialStack.Screen component={SocialScreen} name={routeNames.social} />
+    <SocialStack.Screen component={PublicUserProfileScreen} name={routeNames.publicUserProfile} />
   </SocialStack.Navigator>
 );
 
 const ProfileNavigator = () => (
   <ProfileStack.Navigator screenOptions={stackOptions}>
-    <ProfileStack.Screen component={ProfileScreen} name="ProfileScreen" />
-    <ProfileStack.Screen component={PublicUserProfileScreen} name="PublicUserProfileScreen" />
-    <ProfileStack.Screen component={FartDetailsScreen} name="FartDetailsScreen" />
+    <ProfileStack.Screen component={ProfileScreen} name={routeNames.profile} />
+    <ProfileStack.Screen component={PublicUserProfileScreen} name={routeNames.publicUserProfile} />
+    <ProfileStack.Screen component={FartDetailsScreen} name={routeNames.fartDetails} />
   </ProfileStack.Navigator>
 );
 
@@ -76,9 +78,9 @@ export const TabNavigator = () => {
   const bottomInset = Math.max(insets.bottom, 8);
   const fallbackCurrentXp = useUserStore((state) => state.currentXp);
   const fallbackFlatulons = useUserStore((state) => state.flatulons);
-  const gems = useUserStore((state) => state.gems);
+  const fallbackGems = useUserStore((state) => state.gems);
   const fallbackLevel = useUserStore((state) => state.level);
-  const requiredXp = useUserStore((state) => state.requiredXp);
+  const fallbackRequiredXp = useUserStore((state) => state.requiredXp);
   const hasLoadedProfile = useProfileStore((state) => state.hasLoaded);
   const loadProfile = useProfileStore((state) => state.loadProfile);
   const profile = useProfileStore((state) => state.profile);
@@ -92,16 +94,16 @@ export const TabNavigator = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="HomeTab"
+      initialRouteName={routeNames.homeTab}
       screenOptions={({ navigation, route }) => ({
         header: () => (
           <AppTopBar
-            currentXp={profile?.levelProgressPercent ?? fallbackCurrentXp}
+            currentXp={profile?.currentLevelXp ?? fallbackCurrentXp}
             flatulons={wallet?.flatulons ?? fallbackFlatulons}
-            gems={gems}
+            gems={profile?.gems ?? fallbackGems}
             level={profile?.level ?? fallbackLevel}
-            onOpenShop={() => navigation.navigate('ShopTab', { screen: 'ShopScreen' })}
-            requiredXp={requiredXp}
+            onOpenShop={() => navigation.navigate(routeNames.shopTab, { screen: routeNames.shop })}
+            requiredXp={profile?.requiredLevelXp ?? fallbackRequiredXp}
           />
         ),
         headerShown: true,
@@ -123,11 +125,11 @@ export const TabNavigator = () => {
         ],
       })}
     >
-      <Tab.Screen component={HomeNavigator} name="HomeTab" options={{ title: 'Home' }} />
-      <Tab.Screen component={DetectionNavigator} name="DetectionTab" options={{ title: 'Detection' }} />
-      <Tab.Screen component={ShopNavigator} name="ShopTab" options={{ title: 'Shop' }} />
-      <Tab.Screen component={SocialNavigator} name="SocialTab" options={{ title: 'Social' }} />
-      <Tab.Screen component={ProfileNavigator} name="ProfileTab" options={{ title: 'Profile' }} />
+      <Tab.Screen component={HomeNavigator} name={routeNames.homeTab} options={{ title: t('nav.home') }} />
+      <Tab.Screen component={DetectionNavigator} name={routeNames.detectionTab} options={{ title: t('nav.detection') }} />
+      <Tab.Screen component={ShopNavigator} name={routeNames.shopTab} options={{ title: t('nav.shop') }} />
+      <Tab.Screen component={SocialNavigator} name={routeNames.socialTab} options={{ title: t('nav.social') }} />
+      <Tab.Screen component={ProfileNavigator} name={routeNames.profileTab} options={{ title: t('nav.profile') }} />
     </Tab.Navigator>
   );
 };

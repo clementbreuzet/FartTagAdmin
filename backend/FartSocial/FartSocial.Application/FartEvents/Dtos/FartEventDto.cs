@@ -1,5 +1,7 @@
+using System.Text.Json.Serialization;
 using FartSocial.Domain.FartEvents;
 using FartSocial.Application.Social.Dtos;
+using FartSocial.Application.Progression.Dtos;
 
 namespace FartSocial.Application.FartEvents.Dtos;
 
@@ -22,7 +24,8 @@ public sealed record FartEventDto(
     bool IsAuthenticated,
     string Category,
     FartVisibility Visibility,
-    IReadOnlyCollection<FartRewardDto> Rewards,
+    IReadOnlyCollection<FartRewardDto> RewardItems,
+    [property: JsonPropertyName("rewards")] FartRewardsDto? Rewards,
     IReadOnlyCollection<string> Badges,
     FartReactionSummaryDto Reactions,
     IReadOnlyCollection<CommentDto> Comments);

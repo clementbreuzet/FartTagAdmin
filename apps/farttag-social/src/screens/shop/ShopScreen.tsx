@@ -17,6 +17,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { RevealModal } from '../../features/shop/components/RevealModal';
 import { useShopStore } from '../../features/shop/shopStore';
 import type { LootboxDefinition, LootboxRarity } from '../../features/shop/types';
+import { t } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -82,7 +83,7 @@ export const ShopScreen = (_props: ShopScreenProps) => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="BOUTIQUE" />
+          <ScreenTitle title={t('screens.shop.title')} />
           <FeedState description="Preparation des coffres." loading title="Chargement de la boutique" />
         </View>
       </SafeAreaView>
@@ -93,7 +94,7 @@ export const ShopScreen = (_props: ShopScreenProps) => {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
-          <ScreenTitle title="BOUTIQUE" />
+          <ScreenTitle title={t('screens.shop.title')} />
           <FeedState
             actionLabel="Reessayer"
             description={error ?? 'Boutique indisponible.'}
@@ -111,7 +112,7 @@ export const ShopScreen = (_props: ShopScreenProps) => {
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <ScreenTitle title="BOUTIQUE" />
+        <ScreenTitle title={t('screens.shop.title')} />
 
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>TES FLATULONS</Text>
@@ -182,11 +183,10 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 44,
-    paddingTop: 0,
   },
   stateContent: {
     flex: 1,
-    paddingHorizontal: 16,
+    padding: 16,
   },
   balanceCard: {
     alignItems: 'center',
