@@ -29,6 +29,26 @@ export type UserProfile = {
     description: string;
     unlockedAt: string;
   }[];
+  xp?: number;
+  stats?: {
+    totalFarts: number;
+    bestScore: number;
+    averageScore: number;
+    totalDurationMs: number;
+    totalGasLevel: number;
+  };
+  notifications?: {
+    socialEnabled: boolean;
+    rewardsEnabled: boolean;
+    challengesEnabled: boolean;
+    dailyReminderEnabled: boolean;
+    hasActivePushToken: boolean;
+  };
+  connectedDevice?: {
+    id: string;
+    name: string;
+    model: string;
+  } | null;
 };
 
 export type Wallet = {

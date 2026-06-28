@@ -1,4 +1,4 @@
-export type LootboxRarity = 'rare' | 'epic' | 'mythic';
+export type LootboxRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
 export type LootboxDefinition = {
   id: string;
@@ -17,7 +17,7 @@ export type LootboxesResponse = {
 export type LootboxReward = {
   id: string;
   name: string;
-  rarity: LootboxRarity | 'common' | 'legendary';
+  rarity: LootboxRarity;
   iconGlyph: string;
   description: string;
 };

@@ -20,6 +20,7 @@ import type {
   BackendLeaderboardEntry,
   BackendLootBox,
   BackendMe,
+  BackendPlayerProfile,
   BackendOpenLootBoxResult,
   BackendReactionSummary,
   BackendUserBadge,
@@ -29,7 +30,7 @@ import type {
 import { resolveApiUrl } from './apiClient';
 
 const badgeRarities: BadgeRarity[] = ['common', 'rare', 'epic', 'legendary', 'mythic'];
-const reactionTypes: FartReactionType[] = ['fire', 'laugh', 'shock'];
+const reactionTypes: FartReactionType[] = ['heart', 'laugh', 'fire'];
 
 const normalizeBadgeRarity = (rarity: string | null): BadgeRarity => {
   const normalized = rarity?.toLowerCase() as BadgeRarity | undefined;
@@ -63,9 +64,9 @@ const iconForRarity = (rarity: string) => {
 };
 
 export const mapReactionSummary = (reaction: BackendReactionSummary): ReactionSummary => ({
+  heart: reaction.heart,
   fire: reaction.fire,
   laugh: reaction.laugh,
-  shock: reaction.shock,
   viewerReaction: normalizeReaction(reaction.viewerReaction),
 });
 
@@ -79,6 +80,7 @@ export const mapFeedItem = (item: BackendFeedItem): PublicFartEvent => ({
   },
   createdAt: item.timestamp,
   score: item.officialScore,
+  category: item.category,
   durationMs: item.durationMs,
   audioLevelDb: item.audioLevel,
   gasLevelKohms: item.gasLevel,
@@ -202,6 +204,12 @@ export const mapEquippedInventoryIds = (response: BackendInventoryResponse) => (
 
 const lootboxRarity = (lootbox: BackendLootBox): LootboxRarity => {
   const name = lootbox.name.toLowerCase();
+  if (name.includes('commun') || name.includes('common')) {
+    return 'common';
+  }
+  if (name.includes('legend')) {
+    return 'legendary';
+  }
   if (name.includes('myth')) {
     return 'mythic';
   }
@@ -272,6 +280,30 @@ export const mapUserProfile = (profile: BackendUserProfile): UserProfile => ({
   globalStats: profile.globalStats,
   bestFart: profile.bestFart,
   recentBadges: profile.recentBadges,
+});
+
+export const mapPlayerProfile = (profile: BackendPlayerProfile): UserProfile => ({
+  id: profile.id,
+  username: profile.userName,
+  displayName: profile.displayName,
+  avatarUrl: profile.avatarUrl,
+  equippedTitle: null,
+  equippedFrame: null,
+  level: profile.level,
+  levelProgressPercent: profile.xp % 1000 / 10,
+  globalStats: {
+    totalFarts: profile.stats.totalFarts,
+    publicFarts: 0,
+    legendaryFarts: 0,
+    averageOfficialScore: profile.stats.averageScore,
+    totalReactionsReceived: 0,
+  },
+  bestFart: null,
+  recentBadges: [],
+  xp: profile.xp,
+  stats: profile.stats,
+  notifications: profile.notifications,
+  connectedDevice: profile.connectedDevice,
 });
 
 export const mapHistoryItem = (item: BackendFartHistoryItem): FartHistoryEvent => ({

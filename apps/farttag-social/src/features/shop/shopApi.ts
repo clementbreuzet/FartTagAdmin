@@ -7,7 +7,7 @@ import type { LootboxDefinition } from './types';
 export const shopApi = {
   async getLootboxes(): Promise<LootboxDefinition[]> {
     try {
-      const response = await apiRequest<BackendLootBox[]>('/api/lootboxes');
+      const response = await apiRequest<BackendLootBox[]>('/api/shop');
       const items = response.filter((lootbox) => lootbox.isActive).map(mapLootBox);
       return items.length > 0 ? items : mockLootboxes;
     } catch {
@@ -16,7 +16,8 @@ export const shopApi = {
   },
 
   openLootbox(id: string) {
-    return apiRequest<BackendOpenLootBoxResult>(`/api/lootboxes/${id}/open`, {
+    return apiRequest<BackendOpenLootBoxResult>('/api/shop/open', {
+      body: JSON.stringify({ lootBoxId: id }),
       method: 'POST',
     }).then(mapOpenLootBox).catch(() => mockOpenLootboxResponse(id));
   },

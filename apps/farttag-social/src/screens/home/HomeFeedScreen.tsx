@@ -1,124 +1,88 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
-  Alert,
-  FlatList,
-  Linking,
+  Image,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ScreenTitle, SubmenuTabs } from '../../shared/components';
-import { FartFeedCard } from '../../features/feed/components/FartFeedCard';
 import { FeedState } from '../../features/feed/components/FeedState';
-import { useFeedStore } from '../../features/feed/feedStore';
-import type { FartReactionType, PublicFartEvent } from '../../features/feed/types';
-import { useFriendsStore } from '../../features/friends/friendsStore';
+import { useHomeStore } from '../../features/home/homeStore';
+import type { HomeFartEvent } from '../../features/home/types';
 import type { RootStackParamList } from '../../navigation/types';
+import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
+const logo = require('../../assets/branding/logo-app.png');
+
+const formatDate = (date: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  }).format(new Date(date));
+
+const formatDuration = (durationMs: number) => `${(durationMs / 1_000).toFixed(1)} s`;
+
 export const HomeFeedScreen = () => {
-  const [feedTab, setFeedTab] = useState<'forYou' | 'following' | 'friends'>('forYou');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const error = useFeedStore((state) => state.error);
-  const events = useFeedStore((state) => state.events);
-  const hasLoaded = useFeedStore((state) => state.hasLoaded);
-  const isLoading = useFeedStore((state) => state.isLoading);
-  const isRefreshing = useFeedStore((state) => state.isRefreshing);
-  const reactingEventId = useFeedStore((state) => state.reactingEventId);
-  const loadFeed = useFeedStore((state) => state.loadFeed);
-  const refreshFeed = useFeedStore((state) => state.refreshFeed);
-  const reactToEvent = useFeedStore((state) => state.reactToEvent);
-  const friends = useFriendsStore((state) => state.friends);
-  const friendsHaveLoaded = useFriendsStore((state) => state.hasLoaded);
-  const loadFriends = useFriendsStore((state) => state.loadFriends);
+  const dashboard = useHomeStore((state) => state.dashboard);
+  const error = useHomeStore((state) => state.error);
+  const hasLoaded = useHomeStore((state) => state.hasLoaded);
+  const isLoading = useHomeStore((state) => state.isLoading);
+  const isRefreshing = useHomeStore((state) => state.isRefreshing);
+  const loadHome = useHomeStore((state) => state.loadHome);
+  const refreshHome = useHomeStore((state) => state.refreshHome);
 
   useEffect(() => {
     if (!hasLoaded && !isLoading) {
-      void loadFeed();
+      void loadHome();
     }
-  }, [hasLoaded, isLoading, loadFeed]);
+  }, [hasLoaded, isLoading, loadHome]);
 
-  useEffect(() => {
-    if (!friendsHaveLoaded) {
-      void loadFriends();
-    }
-  }, [friendsHaveLoaded, loadFriends]);
-
-  const visibleEvents = useMemo(() => {
-    if (feedTab === 'following') {
-      return [];
-    }
-    if (feedTab === 'friends') {
-      const friendIds = new Set(friends.map((friend) => friend.userId));
-      return events.filter((event) => friendIds.has(event.user.id));
-    }
-    return events;
-  }, [events, feedTab, friends]);
-
-  const replayEvent = useCallback(async (event: PublicFartEvent) => {
-    if (!event.audioReplayUrl) {
-      return;
-    }
-
-    try {
-      await Linking.openURL(event.audioReplayUrl);
-    } catch {
-      Alert.alert('Replay indisponible', "L'audio n'a pas pu être ouvert.");
-    }
-  }, []);
-
-  const react = useCallback((eventId: string, reaction: FartReactionType) => {
-    void reactToEvent(eventId, reaction);
-  }, [reactToEvent]);
-
-  const openPublicProfile = useCallback((user: PublicFartEvent['user']) => {
-    navigation.navigate('PublicUserProfileScreen', {
-      avatarUrl: user.avatarUrl,
-      displayName: user.displayName,
-      userId: user.id,
-      username: user.username,
+  const openHistory = () => {
+    navigation.navigate('MainTabs', {
+      params: { screen: 'ProfileScreen' },
+      screen: 'ProfileTab',
     });
-  }, [navigation]);
+  };
 
-  const openDetails = useCallback((eventId: string) => {
+  const openDetails = (eventId: string) => {
     navigation.navigate('FartDetailsScreen', { fartEventId: eventId });
-  }, [navigation]);
+  };
 
-  const openComments = useCallback(() => {
-    Alert.alert('Commentaires', "L'écran des commentaires sera connecté à la navigation FartTag Social.");
-  }, []);
-
-  if (isLoading && events.length === 0) {
+  if (isLoading && !dashboard) {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
           <ScreenTitle title="ACCUEIL" />
           <FeedState
-            description="Les meilleurs événements publics arrivent."
+            description="Preparation de ton tableau de bord quotidien."
             loading
-            title="Chargement du feed"
+            title="Chargement de l'accueil"
           />
         </View>
       </SafeAreaView>
     );
   }
 
-  if (error && events.length === 0) {
+  if (!dashboard) {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
           <ScreenTitle title="ACCUEIL" />
           <FeedState
-            actionLabel="Réessayer"
-            description={error}
-            onAction={() => void loadFeed()}
-            title="Feed indisponible"
+            actionLabel="Reessayer"
+            description={error ?? "Impossible de charger l'accueil."}
+            onAction={() => void loadHome()}
+            title="Accueil indisponible"
             tone="purple"
           />
         </View>
@@ -128,68 +92,121 @@ export const HomeFeedScreen = () => {
 
   return (
     <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
-      <FlatList
-        ListEmptyComponent={
-          <FeedState
-            actionLabel="Actualiser"
-            description={
-              feedTab === 'following'
-                ? "Le suivi d'utilisateurs n'est pas encore disponible."
-                : feedTab === 'friends'
-                  ? "Aucun fart public de tes amis pour le moment."
-                  : "Les prochains farts publics apparaîtront ici."
-            }
-            onAction={() => void refreshFeed()}
-            title={feedTab === 'following' ? 'Aucun abonnement' : 'Le feed est encore silencieux'}
-          />
-        }
-        ListHeaderComponent={
-          <>
-            <ScreenTitle title="ACCUEIL" />
-            <SubmenuTabs
-              activeTab={feedTab}
-              onChange={setFeedTab}
-              tabs={[
-                { label: 'Pour toi', value: 'forYou' },
-                { label: 'Following', value: 'following' },
-                { label: 'Amis', value: 'friends' },
-              ]}
-            />
-            {error ? (
-              <Pressable onPress={() => void refreshFeed()} style={styles.errorBanner}>
-                <Text numberOfLines={2} style={styles.errorText}>{error}</Text>
-                <Text style={styles.retryText}>RÉESSAYER</Text>
-              </Pressable>
-            ) : null}
-          </>
-        }
+      <ScrollView
         contentContainerStyle={styles.content}
-        data={visibleEvents}
-        keyExtractor={(event) => event.id}
         refreshControl={
           <RefreshControl
             colors={[colors.neonGreen]}
-            onRefresh={() => void refreshFeed()}
+            onRefresh={() => void refreshHome()}
             refreshing={isRefreshing}
             tintColor={colors.neonGreen}
           />
         }
-        renderItem={({ item }) => (
-          <FartFeedCard
-            event={item}
-            isReacting={reactingEventId === item.id}
-            onCommentsPress={openComments}
-            onOpenDetails={openDetails}
-            onUserPress={openPublicProfile}
-            onReact={react}
-            onReplay={replayEvent}
-          />
-        )}
         showsVerticalScrollIndicator={false}
-      />
+      >
+        <ScreenTitle title="ACCUEIL" />
+
+        <View style={styles.hero}>
+          <Image resizeMode="contain" source={logo} style={styles.logo} />
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroLabel}>TABLEAU DE BORD</Text>
+            <Text style={styles.heroTitle}>Reviens faire monter le score.</Text>
+            <Text style={styles.heroText}>
+              Ton defi, ton coffre et tes derniers exploits sont prets pour aujourd'hui.
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.summaryGrid}>
+          <StatCard label="NIVEAU" value={`${dashboard.level}`} />
+          <StatCard label="XP" value={`${dashboard.xp}`} />
+          <StatCard label="FLATULONS" value={`${dashboard.flatulons}`} />
+          <StatCard label="GEMMES" value={`${dashboard.gems}`} />
+        </View>
+
+        <View style={styles.dailyGrid}>
+          <View style={styles.panel}>
+            <Text style={styles.panelEyebrow}>DEFI DU JOUR</Text>
+            <Text style={styles.panelTitle}>{dashboard.dailyChallenge.title}</Text>
+            <Text style={styles.panelText}>{dashboard.dailyChallenge.description}</Text>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.min(
+                      100,
+                      (dashboard.dailyChallengeProgress / dashboard.dailyChallenge.targetCount) * 100,
+                    )}%`,
+                  },
+                ]}
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {dashboard.dailyChallengeProgress}/{dashboard.dailyChallenge.targetCount} - +{dashboard.dailyChallenge.rewardFlatulons} Flatulons
+            </Text>
+          </View>
+
+          <View style={[styles.panel, styles.chestPanel]}>
+            <Text style={styles.panelEyebrow}>COFFRE QUOTIDIEN</Text>
+            <Text style={styles.chestIcon}>◇</Text>
+            <Text style={styles.panelTitle}>
+              {dashboard.dailyChestAvailable ? 'Disponible' : 'Deja recupere'}
+            </Text>
+            <Text style={styles.panelText}>
+              {dashboard.dailyChestAvailable
+                ? 'Un bonus attend ta prochaine session.'
+                : 'Reviens demain pour un nouveau coffre.'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>LES 3 DERNIERS PETS</Text>
+          <Pressable onPress={openHistory} style={styles.historyButton}>
+            <Text style={styles.historyButtonText}>VOIR MON HISTORIQUE</Text>
+          </Pressable>
+        </View>
+
+        {dashboard.recentFarts.length > 0 ? (
+          dashboard.recentFarts.map((event) => (
+            <RecentFartCard event={event} key={event.id} onPress={() => openDetails(event.id)} />
+          ))
+        ) : (
+          <View style={styles.emptyPanel}>
+            <Text style={styles.emptyTitle}>Aucun pet encore</Text>
+            <Text style={styles.emptyText}>Passe par Detection pour creer ton premier event officiel.</Text>
+          </View>
+        )}
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+      </ScrollView>
     </SafeAreaView>
   );
 };
+
+const StatCard = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.statCard}>
+    <Text style={styles.statValue}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </View>
+);
+
+const RecentFartCard = ({ event, onPress }: { event: HomeFartEvent; onPress: () => void }) => (
+  <Pressable onPress={onPress} style={styles.fartCard}>
+    <View>
+      <Text style={styles.fartCategory}>{event.category.toUpperCase()}</Text>
+      <Text style={styles.fartDate}>{formatDate(event.occurredAt)}</Text>
+      <Text style={styles.fartMeta}>
+        {formatDuration(event.durationMs)} - {event.audioLevel} dB - {event.gasLevel} kOhm
+      </Text>
+    </View>
+    <View style={styles.fartScore}>
+      <Text style={styles.fartScoreLabel}>SCORE</Text>
+      <Text style={styles.fartScoreValue}>{event.officialScore}</Text>
+    </View>
+  </Pressable>
+);
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -197,7 +214,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flexGrow: 1,
     padding: 16,
     paddingBottom: 36,
     paddingTop: 0,
@@ -207,30 +223,213 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 0,
   },
-  errorBanner: {
+  hero: {
     alignItems: 'center',
-    backgroundColor: '#FF4D6712',
-    borderColor: colors.danger,
-    borderRadius: 13,
+    backgroundColor: colors.surface,
+    borderColor: colors.neonGreen,
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    marginBottom: 14,
-    padding: 11,
+    gap: 14,
+    padding: 16,
   },
-  errorText: {
-    color: colors.textSecondary,
+  logo: {
+    height: 76,
+    width: 76,
+  },
+  heroCopy: {
     flex: 1,
-    fontSize: 10,
   },
-  retryText: {
-    color: colors.danger,
-    fontSize: 9,
+  heroLabel: {
+    color: colors.neonCyan,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1.1,
+  },
+  heroTitle: {
+    color: colors.textPrimary,
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 5,
+  },
+  heroText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 6,
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 14,
+  },
+  statCard: {
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexBasis: '47%',
+    flexGrow: 1,
+    padding: 13,
+  },
+  statValue: {
+    color: colors.neonGreen,
+    fontSize: 23,
+    fontWeight: '900',
+  },
+  statLabel: {
+    color: colors.textMuted,
+    fontSize: 8,
     fontWeight: '900',
     letterSpacing: 0.8,
+    marginTop: 4,
+  },
+  dailyGrid: {
+    gap: 12,
+    marginTop: 14,
+  },
+  panel: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 15,
+  },
+  chestPanel: {
+    borderColor: colors.neonPurple,
+  },
+  panelEyebrow: {
+    color: colors.neonCyan,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  panelTitle: {
+    color: colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '900',
+    marginTop: 6,
+  },
+  panelText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 5,
+  },
+  progressTrack: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 6,
+    height: 8,
+    marginTop: 13,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    backgroundColor: colors.neonGreen,
+    height: '100%',
+  },
+  progressText: {
+    color: colors.textMuted,
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 7,
+  },
+  chestIcon: {
+    color: colors.neonPurple,
+    fontSize: 34,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    marginTop: 22,
+  },
+  sectionTitle: {
+    color: colors.textPrimary,
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  historyButton: {
+    borderColor: colors.neonCyan,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  historyButtonText: {
+    color: colors.neonCyan,
+    fontSize: 7,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  fartCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 17,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    padding: 13,
+  },
+  fartCategory: {
+    color: colors.neonGreen,
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  fartDate: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 4,
+  },
+  fartMeta: {
+    color: colors.textMuted,
+    fontSize: 9,
+    marginTop: 4,
+  },
+  fartScore: {
+    alignItems: 'flex-end',
+  },
+  fartScoreLabel: {
+    color: colors.textMuted,
+    fontSize: 7,
+    fontWeight: '900',
+  },
+  fartScoreValue: {
+    color: colors.neonGreen,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  emptyPanel: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 20,
+  },
+  emptyTitle: {
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 10,
+    marginTop: 14,
+    textAlign: 'center',
   },
 });
 
 export default HomeFeedScreen;
-

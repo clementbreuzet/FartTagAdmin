@@ -11,7 +11,7 @@ import type {
 export const feedApi = {
   async getFeed(): Promise<PublicFartEvent[]> {
     try {
-      const response = await apiRequest<BackendFeedItem[]>('/api/feed');
+      const response = await apiRequest<BackendFeedItem[]>('/api/feed/public');
       const events = response.map(mapFeedItem);
       return events.length > 0 ? events : mockFeedEvents;
     } catch {

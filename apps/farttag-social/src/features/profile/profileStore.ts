@@ -18,13 +18,6 @@ type ProfileState = {
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Le profil n'a pas pu être chargé.";
 
-const fetchProfileData = () =>
-  Promise.all([
-    profileApi.getProfile(),
-    profileApi.getWallet(),
-    profileApi.getInventory(),
-  ]);
-
 export const useProfileStore = create<ProfileState>((set) => ({
   error: null,
   hasLoaded: false,
@@ -37,8 +30,8 @@ export const useProfileStore = create<ProfileState>((set) => ({
   loadProfile: async () => {
     set({ error: null, isLoading: true });
     try {
-      const [profile, wallet, inventory] = await fetchProfileData();
-      set({ hasLoaded: true, inventory, profile, wallet });
+      const profile = await profileApi.getProfile();
+      set({ hasLoaded: true, inventory: [], profile, wallet: null });
     } catch (error) {
       set({ error: getErrorMessage(error), hasLoaded: true });
     } finally {
@@ -49,8 +42,8 @@ export const useProfileStore = create<ProfileState>((set) => ({
   refreshProfile: async () => {
     set({ error: null, isRefreshing: true });
     try {
-      const [profile, wallet, inventory] = await fetchProfileData();
-      set({ hasLoaded: true, inventory, profile, wallet });
+      const profile = await profileApi.getProfile();
+      set({ hasLoaded: true, inventory: [], profile, wallet: null });
     } catch (error) {
       set({ error: getErrorMessage(error) });
     } finally {

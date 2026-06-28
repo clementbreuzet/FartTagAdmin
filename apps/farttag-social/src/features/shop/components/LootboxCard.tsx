@@ -12,8 +12,10 @@ type LootboxCardProps = {
 };
 
 const rarityAccent: Record<LootboxDefinition['rarity'], string> = {
+  common: '#A8B3BA',
   rare: colors.neonCyan,
   epic: colors.neonPurple,
+  legendary: '#FF9D00',
   mythic: '#FF4DC4',
 };
 

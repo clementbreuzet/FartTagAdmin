@@ -243,6 +243,34 @@ export type BackendWallet = {
   createdAt: string;
 };
 
+export type BackendHomeFartEvent = {
+  id: string;
+  occurredAt: string;
+  officialScore: number;
+  durationMs: number;
+  audioLevel: number;
+  gasLevel: number;
+  category: string;
+  isAuthenticated: boolean;
+};
+
+export type BackendHomeDashboard = {
+  level: number;
+  xp: number;
+  flatulons: number;
+  gems: number;
+  dailyChallenge: {
+    id: string;
+    title: string;
+    description: string;
+    targetCount: number;
+    rewardFlatulons: number;
+  };
+  dailyChallengeProgress: number;
+  dailyChestAvailable: boolean;
+  recentFarts: BackendHomeFartEvent[];
+};
+
 export type BackendMe = {
   id: string;
   userName: string;
@@ -282,6 +310,34 @@ export type BackendUserProfile = {
     description: string;
     unlockedAt: string;
   }[];
+};
+
+export type BackendPlayerProfile = {
+  id: string;
+  userName: string;
+  displayName: string;
+  avatarUrl: string | null;
+  level: number;
+  xp: number;
+  stats: {
+    totalFarts: number;
+    bestScore: number;
+    averageScore: number;
+    totalDurationMs: number;
+    totalGasLevel: number;
+  };
+  notifications: {
+    socialEnabled: boolean;
+    rewardsEnabled: boolean;
+    challengesEnabled: boolean;
+    dailyReminderEnabled: boolean;
+    hasActivePushToken: boolean;
+  };
+  connectedDevice: {
+    id: string;
+    name: string;
+    model: string;
+  } | null;
 };
 
 export type BackendUserSearchResult = {

@@ -1,42 +1,53 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FeedState } from '../../features/feed/components/FeedState';
-import { ChestCard } from '../../features/shop/components/ChestCard';
-import { OfferCard } from '../../features/shop/components/OfferCard';
 import { RevealModal } from '../../features/shop/components/RevealModal';
 import { useShopStore } from '../../features/shop/shopStore';
-import type { LootboxDefinition } from '../../features/shop/types';
+import type { LootboxDefinition, LootboxRarity } from '../../features/shop/types';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type ShopScreenProps = NativeStackScreenProps<RootStackParamList, 'ShopScreen'>;
-type ShopSection = 'platform' | 'packs' | 'resources' | 'daily';
 
-const chestImages = [
-  require('../../assets/shop/chest-common.png'),
-  require('../../assets/shop/chest-rare.png'),
-  require('../../assets/shop/chest-epic.png'),
-  require('../../assets/shop/chest-legendary.png'),
-  require('../../assets/shop/chest-mythic.png'),
-];
-const offerXp = require('../../assets/shop/offer-xp.png');
-const offerGas = require('../../assets/shop/offer-gas.png');
-const offerEnergy = require('../../assets/shop/offer-energy.png');
+const chestImages: Record<LootboxRarity, ImageSourcePropType> = {
+  common: require('../../assets/shop/chest-common.png'),
+  rare: require('../../assets/shop/chest-rare.png'),
+  epic: require('../../assets/shop/chest-epic.png'),
+  legendary: require('../../assets/shop/chest-legendary.png'),
+  mythic: require('../../assets/shop/chest-mythic.png'),
+};
 
-const chestCatalog = [
-  { accent: '#A8B3BA', name: 'Coffre commun', price: 500 },
-  { accent: colors.neonCyan, name: 'Coffre rare', price: 1500 },
-  { accent: colors.neonPurple, name: 'Coffre épique', price: 3500 },
-  { accent: '#FF9D00', name: 'Coffre légendaire', price: 7500 },
-  { accent: colors.neonGreen, name: 'Coffre mythique', price: 12000 },
-] as const;
+const rarityAccents: Record<LootboxRarity, string> = {
+  common: '#A8B3BA',
+  rare: colors.neonCyan,
+  epic: colors.neonPurple,
+  legendary: '#FF9D00',
+  mythic: colors.neonGreen,
+};
+
+const rarityOrder: Record<LootboxRarity, number> = {
+  common: 1,
+  rare: 2,
+  epic: 3,
+  legendary: 4,
+  mythic: 5,
+};
 
 export const ShopScreen = (_props: ShopScreenProps) => {
-  const [section, setSection] = useState<ShopSection>('platform');
   const error = useShopStore((state) => state.error);
   const hasLoaded = useShopStore((state) => state.hasLoaded);
   const isLoading = useShopStore((state) => state.isLoading);
@@ -56,18 +67,12 @@ export const ShopScreen = (_props: ShopScreenProps) => {
     }
   }, [hasLoaded, isLoading, loadShop]);
 
-  const chests = useMemo(() => chestCatalog.map((chest, index) => ({
-    ...chest,
-    image: chestImages[index],
-    lootbox: lootboxes[index % Math.max(lootboxes.length, 1)] as LootboxDefinition | undefined,
-  })), [lootboxes]);
-
-  const buyChest = (lootbox: LootboxDefinition | undefined, price: number) => {
-    if (!lootbox || !wallet) {
+  const openChest = (lootbox: LootboxDefinition) => {
+    if (!wallet) {
       return;
     }
-    if (price > wallet.flatulons) {
-      Alert.alert('Solde insuffisant', 'Tu n’as pas assez de Flatulons pour ouvrir ce coffre.');
+    if (lootbox.priceFlatulons > wallet.flatulons) {
+      Alert.alert('Solde insuffisant', "Tu n'as pas assez de Flatulons pour ouvrir ce coffre.");
       return;
     }
     void openLootbox(lootbox.id);
@@ -75,78 +80,55 @@ export const ShopScreen = (_props: ShopScreenProps) => {
 
   if (isLoading && lootboxes.length === 0) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FeedState description="Préparation des coffres et des offres." loading title="Chargement de la boutique" />
+      <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
+        <View style={styles.stateContent}>
+          <ScreenTitle title="BOUTIQUE" />
+          <FeedState description="Preparation des coffres." loading title="Chargement de la boutique" />
+        </View>
       </SafeAreaView>
     );
   }
 
   if (!wallet) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <FeedState actionLabel="Réessayer" description={error ?? 'Boutique indisponible.'} onAction={() => void loadShop()} title="Boutique indisponible" tone="purple" />
+      <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
+        <View style={styles.stateContent}>
+          <ScreenTitle title="BOUTIQUE" />
+          <FeedState
+            actionLabel="Reessayer"
+            description={error ?? 'Boutique indisponible.'}
+            onAction={() => void loadShop()}
+            title="Boutique indisponible"
+            tone="purple"
+          />
+        </View>
       </SafeAreaView>
     );
   }
 
+  const sortedLootboxes = [...lootboxes].sort((left, right) => rarityOrder[left.rarity] - rarityOrder[right.rarity]);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenTitle title="BOUTIQUE" />
+
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>TES FLATULONS</Text>
-          <Text style={styles.balance}>{wallet.flatulons.toLocaleString()} <Text style={styles.balanceIcon}>◆</Text></Text>
+          <Text style={styles.balance}>{wallet.flatulons.toLocaleString()} <Text style={styles.balanceIcon}>◇</Text></Text>
         </View>
 
-        <View style={styles.tabs}>
-          {([
-            ['platform', 'PLATEFORME'],
-            ['packs', 'PACKS'],
-            ['resources', 'RESSOURCES'],
-            ['daily', 'OFFRES DU JOUR'],
-          ] as const).map(([value, label]) => (
-            <Pressable key={value} onPress={() => setSection(value)} style={[styles.tab, section === value && styles.tabActive]}>
-              <Text style={[styles.tabText, section === value && styles.tabTextActive]}>{label}</Text>
-            </Pressable>
+        <View style={styles.grid}>
+          {sortedLootboxes.map((lootbox) => (
+            <SimpleChestCard
+              disabled={isOpening}
+              isOpening={openingLootboxId === lootbox.id}
+              key={lootbox.id}
+              lootbox={lootbox}
+              onOpen={() => openChest(lootbox)}
+            />
           ))}
         </View>
-
-        {section === 'platform' ? (
-          <>
-            <SectionTitle title="COFFRES" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {chests.map((chest) => (
-                <ChestCard
-                  accent={chest.accent}
-                  description={chest.lootbox?.description ?? 'Contient des éléments exclusifs.'}
-                  disabled={isOpening}
-                  image={chest.image}
-                  isOpening={isOpening && openingLootboxId === chest.lootbox?.id}
-                  key={chest.name}
-                  name={chest.name}
-                  onBuy={() => buyChest(chest.lootbox, chest.price)}
-                  price={chest.price}
-                />
-              ))}
-            </ScrollView>
-
-            <SectionTitle title="OFFRES SPÉCIALES" />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <OfferCard accent={colors.neonCyan} detail="+50% XP" duration="1H" image={offerXp} name="BOOST XP" onBuy={() => Alert.alert('Boost XP', 'Boost XP ajouté à ton inventaire.')} price={250} />
-              <OfferCard accent={colors.neonGreen} detail="+100% GAZ" duration="30M" image={offerGas} name="BOOST GAZ" onBuy={() => Alert.alert('Boost Gaz', 'Boost Gaz ajouté à ton inventaire.')} price={200} />
-              <OfferCard accent={colors.neonPurple} detail="Énergie au max" duration="x20" image={offerEnergy} name="ÉNERGIE MAX" onBuy={() => Alert.alert('Énergie Max', 'Énergie ajoutée à ton inventaire.')} price={300} />
-            </ScrollView>
-          </>
-        ) : (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderTitle}>
-              {section === 'packs' ? 'PACKS PREMIUM' : section === 'resources' ? 'RESSOURCES' : 'OFFRES DU JOUR'}
-            </Text>
-            <Text style={styles.placeholderText}>
-              {lastReward ? `Dernière récompense : ${lastReward.name}` : 'De nouvelles offres arrivent bientôt.'}
-            </Text>
-          </View>
-        )}
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
@@ -155,32 +137,137 @@ export const ShopScreen = (_props: ShopScreenProps) => {
   );
 };
 
-const SectionTitle = ({ title }: { title: string }) => (
-  <View style={styles.sectionHeading}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.info}>i</Text>
-  </View>
-);
+const SimpleChestCard = ({
+  disabled,
+  isOpening,
+  lootbox,
+  onOpen,
+}: {
+  disabled: boolean;
+  isOpening: boolean;
+  lootbox: LootboxDefinition;
+  onOpen: () => void;
+}) => {
+  const accent = rarityAccents[lootbox.rarity];
+  return (
+    <View style={[styles.chestCard, { borderColor: accent, shadowColor: accent }]}>
+      <Image source={chestImages[lootbox.rarity]} style={styles.chestImage} />
+      <Text style={[styles.chestName, { color: accent }]}>{lootbox.name}</Text>
+      <Text style={styles.price}>{lootbox.priceFlatulons.toLocaleString()} Flatulons</Text>
+      <Pressable
+        disabled={disabled}
+        onPress={onOpen}
+        style={({ pressed }) => [
+          styles.openButton,
+          { borderColor: accent },
+          disabled && styles.disabled,
+          pressed && styles.pressed,
+        ]}
+      >
+        {isOpening ? (
+          <ActivityIndicator color={accent} size="small" />
+        ) : (
+          <Text style={[styles.openText, { color: accent }]}>OUVRIR</Text>
+        )}
+      </Pressable>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.background, flex: 1 },
-  content: { padding: 16, paddingBottom: 44 },
-  balanceCard: { alignItems: 'center', backgroundColor: '#0A1408', borderColor: colors.neonGreen, borderRadius: 21, borderWidth: 1, padding: 15 },
-  balanceLabel: { color: colors.textSecondary, fontSize: 8, fontWeight: '900', letterSpacing: 1.2 },
-  balance: { color: colors.neonGreen, fontSize: 32, fontWeight: '900', marginTop: 4 },
-  balanceIcon: { fontSize: 20 },
-  tabs: { borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: 'row', marginTop: 18 },
-  tab: { alignItems: 'center', flex: 1, paddingBottom: 10, paddingTop: 8 },
-  tabActive: { borderBottomColor: colors.neonGreen, borderBottomWidth: 2 },
-  tabText: { color: colors.textMuted, fontSize: 7, fontWeight: '900' },
-  tabTextActive: { color: colors.neonGreen },
-  sectionHeading: { alignItems: 'center', flexDirection: 'row', marginBottom: 12, marginTop: 22 },
-  sectionTitle: { color: colors.neonGreen, fontSize: 13, fontWeight: '900', letterSpacing: 0.8 },
-  info: { borderColor: colors.neonGreen, borderRadius: 8, borderWidth: 1, color: colors.neonGreen, fontSize: 8, marginLeft: 8, paddingHorizontal: 5, paddingVertical: 1 },
-  placeholder: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.neonCyan, borderRadius: 22, borderWidth: 1, marginTop: 22, padding: 24 },
-  placeholderTitle: { color: colors.neonCyan, fontSize: 15, fontWeight: '900' },
-  placeholderText: { color: colors.textSecondary, fontSize: 10, marginTop: 8, textAlign: 'center' },
-  error: { color: colors.danger, fontSize: 10, marginTop: 14, textAlign: 'center' },
+  safeArea: {
+    backgroundColor: colors.background,
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 44,
+    paddingTop: 0,
+  },
+  stateContent: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  balanceCard: {
+    alignItems: 'center',
+    backgroundColor: '#0A1408',
+    borderColor: colors.neonGreen,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 14,
+    padding: 14,
+  },
+  balanceLabel: {
+    color: colors.textSecondary,
+    fontSize: 8,
+    fontWeight: '900',
+    letterSpacing: 1.2,
+  },
+  balance: {
+    color: colors.neonGreen,
+    fontSize: 30,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  balanceIcon: {
+    fontSize: 18,
+  },
+  grid: {
+    gap: 12,
+  },
+  chestCard: {
+    alignItems: 'center',
+    backgroundColor: '#000000',
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 14,
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+  },
+  chestImage: {
+    height: 156,
+    resizeMode: 'contain',
+    width: '100%',
+  },
+  chestName: {
+    fontSize: 14,
+    fontWeight: '900',
+    marginTop: 8,
+    textTransform: 'uppercase',
+  },
+  price: {
+    color: colors.textPrimary,
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 6,
+  },
+  openButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: 12,
+    minHeight: 42,
+    width: '100%',
+  },
+  openText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.9,
+  },
+  disabled: {
+    opacity: 0.45,
+  },
+  pressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.98 }],
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 10,
+    marginTop: 14,
+    textAlign: 'center',
+  },
 });
 
 export default ShopScreen;

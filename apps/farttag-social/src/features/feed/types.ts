@@ -1,9 +1,9 @@
-export type FartReactionType = 'fire' | 'laugh' | 'shock';
+export type FartReactionType = 'heart' | 'laugh' | 'fire';
 
 export type ReactionSummary = {
+  heart: number;
   fire: number;
   laugh: number;
-  shock: number;
   viewerReaction: FartReactionType | null;
 };
 
@@ -19,6 +19,7 @@ export type PublicFartEvent = {
   user: FeedUser;
   createdAt: string;
   score: number;
+  category: string;
   durationMs: number;
   audioLevelDb: number;
   gasLevelKohms: number;

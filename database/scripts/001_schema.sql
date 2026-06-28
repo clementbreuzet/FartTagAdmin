@@ -86,6 +86,56 @@ CREATE TABLE dbo.RefreshTokens (
     CONSTRAINT FK_RefreshTokens_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
 );
 
+IF OBJECT_ID(N'dbo.UserPushTokens', N'U') IS NULL
+CREATE TABLE dbo.UserPushTokens (
+    Id uniqueidentifier NOT NULL CONSTRAINT PK_UserPushTokens PRIMARY KEY,
+    UserId uniqueidentifier NOT NULL,
+    Token nvarchar(512) NOT NULL,
+    Platform nvarchar(20) NOT NULL,
+    DeviceName nvarchar(200) NULL,
+    LastSeenAt datetimeoffset NOT NULL,
+    RevokedAt datetimeoffset NULL,
+    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_UserPushTokens_CreatedAt DEFAULT SYSUTCDATETIME(),
+    UpdatedAt datetimeoffset NULL,
+    CONSTRAINT FK_UserPushTokens_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
+);
+
+IF OBJECT_ID(N'dbo.NotificationPreferences', N'U') IS NULL
+CREATE TABLE dbo.NotificationPreferences (
+    UserId uniqueidentifier NOT NULL CONSTRAINT PK_NotificationPreferences PRIMARY KEY,
+    SocialEnabled bit NOT NULL CONSTRAINT DF_NotificationPreferences_SocialEnabled DEFAULT 1,
+    RewardsEnabled bit NOT NULL CONSTRAINT DF_NotificationPreferences_RewardsEnabled DEFAULT 1,
+    ChallengesEnabled bit NOT NULL CONSTRAINT DF_NotificationPreferences_ChallengesEnabled DEFAULT 1,
+    DailyReminderEnabled bit NOT NULL CONSTRAINT DF_NotificationPreferences_DailyReminderEnabled DEFAULT 1,
+    UpdatedAt datetimeoffset NOT NULL,
+    CONSTRAINT FK_NotificationPreferences_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
+);
+
+IF OBJECT_ID(N'dbo.DailyChallenges', N'U') IS NULL
+CREATE TABLE dbo.DailyChallenges (
+    Id uniqueidentifier NOT NULL CONSTRAINT PK_DailyChallenges PRIMARY KEY,
+    ChallengeDate date NOT NULL,
+    Title nvarchar(120) NOT NULL,
+    Description nvarchar(500) NOT NULL,
+    TargetCount int NOT NULL,
+    RewardFlatulons int NOT NULL,
+    IsActive bit NOT NULL,
+    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_DailyChallenges_CreatedAt DEFAULT SYSUTCDATETIME(),
+    UpdatedAt datetimeoffset NULL
+);
+
+IF OBJECT_ID(N'dbo.DailyRewards', N'U') IS NULL
+CREATE TABLE dbo.DailyRewards (
+    Id uniqueidentifier NOT NULL CONSTRAINT PK_DailyRewards PRIMARY KEY,
+    UserId uniqueidentifier NOT NULL,
+    RewardDate date NOT NULL,
+    IsClaimed bit NOT NULL,
+    ClaimedAt datetimeoffset NULL,
+    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_DailyRewards_CreatedAt DEFAULT SYSUTCDATETIME(),
+    UpdatedAt datetimeoffset NULL,
+    CONSTRAINT FK_DailyRewards_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE
+);
+
 IF OBJECT_ID(N'dbo.Devices', N'U') IS NULL
 CREATE TABLE dbo.Devices (
     Id uniqueidentifier NOT NULL CONSTRAINT PK_Devices PRIMARY KEY,
@@ -195,45 +245,6 @@ CREATE TABLE dbo.Reactions (
     UpdatedAt datetimeoffset NULL,
     CONSTRAINT FK_Reactions_FartEvents_FartEventId FOREIGN KEY (FartEventId) REFERENCES dbo.FartEvents(Id) ON DELETE CASCADE,
     CONSTRAINT FK_Reactions_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id)
-);
-
-IF OBJECT_ID(N'dbo.Comments', N'U') IS NULL
-CREATE TABLE dbo.Comments (
-    Id uniqueidentifier NOT NULL CONSTRAINT PK_Comments PRIMARY KEY,
-    FartEventId uniqueidentifier NOT NULL,
-    UserId uniqueidentifier NOT NULL,
-    Content nvarchar(1000) NOT NULL,
-    CommentedAt datetimeoffset NOT NULL,
-    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_Comments_CreatedAt DEFAULT SYSUTCDATETIME(),
-    UpdatedAt datetimeoffset NULL,
-    CONSTRAINT FK_Comments_FartEvents_FartEventId FOREIGN KEY (FartEventId) REFERENCES dbo.FartEvents(Id) ON DELETE CASCADE,
-    CONSTRAINT FK_Comments_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id)
-);
-
-IF OBJECT_ID(N'dbo.FriendRequests', N'U') IS NULL
-CREATE TABLE dbo.FriendRequests (
-    Id uniqueidentifier NOT NULL CONSTRAINT PK_FriendRequests PRIMARY KEY,
-    RequesterUserId uniqueidentifier NOT NULL,
-    RecipientUserId uniqueidentifier NOT NULL,
-    Status int NOT NULL,
-    RequestedAt datetimeoffset NOT NULL,
-    RespondedAt datetimeoffset NULL,
-    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_FriendRequests_CreatedAt DEFAULT SYSUTCDATETIME(),
-    UpdatedAt datetimeoffset NULL,
-    CONSTRAINT FK_FriendRequests_Users_RequesterUserId FOREIGN KEY (RequesterUserId) REFERENCES dbo.Users(Id),
-    CONSTRAINT FK_FriendRequests_Users_RecipientUserId FOREIGN KEY (RecipientUserId) REFERENCES dbo.Users(Id)
-);
-
-IF OBJECT_ID(N'dbo.Friendships', N'U') IS NULL
-CREATE TABLE dbo.Friendships (
-    Id uniqueidentifier NOT NULL CONSTRAINT PK_Friendships PRIMARY KEY,
-    UserId uniqueidentifier NOT NULL,
-    FriendUserId uniqueidentifier NOT NULL,
-    AcceptedAt datetimeoffset NOT NULL,
-    CreatedAt datetimeoffset NOT NULL CONSTRAINT DF_Friendships_CreatedAt DEFAULT SYSUTCDATETIME(),
-    UpdatedAt datetimeoffset NULL,
-    CONSTRAINT FK_Friendships_Users_UserId FOREIGN KEY (UserId) REFERENCES dbo.Users(Id),
-    CONSTRAINT FK_Friendships_Users_FriendUserId FOREIGN KEY (FriendUserId) REFERENCES dbo.Users(Id)
 );
 
 IF OBJECT_ID(N'dbo.Wallets', N'U') IS NULL
@@ -375,6 +386,14 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Refre
     CREATE UNIQUE INDEX IX_RefreshTokens_TokenHash ON dbo.RefreshTokens(TokenHash);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.RefreshTokens') AND name = N'IX_RefreshTokens_UserId')
     CREATE INDEX IX_RefreshTokens_UserId ON dbo.RefreshTokens(UserId);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserPushTokens') AND name = N'IX_UserPushTokens_Token')
+    CREATE UNIQUE INDEX IX_UserPushTokens_Token ON dbo.UserPushTokens(Token);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.UserPushTokens') AND name = N'IX_UserPushTokens_UserId')
+    CREATE INDEX IX_UserPushTokens_UserId ON dbo.UserPushTokens(UserId);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.DailyChallenges') AND name = N'IX_DailyChallenges_ChallengeDate')
+    CREATE UNIQUE INDEX IX_DailyChallenges_ChallengeDate ON dbo.DailyChallenges(ChallengeDate);
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.DailyRewards') AND name = N'IX_DailyRewards_UserId_RewardDate')
+    CREATE UNIQUE INDEX IX_DailyRewards_UserId_RewardDate ON dbo.DailyRewards(UserId, RewardDate);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Devices') AND name = N'IX_Devices_SerialNumber')
     CREATE UNIQUE INDEX IX_Devices_SerialNumber ON dbo.Devices(SerialNumber);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.DeviceOwnerships') AND name = N'IX_DeviceOwnerships_DeviceId_IsActive')
@@ -409,28 +428,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.React
     CREATE INDEX IX_Reactions_FartEventId ON dbo.Reactions(FartEventId);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Reactions') AND name = N'IX_Reactions_UserId')
     CREATE INDEX IX_Reactions_UserId ON dbo.Reactions(UserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Comments') AND name = N'IX_Comments_FartEventId')
-    CREATE INDEX IX_Comments_FartEventId ON dbo.Comments(FartEventId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Comments') AND name = N'IX_Comments_FartEventId_CommentedAt')
-    CREATE INDEX IX_Comments_FartEventId_CommentedAt ON dbo.Comments(FartEventId, CommentedAt);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Comments') AND name = N'IX_Comments_UserId')
-    CREATE INDEX IX_Comments_UserId ON dbo.Comments(UserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.FriendRequests') AND name = N'IX_FriendRequests_RequesterUserId_RecipientUserId')
-    CREATE UNIQUE INDEX IX_FriendRequests_RequesterUserId_RecipientUserId ON dbo.FriendRequests(RequesterUserId, RecipientUserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.FriendRequests') AND name = N'IX_FriendRequests_RequesterUserId')
-    CREATE INDEX IX_FriendRequests_RequesterUserId ON dbo.FriendRequests(RequesterUserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.FriendRequests') AND name = N'IX_FriendRequests_RecipientUserId')
-    CREATE INDEX IX_FriendRequests_RecipientUserId ON dbo.FriendRequests(RecipientUserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.FriendRequests') AND name = N'IX_FriendRequests_RecipientUserId_Status')
-    CREATE INDEX IX_FriendRequests_RecipientUserId_Status ON dbo.FriendRequests(RecipientUserId, Status);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.FriendRequests') AND name = N'IX_FriendRequests_RequesterUserId_Status')
-    CREATE INDEX IX_FriendRequests_RequesterUserId_Status ON dbo.FriendRequests(RequesterUserId, Status);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Friendships') AND name = N'IX_Friendships_UserId_FriendUserId')
-    CREATE UNIQUE INDEX IX_Friendships_UserId_FriendUserId ON dbo.Friendships(UserId, FriendUserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Friendships') AND name = N'IX_Friendships_UserId')
-    CREATE INDEX IX_Friendships_UserId ON dbo.Friendships(UserId);
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Friendships') AND name = N'IX_Friendships_FriendUserId')
-    CREATE INDEX IX_Friendships_FriendUserId ON dbo.Friendships(FriendUserId);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Wallets') AND name = N'IX_Wallets_UserId')
     CREATE UNIQUE INDEX IX_Wallets_UserId ON dbo.Wallets(UserId);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.WalletTransactions') AND name = N'IX_WalletTransactions_WalletId')

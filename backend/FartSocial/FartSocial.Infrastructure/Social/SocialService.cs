@@ -45,26 +45,6 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
             .Where(x => fartEventIds.Contains(x.FartEventId))
             .ToListAsync(cancellationToken);
 
-        var comments = await dbContext.Comments
-            .AsNoTracking()
-            .Where(x => fartEventIds.Contains(x.FartEventId))
-            .Join(dbContext.Users.AsNoTracking(),
-                comment => comment.UserId,
-                user => user.Id,
-                (comment, user) => new CommentSnapshot(
-                    comment.Id,
-                    comment.FartEventId,
-                    comment.UserId,
-                    user.UserName,
-                    user.AvatarUrl,
-                    comment.Content,
-                    comment.CommentedAt))
-            .ToListAsync(cancellationToken);
-
-        var commentsByEvent = comments
-            .GroupBy(comment => comment.FartEventId)
-            .ToDictionary(group => group.Key, group => group.OrderByDescending(x => x.CommentedAt).Take(2).ToList());
-
         return snapshots.Select(snapshot =>
         {
             var eventReactions = reactions.Where(reaction => reaction.FartEventId == snapshot.Id).ToList();
@@ -75,8 +55,6 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 eventReactions.Count(reaction => reaction.ReactionType == FartReactionType.Shock),
                 eventReactions.Count(reaction => reaction.ReactionType == FartReactionType.Heart),
                 viewerReaction);
-
-            commentsByEvent.TryGetValue(snapshot.Id, out var recentComments);
 
             return new FeedItemDto(
                 snapshot.Id,
@@ -93,15 +71,8 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 snapshot.Category,
                 snapshot.AudioFileId.HasValue ? $"/api/fart-events/audio/{snapshot.AudioFileId.Value}" : null,
                 reactionSummary,
-                comments.Count(comment => comment.FartEventId == snapshot.Id),
-                (recentComments ?? new List<CommentSnapshot>()).Select(comment => new CommentDto(
-                    comment.Id,
-                    comment.FartEventId,
-                    comment.UserId,
-                    comment.UserName,
-                    comment.AvatarUrl,
-                    comment.Content,
-                    comment.CommentedAt)).ToList());
+                0,
+                Array.Empty<CommentDto>());
         }).ToList();
     }
 
@@ -181,277 +152,46 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
             .OrderBy(item => item.UserName)
             .Take(20)
             .ToListAsync(cancellationToken);
-        var resultUserIds = users.Select(item => item.Id).ToArray();
-        var friendships = await dbContext.Friendships.AsNoTracking()
-            .Where(item =>
-                (item.UserId == userId && resultUserIds.Contains(item.FriendUserId)) ||
-                (item.FriendUserId == userId && resultUserIds.Contains(item.UserId)))
-            .ToListAsync(cancellationToken);
-        var requests = await dbContext.FriendRequests.AsNoTracking()
-            .Where(item => item.Status == FriendRequestStatus.Pending &&
-                ((item.RequesterUserId == userId && resultUserIds.Contains(item.RecipientUserId)) ||
-                 (item.RecipientUserId == userId && resultUserIds.Contains(item.RequesterUserId))))
-            .ToListAsync(cancellationToken);
-        var titleIds = users.Where(item => item.EquippedTitleInventoryItemId.HasValue)
-            .Select(item => item.EquippedTitleInventoryItemId!.Value).ToArray();
-        var titles = await dbContext.InventoryItems.AsNoTracking()
-            .Where(item => titleIds.Contains(item.Id))
-            .ToDictionaryAsync(item => item.Id, item => item.Name, cancellationToken);
-        var badges = await dbContext.UserBadges.AsNoTracking()
-            .Where(item => resultUserIds.Contains(item.UserId))
-            .Include(item => item.Badge)
-            .OrderByDescending(item => item.Badge!.Rarity)
-            .ToListAsync(cancellationToken);
 
-        return users.Select(user =>
-        {
-            titles.TryGetValue(user.EquippedTitleInventoryItemId ?? Guid.Empty, out var equippedTitle);
-            var badgeRarity = badges.FirstOrDefault(item => item.UserId == user.Id)?.Badge?.Rarity.ToString().ToLowerInvariant();
-            return new UserSearchResultDto(
-                user.Id,
-                user.UserName,
-                user.UserName,
-                user.AvatarUrl,
-                equippedTitle,
-                badgeRarity,
-                friendships.Any(item => item.UserId == user.Id || item.FriendUserId == user.Id),
-                requests.Any(item => item.RequesterUserId == user.Id || item.RecipientUserId == user.Id));
-        }).ToList();
+        return users.Select(user => new UserSearchResultDto(
+            user.Id,
+            user.UserName,
+            user.UserName,
+            user.AvatarUrl,
+            null,
+            null,
+            false,
+            false)).ToList();
     }
 
-    public async Task<IReadOnlyCollection<FriendDto>> GetFriendsAsync(Guid userId, CancellationToken cancellationToken)
+    public Task<IReadOnlyCollection<FriendDto>> GetFriendsAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var friendships = await dbContext.Friendships
-            .AsNoTracking()
-            .Where(friendship => friendship.UserId == userId || friendship.FriendUserId == userId)
-            .ToListAsync(cancellationToken);
-
-        var friendIds = friendships
-            .Select(friendship => friendship.UserId == userId ? friendship.FriendUserId : friendship.UserId)
-            .Distinct()
-            .ToArray();
-
-        if (friendIds.Length == 0)
-        {
-            return Array.Empty<FriendDto>();
-        }
-
-        var friends = await dbContext.Users
-            .AsNoTracking()
-            .Where(user => friendIds.Contains(user.Id))
-            .ToDictionaryAsync(user => user.Id, cancellationToken);
-
-        return friendships.Select(friendship =>
-        {
-            var friendId = friendship.UserId == userId ? friendship.FriendUserId : friendship.UserId;
-            var friend = friends[friendId];
-            return new FriendDto(friend.Id, friend.UserName, friend.AvatarUrl, friendship.AcceptedAt);
-        }).ToList();
+        return Task.FromResult<IReadOnlyCollection<FriendDto>>(Array.Empty<FriendDto>());
     }
 
-    public async Task<FriendRequestsResponseDto> GetFriendRequestsAsync(Guid userId, CancellationToken cancellationToken)
+    public Task<FriendRequestsResponseDto> GetFriendRequestsAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var requests = await dbContext.FriendRequests
-            .AsNoTracking()
-            .Where(request => request.Status == FriendRequestStatus.Pending && (request.RequesterUserId == userId || request.RecipientUserId == userId))
-            .ToListAsync(cancellationToken);
-
-        var userIds = requests
-            .SelectMany(request => new[] { request.RequesterUserId, request.RecipientUserId })
-            .Distinct()
-            .ToArray();
-
-        var users = await dbContext.Users
-            .AsNoTracking()
-            .Where(user => userIds.Contains(user.Id))
-            .ToDictionaryAsync(user => user.Id, cancellationToken);
-
-        FriendRequestDto MapRequest(FriendRequest request) =>
-            new(
-                request.Id,
-                request.RequesterUserId,
-                users[request.RequesterUserId].UserName,
-                users[request.RequesterUserId].AvatarUrl,
-                request.RecipientUserId,
-                users[request.RecipientUserId].UserName,
-                users[request.RecipientUserId].AvatarUrl,
-                request.Status.ToString().ToLowerInvariant(),
-                request.RequestedAt,
-                request.RespondedAt);
-
-        var incoming = requests
-            .Where(request => request.RecipientUserId == userId)
-            .Select(MapRequest)
-            .ToList();
-
-        var outgoing = requests
-            .Where(request => request.RequesterUserId == userId)
-            .Select(MapRequest)
-            .ToList();
-
-        return new FriendRequestsResponseDto(incoming, outgoing);
+        return Task.FromResult(new FriendRequestsResponseDto(Array.Empty<FriendRequestDto>(), Array.Empty<FriendRequestDto>()));
     }
 
-    public async Task<FriendRequestDto?> RequestFriendAsync(Guid userId, Guid targetUserId, CancellationToken cancellationToken)
+    public Task<FriendRequestDto?> RequestFriendAsync(Guid userId, Guid targetUserId, CancellationToken cancellationToken)
     {
-        if (userId == targetUserId)
-        {
-            throw new InvalidOperationException("Vous ne pouvez pas vous ajouter vous-même.");
-        }
-
-        var targetExists = await dbContext.Users.AnyAsync(user => user.Id == targetUserId && user.IsActive, cancellationToken);
-        if (!targetExists)
-        {
-            return null;
-        }
-
-        var alreadyFriends = await dbContext.Friendships.AnyAsync(friendship =>
-            (friendship.UserId == userId && friendship.FriendUserId == targetUserId) ||
-            (friendship.UserId == targetUserId && friendship.FriendUserId == userId),
-            cancellationToken);
-        if (alreadyFriends)
-        {
-            throw new InvalidOperationException("Vous êtes déjà amis.");
-        }
-
-        var reversePending = await dbContext.FriendRequests.FirstOrDefaultAsync(request =>
-            request.Status == FriendRequestStatus.Pending &&
-            request.RequesterUserId == targetUserId &&
-            request.RecipientUserId == userId,
-            cancellationToken);
-        if (reversePending is not null)
-        {
-            return await AcceptFriendRequestAsync(userId, reversePending.Id, cancellationToken);
-        }
-
-        var existingPending = await dbContext.FriendRequests.AnyAsync(request =>
-            request.Status == FriendRequestStatus.Pending &&
-            request.RequesterUserId == userId &&
-            request.RecipientUserId == targetUserId,
-            cancellationToken);
-        if (existingPending)
-        {
-            throw new InvalidOperationException("Une demande est déjà en attente.");
-        }
-
-        var request = new FriendRequest
-        {
-            RecipientUserId = targetUserId,
-            RequestedAt = DateTimeOffset.UtcNow,
-            RequesterUserId = userId,
-            Status = FriendRequestStatus.Pending,
-        };
-
-        dbContext.FriendRequests.Add(request);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await MapFriendRequestAsync(request.Id, cancellationToken);
+        return Task.FromResult<FriendRequestDto?>(null);
     }
 
-    public async Task<FriendRequestDto?> AcceptFriendRequestAsync(Guid userId, Guid requestId, CancellationToken cancellationToken)
+    public Task<FriendRequestDto?> AcceptFriendRequestAsync(Guid userId, Guid requestId, CancellationToken cancellationToken)
     {
-        var request = await dbContext.FriendRequests.FirstOrDefaultAsync(x => x.Id == requestId && x.RecipientUserId == userId, cancellationToken);
-        if (request is null)
-        {
-            return null;
-        }
-
-        if (request.Status != FriendRequestStatus.Pending)
-        {
-            throw new InvalidOperationException("Cette demande n'est plus valide.");
-        }
-
-        var alreadyFriends = await dbContext.Friendships.AnyAsync(friendship =>
-            (friendship.UserId == request.RequesterUserId && friendship.FriendUserId == request.RecipientUserId) ||
-            (friendship.UserId == request.RecipientUserId && friendship.FriendUserId == request.RequesterUserId),
-            cancellationToken);
-        if (!alreadyFriends)
-        {
-            dbContext.Friendships.Add(new Friendship
-            {
-                AcceptedAt = DateTimeOffset.UtcNow,
-                FriendUserId = request.RecipientUserId,
-                UserId = request.RequesterUserId,
-            });
-        }
-
-        request.Status = FriendRequestStatus.Accepted;
-        request.RespondedAt = DateTimeOffset.UtcNow;
-        request.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await MapFriendRequestAsync(request.Id, cancellationToken);
+        return Task.FromResult<FriendRequestDto?>(null);
     }
 
-    public async Task<FriendRequestDto?> RejectFriendRequestAsync(Guid userId, Guid requestId, CancellationToken cancellationToken)
+    public Task<FriendRequestDto?> RejectFriendRequestAsync(Guid userId, Guid requestId, CancellationToken cancellationToken)
     {
-        var request = await dbContext.FriendRequests.FirstOrDefaultAsync(
-            x => x.Id == requestId && x.RecipientUserId == userId,
-            cancellationToken);
-        if (request is null)
-        {
-            return null;
-        }
-
-        if (request.Status != FriendRequestStatus.Pending)
-        {
-            throw new InvalidOperationException("Cette demande n'est plus valide.");
-        }
-
-        request.Status = FriendRequestStatus.Rejected;
-        request.RespondedAt = DateTimeOffset.UtcNow;
-        request.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return await MapFriendRequestAsync(request.Id, cancellationToken);
+        return Task.FromResult<FriendRequestDto?>(null);
     }
 
-    public async Task<bool> DeleteFriendAsync(Guid userId, Guid friendUserId, CancellationToken cancellationToken)
+    public Task<bool> DeleteFriendAsync(Guid userId, Guid friendUserId, CancellationToken cancellationToken)
     {
-        var friendship = await dbContext.Friendships.FirstOrDefaultAsync(x =>
-            (x.UserId == userId && x.FriendUserId == friendUserId) ||
-            (x.UserId == friendUserId && x.FriendUserId == userId),
-            cancellationToken);
-        if (friendship is null)
-        {
-            return false;
-        }
-
-        dbContext.Friendships.Remove(friendship);
-
-        var pendingRequests = await dbContext.FriendRequests
-            .Where(request =>
-                (request.RequesterUserId == userId && request.RecipientUserId == friendUserId) ||
-                (request.RequesterUserId == friendUserId && request.RecipientUserId == userId))
-            .ToListAsync(cancellationToken);
-
-        if (pendingRequests.Count > 0)
-        {
-            dbContext.FriendRequests.RemoveRange(pendingRequests);
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return true;
-    }
-
-    private async Task<FriendRequestDto?> MapFriendRequestAsync(Guid requestId, CancellationToken cancellationToken)
-    {
-        var request = await dbContext.FriendRequests.AsNoTracking().FirstOrDefaultAsync(x => x.Id == requestId, cancellationToken);
-        if (request is null)
-        {
-            return null;
-        }
-
-        var requester = await dbContext.Users.AsNoTracking().FirstAsync(x => x.Id == request.RequesterUserId, cancellationToken);
-        var recipient = await dbContext.Users.AsNoTracking().FirstAsync(x => x.Id == request.RecipientUserId, cancellationToken);
-        return new FriendRequestDto(
-            request.Id,
-            requester.Id,
-            requester.UserName,
-            requester.AvatarUrl,
-            recipient.Id,
-            recipient.UserName,
-            recipient.AvatarUrl,
-            request.Status.ToString().ToLowerInvariant(),
-            request.RequestedAt,
-            request.RespondedAt);
+        return Task.FromResult(false);
     }
 
     private sealed record FeedSnapshot(
@@ -469,12 +209,4 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
         string Category,
         Guid? AudioFileId);
 
-    private sealed record CommentSnapshot(
-        Guid Id,
-        Guid FartEventId,
-        Guid UserId,
-        string UserName,
-        string? AvatarUrl,
-        string Content,
-        DateTimeOffset CommentedAt);
 }

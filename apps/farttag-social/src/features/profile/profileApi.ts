@@ -1,14 +1,14 @@
 import { apiRequest } from '../../api/apiClient';
-import type { BackendUserProfile, BackendWallet } from '../../api/backendContracts';
-import { mapUserProfile, mapWallet } from '../../api/backendMappers';
+import type { BackendPlayerProfile, BackendUserProfile, BackendWallet } from '../../api/backendContracts';
+import { mapPlayerProfile, mapUserProfile, mapWallet } from '../../api/backendMappers';
 import { inventoryApi } from '../inventory/inventoryApi';
 import { mockInventory, mockProfile, mockWallet } from '../mockData';
 import type { InventoryItem, UserProfile, Wallet } from './types';
 
 export const profileApi = {
   getProfile() {
-    return apiRequest<BackendUserProfile>('/api/profiles/me')
-      .then(mapUserProfile)
+    return apiRequest<BackendPlayerProfile>('/api/profile')
+      .then(mapPlayerProfile)
       .catch(() => mockProfile);
   },
 

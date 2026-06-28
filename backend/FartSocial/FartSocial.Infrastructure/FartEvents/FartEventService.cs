@@ -111,7 +111,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             return null;
         }
 
-        return await MapCommentsAsync(fartEventId, cancellationToken);
+        return Array.Empty<CommentDto>();
     }
 
     public async Task<FartEventDto?> UpdateVisibilityAsync(Guid userId, Guid fartEventId, UpdateFartVisibilityRequestDto request, CancellationToken cancellationToken)
@@ -165,42 +165,9 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
         return await MapDtoAsync(fartEventId, userId, cancellationToken);
     }
 
-    public async Task<CommentDto?> CommentAsync(Guid userId, Guid fartEventId, CreateCommentRequestDto request, CancellationToken cancellationToken)
+    public Task<CommentDto?> CommentAsync(Guid userId, Guid fartEventId, CreateCommentRequestDto request, CancellationToken cancellationToken)
     {
-        var fartEvent = await dbContext.FartEvents.FirstOrDefaultAsync(
-            x => x.Id == fartEventId && (x.UserId == userId || x.Visibility == FartVisibility.Public),
-            cancellationToken);
-        if (fartEvent is null)
-        {
-            return null;
-        }
-
-        var content = request.Content.Trim();
-        if (string.IsNullOrWhiteSpace(content))
-        {
-            throw new InvalidOperationException("Le commentaire ne peut pas être vide.");
-        }
-
-        var comment = new Comment
-        {
-            CommentedAt = DateTimeOffset.UtcNow,
-            Content = content,
-            FartEventId = fartEventId,
-            UserId = userId,
-        };
-
-        dbContext.Comments.Add(comment);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var user = await dbContext.Users.AsNoTracking().FirstAsync(x => x.Id == userId, cancellationToken);
-        return new CommentDto(
-            comment.Id,
-            fartEventId,
-            user.Id,
-            user.UserName,
-            user.AvatarUrl,
-            comment.Content,
-            comment.CommentedAt);
+        return Task.FromResult<CommentDto?>(null);
     }
 
     private async Task<FartEventDto?> MapDtoAsync(Guid fartEventId, Guid viewerUserId, CancellationToken cancellationToken)
@@ -238,27 +205,7 @@ public sealed class FartEventService(FartSocialDbContext dbContext, IBadgeServic
             rewards,
             badges,
             await GetReactionSummaryAsync(fartEvent.Id, viewerUserId, cancellationToken),
-            await MapCommentsAsync(fartEvent.Id, cancellationToken));
-    }
-
-    private async Task<IReadOnlyCollection<CommentDto>> MapCommentsAsync(Guid fartEventId, CancellationToken cancellationToken)
-    {
-        return await dbContext.Comments.AsNoTracking()
-            .Where(comment => comment.FartEventId == fartEventId)
-            .OrderBy(comment => comment.CommentedAt)
-            .Join(
-                dbContext.Users.AsNoTracking(),
-                comment => comment.UserId,
-                user => user.Id,
-                (comment, user) => new CommentDto(
-                    comment.Id,
-                    comment.FartEventId,
-                    comment.UserId,
-                    user.UserName,
-                    user.AvatarUrl,
-                    comment.Content,
-                    comment.CommentedAt))
-            .ToListAsync(cancellationToken);
+            Array.Empty<CommentDto>());
     }
 
     private static (int OfficialScore, int Authenticity, string Category, bool IsAuthenticated, List<FartRewardDto> Rewards, List<string> Badges) CalculateClassification(CreateFartEventRequestDto request)

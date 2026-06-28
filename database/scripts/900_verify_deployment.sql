@@ -9,10 +9,11 @@ DECLARE @ExpectedTables TABLE (Name sysname NOT NULL PRIMARY KEY);
 INSERT INTO @ExpectedTables (Name) VALUES
 (N'Users'), (N'Roles'), (N'Permissions'), (N'UserRoles'), (N'RolePermissions'),
 (N'RefreshTokens'), (N'Devices'), (N'DeviceOwnerships'), (N'DeviceCalibrations'),
-(N'DeviceLogs'), (N'FartAudioFiles'), (N'FartEvents'), (N'Reactions'), (N'Comments'),
-(N'FriendRequests'), (N'Friendships'), (N'Wallets'), (N'WalletTransactions'),
+(N'DeviceLogs'), (N'FartAudioFiles'), (N'FartEvents'), (N'Reactions'),
+(N'Wallets'), (N'WalletTransactions'),
 (N'Badges'), (N'UserBadges'), (N'LootBoxes'), (N'InventoryItems'),
-(N'LootBoxRewards'), (N'UserInventoryItems');
+(N'LootBoxRewards'), (N'UserInventoryItems'), (N'UserPushTokens'),
+(N'NotificationPreferences'), (N'DailyChallenges'), (N'DailyRewards');
 
 DECLARE @MissingTables nvarchar(max);
 SELECT @MissingTables = STRING_AGG(expected.Name, N', ')
@@ -32,13 +33,15 @@ INSERT INTO @ExpectedForeignKeys (Name) VALUES
 (N'FK_RolePermissions_Roles_RoleId'),
 (N'FK_RolePermissions_Permissions_PermissionId'),
 (N'FK_RefreshTokens_Users_UserId'),
+(N'FK_UserPushTokens_Users_UserId'),
+(N'FK_NotificationPreferences_Users_UserId'),
+(N'FK_DailyRewards_Users_UserId'),
 (N'FK_DeviceOwnerships_Devices_DeviceId'),
 (N'FK_DeviceCalibrations_Devices_DeviceId'),
 (N'FK_DeviceLogs_Devices_DeviceId'),
 (N'FK_FartEvents_Devices_DeviceId'),
 (N'FK_FartEvents_FartAudioFiles_AudioFileId'),
 (N'FK_Reactions_FartEvents_FartEventId'),
-(N'FK_Comments_FartEvents_FartEventId'),
 (N'FK_WalletTransactions_Wallets_WalletId'),
 (N'FK_UserBadges_Badges_BadgeId'),
 (N'FK_LootBoxRewards_LootBoxes_LootBoxId'),
@@ -50,11 +53,6 @@ INSERT INTO @ExpectedForeignKeys (Name) VALUES
 (N'FK_FartAudioFiles_Users_UserId'),
 (N'FK_FartEvents_Users_UserId'),
 (N'FK_Reactions_Users_UserId'),
-(N'FK_Comments_Users_UserId'),
-(N'FK_FriendRequests_Users_RequesterUserId'),
-(N'FK_FriendRequests_Users_RecipientUserId'),
-(N'FK_Friendships_Users_UserId'),
-(N'FK_Friendships_Users_FriendUserId'),
 (N'FK_Wallets_Users_UserId'),
 (N'FK_WalletTransactions_Users_CreatedByUserId'),
 (N'FK_UserBadges_Users_UserId'),
@@ -81,7 +79,7 @@ IF (SELECT COUNT(*) FROM dbo.Roles) < 5
     THROW 51002, N'Role seed is incomplete.', 1;
 IF (SELECT COUNT(*) FROM dbo.Badges WHERE IsActive = 1) < 5
     THROW 51003, N'Badge seed is incomplete.', 1;
-IF (SELECT COUNT(*) FROM dbo.InventoryItems) < 18
+IF (SELECT COUNT(*) FROM dbo.InventoryItems) < 5
     THROW 51004, N'Inventory catalog seed is incomplete.', 1;
 IF (SELECT COUNT(*) FROM dbo.LootBoxes WHERE IsActive = 1) < 5
     THROW 51005, N'Loot box seed is incomplete.', 1;
@@ -134,5 +132,7 @@ SELECT
     (SELECT COUNT(*) FROM dbo.Badges) AS Badges,
     (SELECT COUNT(*) FROM dbo.InventoryItems) AS InventoryItems,
     (SELECT COUNT(*) FROM dbo.LootBoxes) AS LootBoxes,
-    (SELECT COUNT(*) FROM dbo.LootBoxRewards) AS LootBoxRewards;
+    (SELECT COUNT(*) FROM dbo.LootBoxRewards) AS LootBoxRewards,
+    (SELECT COUNT(*) FROM dbo.DailyChallenges) AS DailyChallenges,
+    (SELECT COUNT(*) FROM dbo.DailyRewards) AS DailyRewards;
 GO

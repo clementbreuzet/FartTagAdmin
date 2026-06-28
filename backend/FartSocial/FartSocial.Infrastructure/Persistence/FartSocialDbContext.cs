@@ -3,6 +3,7 @@ using FartSocial.Domain.Devices;
 using FartSocial.Domain.FartEvents;
 using FartSocial.Domain.Economy;
 using FartSocial.Domain.Badges;
+using FartSocial.Domain.Daily;
 using FartSocial.Domain.LootBoxes;
 using FartSocial.Domain.Social;
 using FartSocial.Domain.Security;
@@ -39,6 +40,8 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<UserPushToken> UserPushTokens => Set<UserPushToken>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<DailyChallenge> DailyChallenges => Set<DailyChallenge>();
+    public DbSet<DailyReward> DailyRewards => Set<DailyReward>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -85,6 +88,31 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.HasKey(x => x.UserId);
             builder.Property(x => x.UpdatedAt).IsRequired();
             builder.HasOne<User>().WithOne().HasForeignKey<NotificationPreference>(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DailyChallenge>(builder =>
+        {
+            builder.ToTable("DailyChallenges");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.ChallengeDate).IsRequired();
+            builder.Property(x => x.Title).HasMaxLength(120).IsRequired();
+            builder.Property(x => x.Description).HasMaxLength(500).IsRequired();
+            builder.Property(x => x.TargetCount).IsRequired();
+            builder.Property(x => x.RewardFlatulons).IsRequired();
+            builder.Property(x => x.IsActive).IsRequired();
+            builder.HasIndex(x => x.ChallengeDate).IsUnique();
+        });
+
+        modelBuilder.Entity<DailyReward>(builder =>
+        {
+            builder.ToTable("DailyRewards");
+            builder.HasKey(x => x.Id);
+            builder.Property(x => x.UserId).IsRequired();
+            builder.Property(x => x.RewardDate).IsRequired();
+            builder.Property(x => x.IsClaimed).IsRequired();
+            builder.Property(x => x.ClaimedAt);
+            builder.HasIndex(x => new { x.UserId, x.RewardDate }).IsUnique();
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Role>(builder =>
@@ -445,5 +473,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
         modelBuilder.Entity<UserInventoryItem>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
         modelBuilder.Entity<Friendship>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
         modelBuilder.Entity<FriendRequest>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+        modelBuilder.Entity<DailyChallenge>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
+        modelBuilder.Entity<DailyReward>().Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
     }
 }

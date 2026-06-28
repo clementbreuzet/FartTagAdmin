@@ -11,9 +11,9 @@ type ReactionBarProps = {
 };
 
 const reactionOptions: { label: string; type: FartReactionType }[] = [
-  { label: '🔥', type: 'fire' },
+  { label: '❤️', type: 'heart' },
   { label: '😂', type: 'laugh' },
-  { label: '😱', type: 'shock' },
+  { label: '🔥', type: 'fire' },
 ];
 
 export const ReactionBar = ({ disabled, onReact, reactions }: ReactionBarProps) => (

@@ -15,9 +15,16 @@ namespace FartSocial.Api.Controllers;
 [Route("api/feed")]
 public sealed class FeedController(ISocialService socialService) : ControllerBase
 {
-    /// <summary>Gets recent public fart events with reactions and comments.</summary>
+    /// <summary>Gets recent public fart events with reactions.</summary>
     [HttpGet]
     public async Task<ActionResult<IReadOnlyCollection<FeedItemDto>>> GetFeed(CancellationToken cancellationToken)
+    {
+        return await GetPublicFeed(cancellationToken);
+    }
+
+    /// <summary>Gets the V0 public feed.</summary>
+    [HttpGet("public")]
+    public async Task<ActionResult<IReadOnlyCollection<FeedItemDto>>> GetPublicFeed(CancellationToken cancellationToken)
     {
         var userId = GetUserId();
         if (userId is null)
