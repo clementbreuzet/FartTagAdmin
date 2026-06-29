@@ -139,7 +139,7 @@ export const HomeFeedScreen = () => {
               />
             </View>
             <Text style={styles.progressText}>
-              {dashboard.dailyChallengeProgress}/{dashboard.dailyChallenge.targetCount} - +{dashboard.dailyChallenge.rewardFlatulons} Flatulons
+              {dashboard.dailyChallengeProgress}/{dashboard.dailyChallenge.targetCount} - +{dashboard.dailyChallenge.rewardFlatulons} {t('currency.flatulons')}
             </Text>
           </View>
 

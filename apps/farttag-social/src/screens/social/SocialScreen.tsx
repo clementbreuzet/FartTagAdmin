@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Linking,
   Pressable,
@@ -17,7 +17,7 @@ import { useFeedStore } from '../../features/feed/feedStore';
 import type { FartReactionType, PublicFartEvent } from '../../features/feed/types';
 import { t, useLanguageStore } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
-import { ScreenTitle } from '../../shared/components';
+import { Dropdown, ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type SocialScreenProps = NativeStackScreenProps<RootStackParamList, 'SocialScreen'>;
@@ -30,8 +30,23 @@ const formatDate = (date: string) =>
     month: 'short',
   }).format(new Date(date));
 
+const formatDayTitle = (date: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(date));
+
+type GroupedFeedEvents = {
+  dateKey: string;
+  title: string;
+  events: PublicFartEvent[];
+};
+
 export const SocialScreen = (_props: SocialScreenProps) => {
   useLanguageStore((state) => state.locale);
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('all');
   const error = useFeedStore((state) => state.error);
   const events = useFeedStore((state) => state.events);
   const hasLoaded = useFeedStore((state) => state.hasLoaded);
@@ -59,12 +74,62 @@ export const SocialScreen = (_props: SocialScreenProps) => {
     void reactToEvent(eventId, reaction);
   };
 
+  const availableMonthOptions = useMemo(() => {
+    const monthIndexes = Array.from(new Set(events.map((event) => new Date(event.createdAt).getMonth())))
+      .sort((left, right) => left - right);
+    return [
+      { label: t('common.all'), value: 'all' },
+      ...monthIndexes.map((monthIndex) => ({
+        label: new Intl.DateTimeFormat(undefined, { month: 'long' }).format(new Date(2026, monthIndex, 1)),
+        value: String(monthIndex + 1),
+      })),
+    ];
+  }, [events]);
+
+  const yearOptions = useMemo(() => {
+    const years = Array.from(new Set(events.map((event) => String(new Date(event.createdAt).getFullYear()))))
+      .sort((left, right) => Number(right) - Number(left));
+    return [
+      { label: t('common.all'), value: 'all' },
+      ...years.map((year) => ({ label: year, value: year })),
+    ];
+  }, [events]);
+
+  const groupedEvents = useMemo<GroupedFeedEvents[]>(() => {
+    const filtered = events
+      .filter((event) => {
+        const date = new Date(event.createdAt);
+        const monthMatches = selectedMonth === 'all' || String(date.getMonth() + 1) === selectedMonth;
+        const yearMatches = selectedYear === 'all' || String(date.getFullYear()) === selectedYear;
+        return monthMatches && yearMatches;
+      })
+      .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+
+    const groups = new Map<string, GroupedFeedEvents>();
+    filtered.forEach((event) => {
+      const date = new Date(event.createdAt);
+      const dateKey = date.toISOString().slice(0, 10);
+      const existing = groups.get(dateKey);
+      if (existing) {
+        existing.events.push(event);
+        return;
+      }
+      groups.set(dateKey, {
+        dateKey,
+        events: [event],
+        title: formatDayTitle(event.createdAt),
+      });
+    });
+
+    return Array.from(groups.values());
+  }, [events, selectedMonth, selectedYear]);
+
   if (isLoading && events.length === 0) {
     return (
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
           <ScreenTitle title={t('screens.social.title')} />
-          <FeedState description="Chargement du feed public." loading title="Feed public" tone="purple" />
+          <FeedState description={t('social.loading.description')} loading title={t('social.loading.title')} tone="purple" />
         </View>
       </SafeAreaView>
     );
@@ -89,21 +154,53 @@ export const SocialScreen = (_props: SocialScreenProps) => {
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         {events.length > 0 ? (
-          events.map((event) => (
-            <PublicFeedCard
-              event={event}
-              isReacting={reactingEventId === event.id}
-              key={event.id}
-              onReact={react}
-              onReplay={() => void replay(event)}
-            />
-          ))
+          <>
+            <View style={styles.filters}>
+              <View style={styles.filterItem}>
+                <Dropdown
+                  label={t('social.filter.month')}
+                  onChange={setSelectedMonth}
+                  options={availableMonthOptions}
+                  value={selectedMonth}
+                />
+              </View>
+              <View style={styles.filterItem}>
+                <Dropdown
+                  label={t('social.filter.year')}
+                  onChange={setSelectedYear}
+                  options={yearOptions}
+                  value={selectedYear}
+                />
+              </View>
+            </View>
+            {groupedEvents.length > 0 ? groupedEvents.map((group) => (
+              <View key={group.dateKey} style={styles.dayGroup}>
+                <Text style={styles.dayTitle}>{group.title}</Text>
+                {group.events.map((event) => (
+                  <PublicFeedCard
+                    event={event}
+                    isReacting={reactingEventId === event.id}
+                    key={event.id}
+                    onReact={react}
+                    onReplay={() => void replay(event)}
+                  />
+                ))}
+              </View>
+            )) : (
+              <FeedState
+                actionLabel={t('common.update')}
+                description={t('social.empty.description')}
+                onAction={() => void refreshFeed()}
+                title={t('social.empty.title')}
+              />
+            )}
+          </>
         ) : (
           <FeedState
-            actionLabel="Actualiser"
-            description="Les pets publics apparaitront ici."
+            actionLabel={t('common.update')}
+            description={t('social.empty.description')}
             onAction={() => void refreshFeed()}
-            title="Feed vide"
+            title={t('social.empty.title')}
           />
         )}
       </ScrollView>
@@ -133,7 +230,7 @@ const PublicFeedCard = ({
       </View>
       <View style={styles.score}>
         <Text style={styles.scoreValue}>{event.score}</Text>
-        <Text style={styles.scoreLabel}>SCORE</Text>
+        <Text style={styles.scoreLabel}>{t('common.score')}</Text>
       </View>
     </View>
 
@@ -150,7 +247,7 @@ const PublicFeedCard = ({
         reactions={event.reactions}
       />
       <Pressable disabled={!event.audioReplayUrl} onPress={onReplay} style={[styles.replayButton, !event.audioReplayUrl && styles.disabled]}>
-        <Text style={styles.replayText}>REECOUTER</Text>
+        <Text style={styles.replayText}>{t('social.replay')}</Text>
       </Pressable>
     </View>
   </View>
@@ -174,6 +271,25 @@ const styles = StyleSheet.create({
     fontSize: 10,
     marginBottom: 10,
     textAlign: 'center',
+  },
+  dayGroup: {
+    marginBottom: 8,
+  },
+  dayTitle: {
+    color: colors.neonCyan,
+    fontSize: 12,
+    fontWeight: '900',
+    marginBottom: 8,
+    marginTop: 8,
+    textTransform: 'uppercase',
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
+  },
+  filterItem: {
+    flex: 1,
   },
   card: {
     backgroundColor: colors.surface,

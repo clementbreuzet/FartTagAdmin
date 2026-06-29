@@ -16,6 +16,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { useFartDetailsStore } from '../../features/fart-details/fartDetailsStore';
 import { AudioPlayButton } from '../../features/history/components/AudioPlayButton';
 import { useHistoryStore } from '../../features/history/historyStore';
+import { t, useLanguageStore } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
 import { LabelValueRow, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -23,6 +24,7 @@ import { colors } from '../../theme/colors';
 type FartDetailsScreenProps = NativeStackScreenProps<RootStackParamList, 'FartDetailsScreen'>;
 
 export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps) => {
+  useLanguageStore((state) => state.locale);
   const details = useFartDetailsStore((state) => state.details);
   const error = useFartDetailsStore((state) => state.error);
   const isLoading = useFartDetailsStore((state) => state.isLoading);
@@ -100,7 +102,7 @@ export const FartDetailsScreen = ({ navigation, route }: FartDetailsScreenProps)
 
         <View style={[styles.card, styles.rewardCard]}>
           <Text style={styles.sectionTitle}>Récompenses gagnées</Text>
-          <Text style={styles.flatulons}>+{details.rewards.flatulons} FLATULONS</Text>
+          <Text style={styles.flatulons}>+{details.rewards.flatulons} {t('currency.flatulons').toUpperCase()}</Text>
           <Text style={styles.rewardText}>
             Badges : {details.rewards.badges.length > 0
               ? details.rewards.badges.map((badge) => badge.name).join(', ')

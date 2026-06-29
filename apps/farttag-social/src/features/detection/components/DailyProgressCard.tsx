@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../../../theme/colors';
+import { t, useLanguageStore } from '../../../i18n/translations';
 
 type DailyProgressCardProps = {
   goal: number;
@@ -11,7 +12,10 @@ type DailyProgressCardProps = {
 
 const chestImage = require('../../../assets/shop/chest-common.png');
 
-export const DailyProgressCard = ({ goal, progress, reward }: DailyProgressCardProps) => (
+export const DailyProgressCard = ({ goal, progress, reward }: DailyProgressCardProps) => {
+  useLanguageStore((state) => state.locale);
+
+  return (
   <View style={styles.card}>
     <Text style={styles.heading}>PROGRESSION DU JOUR</Text>
     <View style={styles.progressHeader}>
@@ -29,12 +33,13 @@ export const DailyProgressCard = ({ goal, progress, reward }: DailyProgressCardP
     <View style={styles.rewardRow}>
       <View>
         <Text style={styles.rewardLabel}>RÉCOMPENSE</Text>
-        <Text style={styles.rewardValue}>+{reward} <Text style={styles.rewardUnit}>FLATULONS</Text></Text>
+        <Text style={styles.rewardValue}>+{reward} <Text style={styles.rewardUnit}>{t('currency.flatulons').toUpperCase()}</Text></Text>
       </View>
       <Image source={chestImage} style={styles.chest} />
     </View>
   </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#050B10', borderColor: '#9CFF0035', borderRadius: 20, borderWidth: 1, flex: 1, padding: 13 },

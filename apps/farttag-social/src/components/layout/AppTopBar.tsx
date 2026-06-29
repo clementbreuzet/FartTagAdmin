@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { t } from '../../i18n/translations';
 import { appTheme } from '../../theme/theme';
 import { CurrencyPill } from '../ui/CurrencyPill';
 import { XpProgressBar } from '../ui/XpProgressBar';
@@ -27,7 +28,7 @@ export const AppTopBar = ({
 }: AppTopBarProps) => {
   const insets = useSafeAreaInsets();
   const showConnectionBanner = backendStatus === 'offline' || backendStatus === 'checking';
-  const connectionLabel = backendStatus === 'offline' ? 'DECONNECTE' : 'CONNEXION';
+  const connectionLabel = backendStatus === 'offline' ? t('common.disconnected') : t('common.connection');
 
   return (
     <View style={[styles.safeArea, { paddingTop: insets.top }]}>

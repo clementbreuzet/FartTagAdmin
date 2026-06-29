@@ -21,12 +21,12 @@ type UserResourcesState = {
 };
 
 export const useUserStore = create<UserResourcesState>((set) => ({
-  currentXp: 1,
-  flatulons: 545,
-  gems: 114,
-  level: 3,
+  currentXp: 0,
+  flatulons: 0,
+  gems: 0,
+  level: 1,
   requiredXp: 100,
-  totalXp: 1,
+  totalXp: 0,
   applyFartRewards: (rewards) => set({
     currentXp: rewards.currentLevelXp,
     flatulons: rewards.newFlatulons,

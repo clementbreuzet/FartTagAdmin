@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { appTheme } from '../../theme/theme';
+import { GemIcon } from './GemIcon';
 
 type CurrencyPillProps = {
   accent?: 'cyan' | 'green';
@@ -17,8 +18,8 @@ export const CurrencyPill = ({ accent = 'green', amount, onAdd }: CurrencyPillPr
   return (
     <View style={[styles.pill, { borderColor: `${accentColor}66` }]}>
       {accent === 'cyan' ? (
-        <View style={[styles.gemIcon, { borderColor: accentColor }]}>
-          <Text style={[styles.gemText, { color: accentColor }]}>◆</Text>
+        <View style={styles.gemIcon}>
+          <GemIcon size={38} />
         </View>
       ) : (
         <Image source={currencyLogo} style={styles.logo} />
@@ -63,15 +64,9 @@ const styles = StyleSheet.create({
   },
   gemIcon: {
     alignItems: 'center',
-    backgroundColor: '#001C22',
-    borderRadius: 15,
-    borderWidth: 1,
-    height: 26,
+    height: 32,
     justifyContent: 'center',
-    width: 26,
-  },
-  gemText: {
-    fontSize: 15,
+    width: 32,
   },
   amount: {
     color: appTheme.colors.text,

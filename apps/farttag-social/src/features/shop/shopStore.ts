@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { profileApi } from '../profile/profileApi';
 import { useProfileStore } from '../profile/profileStore';
 import type { Wallet } from '../profile/types';
+import { useUserStore } from '../../store/userStore';
 import { shopApi } from './shopApi';
 import type { LootboxDefinition, LootboxReward } from './types';
 import { useNotificationStore } from '../notifications/notificationStore';
@@ -50,6 +51,8 @@ export const useShopStore = create<ShopState>((set, get) => ({
         profileApi.getWallet(),
         shopApi.getLootboxes(),
       ]);
+      useProfileStore.setState({ wallet });
+      useUserStore.getState().setResources({ flatulons: wallet.flatulons });
       set({ hasLoaded: true, lootboxes, wallet });
     } catch (error) {
       set({ error: getErrorMessage(error), hasLoaded: true });
@@ -68,6 +71,7 @@ export const useShopStore = create<ShopState>((set, get) => ({
         revealVisible: true,
       });
       useProfileStore.setState({ wallet: result.wallet });
+      useUserStore.getState().setResources({ flatulons: result.wallet.flatulons });
       const notifications = useNotificationStore.getState();
       if (notifications.preferences.rewardsEnabled && notifications.permissionStatus === 'granted') {
         void NotificationService.showLootBoxNotification(result.reward.name, result.reward.rarity)

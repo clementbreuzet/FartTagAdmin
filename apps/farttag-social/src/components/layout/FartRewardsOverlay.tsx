@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { OfficialFartResult } from '../../features/detection/types';
+import { t, useLanguageStore } from '../../i18n/translations';
 import { appTheme } from '../../theme/theme';
 import { EventCelebrationModal } from './EventCelebrationModal';
 
@@ -10,6 +11,7 @@ type FartRewardsOverlayProps = {
 };
 
 export const FartRewardsOverlay = ({ result }: FartRewardsOverlayProps) => {
+  useLanguageStore((state) => state.locale);
   const [visibleResult, setVisibleResult] = useState<OfficialFartResult | null>(null);
   const lastShownId = useRef<string | null>(result?.fartEventId ?? null);
 
@@ -26,12 +28,12 @@ export const FartRewardsOverlay = ({ result }: FartRewardsOverlayProps) => {
     <EventCelebrationModal
       accentColor={appTheme.colors.toxicGreen}
       onClose={() => setVisibleResult(null)}
-      title="Pet validé"
+      title={t('rewards.title')}
       visible={Boolean(visibleResult)}
     >
       {visibleResult ? (
         <>
-          <Text style={styles.score}>Score {visibleResult.officialScore}</Text>
+          <Text style={styles.score}>{t('common.score')} {visibleResult.officialScore}</Text>
           <View style={styles.rewards}>
             <View style={styles.rewardPill}>
               <Text style={styles.xp}>+{visibleResult.xpGained}</Text>
@@ -39,11 +41,13 @@ export const FartRewardsOverlay = ({ result }: FartRewardsOverlayProps) => {
             </View>
             <View style={[styles.rewardPill, styles.flatulonsPill]}>
               <Text style={styles.flatulons}>+{visibleResult.flatulonsEarned}</Text>
-              <Text style={styles.rewardLabel}>Flatulons</Text>
+              <Text style={styles.rewardLabel}>{t('currency.flatulons')}</Text>
             </View>
           </View>
           {visibleResult.leveledUp ? (
-            <Text style={styles.levelUp}>Niveau {visibleResult.oldLevel} → {visibleResult.newLevel}</Text>
+            <Text style={styles.levelUp}>
+              {t('rewards.levelUp')} {visibleResult.oldLevel} - {visibleResult.newLevel}
+            </Text>
           ) : null}
         </>
       ) : null}

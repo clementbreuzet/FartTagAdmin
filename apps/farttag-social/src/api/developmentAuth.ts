@@ -1,5 +1,5 @@
 import type { BackendAuthResponse } from './backendContracts';
-import { ApiError, apiRequest, setApiAccessToken } from './apiClient';
+import { ApiError, apiRequest, setApiAccessToken, setUnauthorizedRetryHandler } from './apiClient';
 import { apiEndpoints } from './apiEndpoints';
 
 const developmentUser = {
@@ -49,3 +49,5 @@ export const initializeDevelopmentAuth = async (): Promise<void> => {
     userName: response.user.userName,
   });
 };
+
+setUnauthorizedRetryHandler(initializeDevelopmentAuth);

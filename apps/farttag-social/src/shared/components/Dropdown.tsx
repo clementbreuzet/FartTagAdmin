@@ -26,7 +26,7 @@ export const Dropdown = <TValue extends string>({
   const selected = options.find((option) => option.value === value) ?? options[0];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, open && styles.containerOpen]}>
       <Text style={styles.label}>{label}</Text>
       <Pressable onPress={() => setOpen((current) => !current)} style={styles.trigger}>
         <Text style={styles.selectedText}>
@@ -73,6 +73,11 @@ const styles = StyleSheet.create({
   },
   container: {
     gap: 8,
+    position: 'relative',
+    zIndex: 1,
+  },
+  containerOpen: {
+    zIndex: 1000,
   },
   label: {
     color: colors.textPrimary,
@@ -84,7 +89,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 12,
     borderWidth: 1,
+    left: 0,
     overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 64,
+    zIndex: 1001,
   },
   option: {
     alignItems: 'center',

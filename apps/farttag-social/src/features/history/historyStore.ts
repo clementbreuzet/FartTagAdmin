@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { audioPlaybackService } from './audioPlaybackService';
 import { historyApi } from './historyApi';
+import { useFeedStore } from '../feed/feedStore';
 import type {
   AudioPlaybackStatus,
   FartDetails,
@@ -162,6 +163,9 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
           ? { ...state.selectedEvent, visibility }
           : state.selectedEvent,
       }));
+      if (useFeedStore.getState().hasLoaded) {
+        await useFeedStore.getState().refreshFeed();
+      }
     } catch (error) {
       set({ error: getErrorMessage(error) });
     }

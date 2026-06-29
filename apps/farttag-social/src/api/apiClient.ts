@@ -10,6 +10,8 @@ import { useBackendConnectionStore } from './backendConnectionStore';
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? apiConfig.defaultApiUrl;
 
 let accessToken: string | null = null;
+let unauthorizedRetryHandler: (() => Promise<void>) | null = null;
+let unauthorizedRetryPromise: Promise<void> | null = null;
 
 export const setApiAccessToken = (token: string | null) => {
   accessToken = token;
@@ -17,9 +19,11 @@ export const setApiAccessToken = (token: string | null) => {
 
 export const getAccessToken = () => accessToken;
 
-export const getApiUrl = () => {
-  return API_URL;
+export const setUnauthorizedRetryHandler = (handler: (() => Promise<void>) | null) => {
+  unauthorizedRetryHandler = handler;
 };
+
+export const getApiUrl = () => API_URL;
 
 export const resolveApiUrl = (path: string | null): string | null => {
   if (!path) {
@@ -46,6 +50,17 @@ export const apiRequest = async <T>(
     typeof FormData !== 'undefined' &&
     init?.body instanceof FormData;
 
+  const request = () =>
+    fetch(`${getApiUrl()}${path}`, {
+      ...init,
+      headers: {
+        Accept: 'application/json',
+        ...(!isMultipart ? { 'Content-Type': 'application/json' } : {}),
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        ...init?.headers,
+      },
+    });
+
   if (__DEV__) {
     console.log('========================');
     console.log('API REQUEST');
@@ -55,58 +70,66 @@ export const apiRequest = async <T>(
     console.log('HAS TOKEN:', !!accessToken);
   }
 
-  try{
-    const response = await fetch(`${getApiUrl()}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      ...(!isMultipart ? { 'Content-Type': 'application/json' } : {}),
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...init?.headers,
-    },
-  });
-  if (__DEV__) {
-    console.log('STATUS:', response.status);
-    console.log('OK:', response.ok);
-  }
-  useBackendConnectionStore.getState().markOnline();
-
-  if (!response.ok) {
-    const body = await response.text();
+  try {
+    let response = await request();
+    useBackendConnectionStore.getState().markOnline();
 
     if (__DEV__) {
-      console.log('ERROR BODY:', body);
+      console.log('STATUS:', response.status);
+      console.log('OK:', response.ok);
     }
 
-    throw new ApiError(
-      body || 'The server could not complete the request.',
-      response.status,
-    );
-  }
+    if (response.status === 401 && unauthorizedRetryHandler && !path.startsWith('/api/auth/')) {
+      if (__DEV__) {
+        console.log('AUTH RETRY STARTED');
+      }
+      unauthorizedRetryPromise ??= unauthorizedRetryHandler().finally(() => {
+        unauthorizedRetryPromise = null;
+      });
+      await unauthorizedRetryPromise;
+      response = await request();
 
-  if (response.status === 204) {
+      if (__DEV__) {
+        console.log('AUTH RETRY STATUS:', response.status);
+        console.log('AUTH RETRY OK:', response.ok);
+      }
+    }
+
+    if (!response.ok) {
+      const body = await response.text();
+
+      if (__DEV__) {
+        console.log('ERROR BODY:', body);
+      }
+
+      throw new ApiError(
+        body || 'The server could not complete the request.',
+        response.status,
+      );
+    }
+
+    if (response.status === 204) {
+      if (__DEV__) {
+        console.log('NO CONTENT');
+      }
+      return undefined as T;
+    }
+
+    const json = await response.json();
+
     if (__DEV__) {
-      console.log('NO CONTENT');
+      console.log('SUCCESS RESPONSE:', json);
     }
-    return undefined as T;
-  }
 
-  const json = await response.json();
-
-  if (__DEV__) {
-    console.log('SUCCESS RESPONSE:', json);
-  }
-
-  return json as Promise<T>;
-  }
-  catch (error) {
-  if (__DEV__) {
-    console.log('FETCH EXCEPTION');
-    console.log(error);
-  }
-  if (!(error instanceof ApiError)) {
-    useBackendConnectionStore.getState().markOffline(error);
-  }
-  throw error;
+    return json as T;
+  } catch (error) {
+    if (__DEV__) {
+      console.log('FETCH EXCEPTION');
+      console.log(error);
+    }
+    if (!(error instanceof ApiError)) {
+      useBackendConnectionStore.getState().markOffline(error);
+    }
+    throw error;
   }
 };

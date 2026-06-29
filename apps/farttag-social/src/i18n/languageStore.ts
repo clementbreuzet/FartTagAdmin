@@ -13,8 +13,8 @@ const getDeviceLocale = (): Locale => {
 };
 
 export const languageOptions: Array<{ flag: string; label: string; value: Locale }> = [
-  { flag: '🇫🇷', label: 'Français', value: 'fr' },
-  { flag: '🇺🇸', label: 'English', value: 'en' },
+  { flag: '\uD83C\uDDEB\uD83C\uDDF7', label: 'Francais', value: 'fr' },
+  { flag: '\uD83C\uDDFA\uD83C\uDDF8', label: 'English', value: 'en' },
 ];
 
 export const useLanguageStore = create<LanguageState>((set) => ({

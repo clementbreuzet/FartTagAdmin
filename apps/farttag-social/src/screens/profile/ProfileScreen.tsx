@@ -24,7 +24,7 @@ import { useProfileStore } from '../../features/profile/profileStore';
 import type { RankingScope } from '../../features/profile/types';
 import type { RootStackParamList } from '../../navigation/types';
 import type { NotificationPreferences } from '../../services/notifications/NotificationService';
-import { Dropdown, ScreenTitle, SectionTitle, SurfaceCard } from '../../shared/components';
+import { Dropdown, PaginationControls, ScreenTitle, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'ProfileScreen'>;
@@ -55,7 +55,7 @@ const categoryColor = (category: string) => {
 
 const collapsedHistoryLimit = 3;
 const historyPageSize = 3;
-const playButtonImage = require('../../assets/history/play-button.png');
+const playButtonImage = require('../../assets/history/play.png');
 
 const rankingScopeOptions: Array<{ flag: string; label: string; value: RankingScope }> = [
   { flag: '🌍', label: 'Mondial', value: 'world' },
@@ -163,7 +163,7 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
       <SafeAreaView edges={['left', 'right']} style={styles.safeArea}>
         <View style={styles.stateContent}>
           <ScreenTitle title={t('screens.profile.title')} />
-          <FeedState description="Chargement du joueur." loading title="Profil" tone="purple" />
+          <FeedState description={t('profile.loading.description')} loading title={t('screens.profile.title')} tone="purple" />
         </View>
       </SafeAreaView>
     );
@@ -175,10 +175,10 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
         <View style={styles.stateContent}>
           <ScreenTitle title={t('screens.profile.title')} />
           <FeedState
-            actionLabel="Reessayer"
-            description={profileError ?? 'Profil indisponible.'}
+            actionLabel={t('common.retry')}
+            description={profileError ?? t('profile.unavailable.description')}
             onAction={() => void loadProfile()}
-            title="Profil indisponible"
+            title={t('profile.unavailable.title')}
             tone="purple"
           />
         </View>
@@ -226,14 +226,14 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
         </SurfaceCard>
 
         <View style={styles.sectionHeader}>
-          <SectionTitle title="Statistiques" />
+          <SectionTitle title={t('profile.stats')} />
           <Text style={styles.locationLabel}>
             {profile.location ? `${profile.location.continent} / ${profile.location.country} / ${profile.location.city}` : ''}
           </Text>
         </View>
         <SurfaceCard style={styles.rankingFilterCard}>
           <Dropdown
-            label="Classement"
+            label={t('profile.ranking')}
             onChange={(scope) => void setRankingScope(scope)}
             options={rankingScopeOptions}
             value={rankingScope}
@@ -241,35 +241,35 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
         </SurfaceCard>
         <View style={styles.stats}>
           <ProfileStat
-            label="Nombre de pets"
+            label={t('profile.stats.totalFarts')}
             ranking={profile.rankings?.totalFarts}
             rankingScopeLabel={rankingScopeLabel}
             rankingUserCount={rankingUserCount}
             value={`${stats.totalFarts}`}
           />
           <ProfileStat
-            label="Meilleur score"
+            label={t('profile.stats.bestScore')}
             ranking={profile.rankings?.bestScore}
             rankingScopeLabel={rankingScopeLabel}
             rankingUserCount={rankingUserCount}
             value={`${stats.bestScore}`}
           />
           <ProfileStat
-            label="Score moyen"
+            label={t('profile.stats.averageScore')}
             ranking={profile.rankings?.averageScore}
             rankingScopeLabel={rankingScopeLabel}
             rankingUserCount={rankingUserCount}
             value={`${stats.averageScore}`}
           />
           <ProfileStat
-            label="Temps total"
+            label={t('profile.stats.totalDuration')}
             ranking={profile.rankings?.totalDurationMs}
             rankingScopeLabel={rankingScopeLabel}
             rankingUserCount={rankingUserCount}
             value={formatDuration(stats.totalDurationMs)}
           />
           <ProfileStat
-            label="Gaz total"
+            label={t('profile.stats.totalGas')}
             ranking={profile.rankings?.totalGasLevel}
             rankingScopeLabel={rankingScopeLabel}
             rankingUserCount={rankingUserCount}
@@ -277,7 +277,7 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
           />
         </View>
 
-        <SectionTitle title="Historique complet" />
+        <SectionTitle title={t('profile.history')} />
         {isLoadingHistory && history.length === 0 ? (
           <SurfaceCard style={styles.loadingCard}>
             <ActivityIndicator color={colors.neonGreen} />
@@ -297,43 +297,32 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
               />
             ))}
             {history.length > collapsedHistoryLimit ? (
-              <View style={styles.pagination}>
-                <Pressable
-                  disabled={historyPage === 0}
-                  onPress={() => setHistoryPage((page) => Math.max(0, page - 1))}
-                  style={[styles.pageButton, historyPage === 0 && styles.pageButtonDisabled]}
-                >
-                  <Text style={styles.pageButtonText}>PRECEDENT</Text>
-                </Pressable>
-                <Text style={styles.pageLabel}>{historyPage + 1} / {historyPageCount}</Text>
-                <Pressable
-                  disabled={historyPage >= historyPageCount - 1}
-                  onPress={() => setHistoryPage((page) => Math.min(historyPageCount - 1, page + 1))}
-                  style={[styles.pageButton, historyPage >= historyPageCount - 1 && styles.pageButtonDisabled]}
-                >
-                  <Text style={styles.pageButtonText}>SUIVANT</Text>
-                </Pressable>
-              </View>
+              <PaginationControls
+                currentPage={historyPage}
+                onNext={() => setHistoryPage((page) => Math.min(historyPageCount - 1, page + 1))}
+                onPrevious={() => setHistoryPage((page) => Math.max(0, page - 1))}
+                pageCount={historyPageCount}
+              />
             ) : null}
           </View>
         ) : (
           <FeedState
-            actionLabel="Actualiser"
-            description="Tes pets detectes apparaitront ici."
+            actionLabel={t('common.update')}
+            description={t('profile.emptyHistory.description')}
             onAction={() => void refreshHistory()}
-            title="Historique vide"
+            title={t('profile.emptyHistory.title')}
           />
         )}
 
-        <SectionTitle title="Parametres" />
+        <SectionTitle title={t('profile.settings')} />
         <SurfaceCard style={styles.settingsCard}>
           <SettingToggle
-            label="Notifications"
+            label={t('profile.notifications')}
             onValueChange={(enabled) => void updatePreference('dailyReminderEnabled', enabled)}
             value={preferences.dailyReminderEnabled}
           />
           <SettingToggle
-            label="Recompenses"
+            label={t('profile.rewards')}
             onValueChange={(enabled) => void updatePreference('rewardsEnabled', enabled)}
             value={preferences.rewardsEnabled}
           />
@@ -342,32 +331,32 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
               <Text style={styles.settingLabel}>Token push</Text>
               <Text style={styles.settingValue}>
                 {profile.notifications?.hasActivePushToken || permissionStatus === 'granted'
-                  ? 'Notifications actives'
-                  : 'Non configure'}
+                  ? t('profile.notificationsActive')
+                  : t('profile.notConfigured')}
               </Text>
             </View>
             <Pressable disabled={isRegistering} onPress={() => void registerToken()} style={styles.smallButton}>
-              {isRegistering ? <ActivityIndicator color={colors.neonGreen} size="small" /> : <Text style={styles.smallButtonText}>ACTIVER</Text>}
+              {isRegistering ? <ActivityIndicator color={colors.neonGreen} size="small" /> : <Text style={styles.smallButtonText}>{t('common.activate')}</Text>}
             </Pressable>
           </View>
           <View style={styles.settingRow}>
             <View style={styles.settingCopy}>
-              <Text style={styles.settingLabel}>Appareil connecte</Text>
+              <Text style={styles.settingLabel}>{t('profile.connectedDevice')}</Text>
               <Text style={styles.settingValue}>
                 {profile.connectedDevice
                   ? `${profile.connectedDevice.name} - ${profile.connectedDevice.model}`
-                  : 'Aucun appareil rattache'}
+                  : t('profile.noDevice')}
               </Text>
             </View>
           </View>
           <Pressable onPress={logout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>DECONNEXION</Text>
+            <Text style={styles.logoutText}>{t('profile.signOut')}</Text>
           </Pressable>
         </SurfaceCard>
 
         <SurfaceCard style={styles.languageCard}>
           <Dropdown
-            label="Langue"
+            label={t('common.language')}
             onChange={setLocale}
             options={languageOptions}
             value={locale}
@@ -394,7 +383,7 @@ const SettingToggle = ({
   <View style={styles.settingRow}>
     <View style={styles.settingCopy}>
       <Text style={styles.settingLabel}>{label}</Text>
-      <Text style={styles.settingValue}>{value ? 'Active' : 'Desactive'}</Text>
+      <Text style={styles.settingValue}>{value ? t('profile.enabled') : t('profile.disabled')}</Text>
     </View>
     <Switch
       onValueChange={onValueChange}
@@ -440,7 +429,7 @@ const ProfileHistoryRow = ({
               { color: event.visibility === 'public' ? colors.neonCyan : colors.textMuted },
             ]}
           >
-            {event.visibility.toUpperCase()}
+            {event.visibility === 'public' ? t('profile.visibility.public') : t('profile.visibility.private')}
           </Text>
         </Pressable>
         <Pressable onPress={() => onPress(event)} style={styles.historyRowTap}>
@@ -449,28 +438,30 @@ const ProfileHistoryRow = ({
             <Text style={styles.historyDate}>{formatDate(event.occurredAt)}</Text>
           </View>
           <View style={styles.historyScore}>
-            <Text style={styles.historyScoreLabel}>SCORE</Text>
+            <Text style={styles.historyScoreLabel}>{t('common.score')}</Text>
             <Text style={styles.historyScoreValue}>{event.officialScore}</Text>
           </View>
+        </Pressable>
+        <Pressable
+          disabled={!event.audioReplayUrl && !event.audioFileId}
+          onPress={() => onReplay(event)}
+          style={[styles.playButton, (!event.audioReplayUrl && !event.audioFileId) && styles.pageButtonDisabled]}
+        >
+          <Image source={playButtonImage} style={[styles.playButtonImage, isPlaying && styles.playButtonActive]} />
         </Pressable>
       </View>
 
       {expanded ? (
         <View style={styles.historyDetails}>
           <View style={styles.historyMetrics}>
-            <InlineMetric label="Duree" value={formatDuration(event.durationMs)} />
+            <InlineMetric label={t('common.duration')} value={formatDuration(event.durationMs)} />
             <InlineMetric label="Audio" value={`${event.audioLevel.toFixed(1)} dB`} />
             <InlineMetric label="Gaz" value={`${event.gasLevel.toFixed(1)} kOhm`} />
           </View>
           <View style={styles.historyDetailFooter}>
-            <Text style={styles.historyAuth}>{event.isAuthenticated ? 'Authentifie' : 'Non authentifie'}</Text>
-            <Pressable
-              disabled={!event.audioReplayUrl && !event.audioFileId}
-              onPress={() => onReplay(event)}
-              style={[styles.playButton, (!event.audioReplayUrl && !event.audioFileId) && styles.pageButtonDisabled]}
-            >
-              <Image source={playButtonImage} style={[styles.playButtonImage, isPlaying && styles.playButtonActive]} />
-            </Pressable>
+            <Text style={styles.historyAuth}>
+              {event.isAuthenticated ? t('common.authenticated') : `${t('common.no')} ${t('common.authenticated').toLowerCase()}`}
+            </Text>
           </View>
         </View>
       ) : null}
@@ -636,7 +627,7 @@ const styles = StyleSheet.create({
   },
   historyScore: {
     alignItems: 'flex-end',
-    minWidth: 54,
+    minWidth: 50,
   },
   historyScoreLabel: {
     color: colors.textMuted,
@@ -689,21 +680,22 @@ const styles = StyleSheet.create({
   },
   playButton: {
     alignItems: 'center',
-    borderColor: colors.neonCyan,
-    borderRadius: 21,
+    borderColor: colors.neonGreen,
+    borderRadius: 18,
     borderWidth: 1,
-    height: 42,
-    width: 42,
+    height: 36,
     justifyContent: 'center',
+    marginLeft: 8,
     overflow: 'hidden',
+    width: 36,
   },
   playButtonActive: {
     opacity: 0.55,
   },
   playButtonImage: {
-    height: 42,
-    resizeMode: 'cover',
-    width: 42,
+    height: 22,
+    resizeMode: 'contain',
+    width: 22,
   },
   pagination: {
     alignItems: 'center',

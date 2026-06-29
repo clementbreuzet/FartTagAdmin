@@ -77,6 +77,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     set({ error: null, isRefreshing: true, rankingScope });
     try {
       const profile = await profileApi.getProfile(rankingScope);
+      useUserStore.getState().setResources({
+        currentXp: profile.currentLevelXp,
+        flatulons: profile.flatulons,
+        gems: profile.gems,
+        level: profile.level,
+        requiredXp: profile.requiredLevelXp,
+        totalXp: profile.totalXp,
+      });
       set({ hasLoaded: true, inventory: [], profile, wallet: { flatulons: profile.flatulons ?? 0 } });
     } catch (error) {
       set({ error: getErrorMessage(error) });
