@@ -6,6 +6,33 @@ GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 
+IF OBJECT_ID(N'dbo.Users', N'U') IS NULL
+    THROW 51102, N'Cannot seed dev user because dbo.Users does not exist. Run 001_schema.sql first.', 1;
+
+IF COL_LENGTH(N'dbo.Users', N'Level') IS NULL
+    ALTER TABLE dbo.Users ADD Level int NOT NULL CONSTRAINT DF_Users_Level DEFAULT 1 WITH VALUES;
+
+IF COL_LENGTH(N'dbo.Users', N'TotalXp') IS NULL
+    ALTER TABLE dbo.Users ADD TotalXp int NOT NULL CONSTRAINT DF_Users_TotalXp DEFAULT 0 WITH VALUES;
+
+IF COL_LENGTH(N'dbo.Users', N'Gems') IS NULL
+    ALTER TABLE dbo.Users ADD Gems int NOT NULL CONSTRAINT DF_Users_Gems DEFAULT 0 WITH VALUES;
+
+IF COL_LENGTH(N'dbo.Users', N'Continent') IS NULL
+    ALTER TABLE dbo.Users ADD Continent nvarchar(80) NOT NULL CONSTRAINT DF_Users_Continent DEFAULT N'Europe' WITH VALUES;
+
+IF COL_LENGTH(N'dbo.Users', N'Country') IS NULL
+    ALTER TABLE dbo.Users ADD Country nvarchar(120) NOT NULL CONSTRAINT DF_Users_Country DEFAULT N'France' WITH VALUES;
+
+IF COL_LENGTH(N'dbo.Users', N'City') IS NULL
+    ALTER TABLE dbo.Users ADD City nvarchar(120) NOT NULL CONSTRAINT DF_Users_City DEFAULT N'Montesson' WITH VALUES;
+
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Users') AND name = N'IX_Users_Continent_Country_City')
+    EXEC sys.sp_executesql N'CREATE INDEX IX_Users_Continent_Country_City ON dbo.Users(Continent, Country, City);';
+GO
+
 BEGIN TRANSACTION;
 
 DECLARE @UserRoleId uniqueidentifier;
@@ -43,40 +70,75 @@ SET @DevUserId = COALESCE(@ExistingByUserName, @ExistingByEmail, @DevUserId);
 
 IF EXISTS (SELECT 1 FROM dbo.Users WHERE Id = @DevUserId)
 BEGIN
-    UPDATE dbo.Users
-    SET UserName = @UserName,
-        NormalizedUserName = @NormalizedUserName,
-        Email = @Email,
-        NormalizedEmail = @NormalizedEmail,
-        PasswordHash = @PasswordHash,
-        IsActive = 1,
-        UpdatedAt = SYSUTCDATETIME()
-    WHERE Id = @DevUserId;
-END
-ELSE
-BEGIN
-    INSERT INTO dbo.Users (
-        Id,
-        UserName,
-        NormalizedUserName,
-        Email,
-        NormalizedEmail,
-        PasswordHash,
-        SecurityStamp,
-        ConcurrencyStamp,
-        IsActive
-    )
-    VALUES (
+    EXEC sys.sp_executesql
+        N'UPDATE dbo.Users
+          SET UserName = @UserName,
+              NormalizedUserName = @NormalizedUserName,
+              Email = @Email,
+              NormalizedEmail = @NormalizedEmail,
+              PasswordHash = @PasswordHash,
+              Continent = N''Europe'',
+              Country = N''France'',
+              City = N''Montesson'',
+              IsActive = 1,
+              UpdatedAt = SYSUTCDATETIME()
+          WHERE Id = @DevUserId;',
+        N'@DevUserId uniqueidentifier,
+          @UserName nvarchar(50),
+          @NormalizedUserName nvarchar(50),
+          @Email nvarchar(254),
+          @NormalizedEmail nvarchar(254),
+          @PasswordHash nvarchar(max)',
         @DevUserId,
         @UserName,
         @NormalizedUserName,
         @Email,
         @NormalizedEmail,
-        @PasswordHash,
-        REPLACE(CONVERT(nvarchar(36), NEWID()), N'-', N''),
-        REPLACE(CONVERT(nvarchar(36), NEWID()), N'-', N''),
-        1
-    );
+        @PasswordHash;
+END
+ELSE
+BEGIN
+    EXEC sys.sp_executesql
+        N'INSERT INTO dbo.Users (
+              Id,
+              UserName,
+              NormalizedUserName,
+              Email,
+              NormalizedEmail,
+              PasswordHash,
+              Continent,
+              Country,
+              City,
+              SecurityStamp,
+              ConcurrencyStamp,
+              IsActive
+          )
+          VALUES (
+              @DevUserId,
+              @UserName,
+              @NormalizedUserName,
+              @Email,
+              @NormalizedEmail,
+              @PasswordHash,
+              N''Europe'',
+              N''France'',
+              N''Montesson'',
+              REPLACE(CONVERT(nvarchar(36), NEWID()), N''-'', N''''),
+              REPLACE(CONVERT(nvarchar(36), NEWID()), N''-'', N''''),
+              1
+          );',
+        N'@DevUserId uniqueidentifier,
+          @UserName nvarchar(50),
+          @NormalizedUserName nvarchar(50),
+          @Email nvarchar(254),
+          @NormalizedEmail nvarchar(254),
+          @PasswordHash nvarchar(max)',
+        @DevUserId,
+        @UserName,
+        @NormalizedUserName,
+        @Email,
+        @NormalizedEmail,
+        @PasswordHash;
 END;
 
 IF NOT EXISTS (

@@ -10,7 +10,7 @@ import { DeviceStatusCard } from '../../features/detection/components/DeviceStat
 import { LastExploitCard } from '../../features/detection/components/LastExploitCard';
 import { MicrophoneRecorderCard } from '../../features/detection/components/MicrophoneRecorderCard';
 import { useDetectionStore } from '../../features/detection/detectionStore';
-import { t } from '../../i18n/translations';
+import { t, useLanguageStore } from '../../i18n/translations';
 import type { DetectedFartEvent, DetectionSource } from '../../features/detection/types';
 import type { DetectionStackParamList } from '../../navigation/types';
 import { PhoneMicService } from '../../services/audio/PhoneMicService';
@@ -31,6 +31,7 @@ const categoryForScore = (score: number) => score >= 92 ? 'Catégorie 5' : score
 const funLabelForScore = (score: number) => score >= 92 ? 'Légendaire' : score >= 70 ? 'Gros et fier' : 'Assassin silencieux';
 
 export const DetectionScreen = () => {
+  useLanguageStore((state) => state.locale);
   const navigation = useNavigation<NativeStackNavigationProp<DetectionStackParamList>>();
   const bleStatus = useDetectionStore((state) => state.bleStatus);
   const audioSaveStatus = useDetectionStore((state) => state.audioSaveStatus);

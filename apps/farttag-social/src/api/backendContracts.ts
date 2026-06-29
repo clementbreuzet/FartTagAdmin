@@ -100,6 +100,7 @@ export type BackendFeedItem = {
   timestamp: string;
   isAuthenticated: boolean;
   category: string;
+  visibility?: string;
   audioReplayUrl: string | null;
   reactions: BackendReactionSummary;
   commentsCount: number;
@@ -339,12 +340,26 @@ export type BackendPlayerProfile = {
   progressPercent: number;
   flatulons: number;
   gems: number;
+  location: {
+    continent: string;
+    country: string;
+    city: string;
+  };
   stats: {
     totalFarts: number;
     bestScore: number;
     averageScore: number;
     totalDurationMs: number;
     totalGasLevel: number;
+  };
+  rankings: {
+    scope: 'world' | 'continent' | 'country' | 'city';
+    userCount: number;
+    totalFarts: number | null;
+    bestScore: number | null;
+    averageScore: number | null;
+    totalDurationMs: number | null;
+    totalGasLevel: number | null;
   };
   notifications: {
     socialEnabled: boolean;

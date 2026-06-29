@@ -149,6 +149,12 @@ app.Use(async (context, next) =>
 
 app.UseAuthorization();
 
+app.MapGet("/health", () => Results.Ok(new
+{
+    status = "ok",
+    checkedAt = DateTimeOffset.UtcNow,
+})).AllowAnonymous();
+
 app.MapControllers();
 
 await using (var scope = app.Services.CreateAsyncScope())

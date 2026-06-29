@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FeedState } from '../../features/feed/components/FeedState';
 import { useHomeStore } from '../../features/home/homeStore';
 import type { HomeFartEvent } from '../../features/home/types';
-import { t } from '../../i18n/translations';
+import { t, useLanguageStore } from '../../i18n/translations';
 import { routeNames } from '../../navigation/routeNames';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
@@ -34,6 +34,7 @@ const formatDate = (date: string) =>
 const formatDuration = (durationMs: number) => `${(durationMs / 1_000).toFixed(1)} s`;
 
 export const HomeFeedScreen = () => {
+  useLanguageStore((state) => state.locale);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const dashboard = useHomeStore((state) => state.dashboard);
   const error = useHomeStore((state) => state.error);
@@ -119,13 +120,6 @@ export const HomeFeedScreen = () => {
           </View>
         </View>
 
-        <View style={styles.summaryGrid}>
-          <StatCard label="NIVEAU" value={`${dashboard.level}`} />
-          <StatCard label="XP" value={`${dashboard.xp}`} />
-          <StatCard label="FLATULONS" value={`${dashboard.flatulons}`} />
-          <StatCard label="GEMMES" value={`${dashboard.gems}`} />
-        </View>
-
         <View style={styles.dailyGrid}>
           <View style={styles.panel}>
             <Text style={styles.panelEyebrow}>DEFI DU JOUR</Text>
@@ -186,13 +180,6 @@ export const HomeFeedScreen = () => {
     </SafeAreaView>
   );
 };
-
-const StatCard = ({ label, value }: { label: string; value: string }) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
 
 const RecentFartCard = ({ event, onPress }: { event: HomeFartEvent; onPress: () => void }) => (
   <Pressable onPress={onPress} style={styles.fartCard}>
@@ -257,33 +244,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     marginTop: 6,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 14,
-  },
-  statCard: {
-    backgroundColor: colors.surfaceElevated,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    flexBasis: '47%',
-    flexGrow: 1,
-    padding: 13,
-  },
-  statValue: {
-    color: colors.neonGreen,
-    fontSize: 23,
-    fontWeight: '900',
-  },
-  statLabel: {
-    color: colors.textMuted,
-    fontSize: 8,
-    fontWeight: '900',
-    letterSpacing: 0.8,
-    marginTop: 4,
   },
   dailyGrid: {
     gap: 12,

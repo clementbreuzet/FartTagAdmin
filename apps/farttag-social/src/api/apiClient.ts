@@ -5,6 +5,7 @@ declare const process: {
 };
 
 import { apiConfig } from '../config/apiConfig';
+import { useBackendConnectionStore } from './backendConnectionStore';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? apiConfig.defaultApiUrl;
 
@@ -68,6 +69,7 @@ export const apiRequest = async <T>(
     console.log('STATUS:', response.status);
     console.log('OK:', response.ok);
   }
+  useBackendConnectionStore.getState().markOnline();
 
   if (!response.ok) {
     const body = await response.text();
@@ -101,6 +103,9 @@ export const apiRequest = async <T>(
   if (__DEV__) {
     console.log('FETCH EXCEPTION');
     console.log(error);
+  }
+  if (!(error instanceof ApiError)) {
+    useBackendConnectionStore.getState().markOffline(error);
   }
   throw error;
   }

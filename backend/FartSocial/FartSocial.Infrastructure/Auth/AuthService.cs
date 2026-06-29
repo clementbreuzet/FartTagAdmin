@@ -32,6 +32,9 @@ public sealed class AuthService(
         var user = new User
         {
             Email = request.Email.Trim(),
+            Continent = NormalizeLocation(request.Continent, "Europe"),
+            Country = NormalizeLocation(request.Country, "France"),
+            City = NormalizeLocation(request.City, "Montesson"),
             NormalizedEmail = emailNormalized,
             NormalizedUserName = userNameNormalized,
             UserName = request.UserName.Trim(),
@@ -143,6 +146,9 @@ public sealed class AuthService(
             issuedTokens.RefreshTokenExpiresAt,
             new AuthUserDto(user.Id, user.UserName, user.Email, roles, permissions));
     }
+
+    private static string NormalizeLocation(string? value, string fallback) =>
+        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 
     private async Task AssignRoleAsync(Guid userId, string roleName, CancellationToken cancellationToken)
     {

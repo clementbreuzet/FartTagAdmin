@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { appTheme } from '../../theme/theme';
@@ -7,6 +7,7 @@ import { CurrencyPill } from '../ui/CurrencyPill';
 import { XpProgressBar } from '../ui/XpProgressBar';
 
 export type AppTopBarProps = {
+  backendStatus?: 'checking' | 'offline' | 'online' | 'unknown';
   level: number;
   currentXp: number;
   requiredXp: number;
@@ -16,6 +17,7 @@ export type AppTopBarProps = {
 };
 
 export const AppTopBar = ({
+  backendStatus = 'unknown',
   level,
   currentXp,
   requiredXp,
@@ -24,9 +26,17 @@ export const AppTopBar = ({
   onOpenShop,
 }: AppTopBarProps) => {
   const insets = useSafeAreaInsets();
+  const showConnectionBanner = backendStatus === 'offline' || backendStatus === 'checking';
+  const connectionLabel = backendStatus === 'offline' ? 'DECONNECTE' : 'CONNEXION';
 
   return (
     <View style={[styles.safeArea, { paddingTop: insets.top }]}>
+      {showConnectionBanner ? (
+        <View style={[styles.connectionBanner, backendStatus === 'offline' && styles.connectionBannerOffline]}>
+          {backendStatus === 'checking' ? <ActivityIndicator color={appTheme.colors.toxicGreen} size="small" /> : null}
+          <Text style={styles.connectionText}>{connectionLabel}</Text>
+        </View>
+      ) : null}
       <View style={styles.bar}>
         <View style={styles.levelCard}>
           <View style={styles.levelBadge}>
@@ -50,13 +60,34 @@ const styles = StyleSheet.create({
   safeArea: {
     backgroundColor: appTheme.colors.background,
   },
+  connectionBanner: {
+    alignItems: 'center',
+    backgroundColor: '#101A0A',
+    borderBottomColor: appTheme.colors.toxicGreen,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 28,
+    paddingHorizontal: 12,
+  },
+  connectionBannerOffline: {
+    backgroundColor: '#260C14',
+    borderBottomColor: '#FF4D67',
+  },
+  connectionText: {
+    color: appTheme.colors.text,
+    fontSize: 9,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
   bar: {
     alignItems: 'center',
     backgroundColor: appTheme.colors.background,
     borderBottomColor: appTheme.colors.borderGlow,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
     paddingBottom: 8,
     paddingHorizontal: 10,
     paddingTop: 6,
@@ -98,6 +129,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gems: {
-    flex: 0.85,
+    flex: 1,
   },
 });

@@ -2,7 +2,6 @@ import { apiRequest } from '../../api/apiClient';
 import { apiEndpoints } from '../../api/apiEndpoints';
 import type { BackendFartEvent, BackendFeedItem } from '../../api/backendContracts';
 import { mapFeedItem, mapReactionResponse } from '../../api/backendMappers';
-import { mockFeedEvents } from '../mockData';
 import type {
   FartReactionType,
   PublicFartEvent,
@@ -11,13 +10,10 @@ import type {
 
 export const feedApi = {
   async getFeed(): Promise<PublicFartEvent[]> {
-    try {
-      const response = await apiRequest<BackendFeedItem[]>(apiEndpoints.feed.public);
-      const events = response.map(mapFeedItem);
-      return events.length > 0 ? events : mockFeedEvents;
-    } catch {
-      return mockFeedEvents;
-    }
+    const response = await apiRequest<BackendFeedItem[]>(apiEndpoints.feed.public);
+    return response
+      .filter((event) => (event.visibility ?? 'public').toLowerCase() === 'public')
+      .map(mapFeedItem);
   },
 
   react(fartEventId: string, reactionType: FartReactionType) {

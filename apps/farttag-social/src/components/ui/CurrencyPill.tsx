@@ -23,7 +23,9 @@ export const CurrencyPill = ({ accent = 'green', amount, onAdd }: CurrencyPillPr
       ) : (
         <Image source={currencyLogo} style={styles.logo} />
       )}
-      <Text numberOfLines={1} style={styles.amount}>{amount.toLocaleString()}</Text>
+      <Text adjustsFontSizeToFit minimumFontScale={0.72} numberOfLines={1} style={styles.amount}>
+        {amount.toLocaleString()}
+      </Text>
       <Pressable
         accessibilityLabel="Ouvrir la boutique"
         hitSlop={6}
@@ -48,46 +50,47 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     flexDirection: 'row',
-    paddingLeft: 5,
-    paddingRight: 4,
+    minWidth: 0,
+    paddingLeft: 4,
+    paddingRight: 3,
     paddingVertical: 4,
   },
   logo: {
     borderRadius: 15,
-    height: 30,
+    height: 26,
     resizeMode: 'cover',
-    width: 30,
+    width: 26,
   },
   gemIcon: {
     alignItems: 'center',
     backgroundColor: '#001C22',
     borderRadius: 15,
     borderWidth: 1,
-    height: 30,
+    height: 26,
     justifyContent: 'center',
-    width: 30,
+    width: 26,
   },
   gemText: {
-    fontSize: 17,
+    fontSize: 15,
   },
   amount: {
     color: appTheme.colors.text,
     flex: 1,
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '900',
-    marginHorizontal: 4,
+    marginHorizontal: 3,
     textAlign: 'right',
   },
   addButton: {
     alignItems: 'center',
     borderRadius: 12,
     borderWidth: 1,
-    height: 30,
+    height: 26,
     justifyContent: 'center',
-    width: 30,
+    width: 26,
   },
   addText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
     lineHeight: 22,
   },

@@ -32,6 +32,11 @@ export const mockProfile: UserProfile = {
   },
   level: 18,
   levelProgressPercent: 64,
+  location: {
+    city: 'Montesson',
+    continent: 'Europe',
+    country: 'France',
+  },
   globalStats: {
     averageOfficialScore: 87,
     legendaryFarts: 7,
@@ -52,6 +57,15 @@ export const mockProfile: UserProfile = {
       unlockedAt: '2026-06-11T10:00:00.000Z',
     },
   ],
+  rankings: {
+    averageScore: 1,
+    bestScore: 1,
+    scope: 'world',
+    totalDurationMs: 1,
+    totalFarts: 1,
+    totalGasLevel: 1,
+    userCount: 1,
+  },
 };
 
 export const mockInventory: InventoryItem[] = [
@@ -121,6 +135,7 @@ export const mockFeedEvents: PublicFartEvent[] = [
     reactions: { heart: 4, fire: 18, laugh: 12, viewerReaction: null },
     score: 94,
     user: baseUser,
+    visibility: 'public',
   },
 ];
 

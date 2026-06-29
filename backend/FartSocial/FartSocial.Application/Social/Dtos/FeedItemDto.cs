@@ -15,6 +15,7 @@ public sealed record FeedItemDto(
     DateTimeOffset Timestamp,
     bool IsAuthenticated,
     string Category,
+    string Visibility,
     string? AudioReplayUrl,
     FartReactionSummaryDto Reactions,
     int CommentsCount,

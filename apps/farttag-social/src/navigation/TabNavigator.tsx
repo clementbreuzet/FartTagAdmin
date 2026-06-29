@@ -1,11 +1,15 @@
 import React, { useEffect } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppTopBar } from '../components/layout/AppTopBar';
+import { useBackendConnectionStore } from '../api/backendConnectionStore';
+import { useBackendConnectionMonitor } from '../api/useBackendConnectionMonitor';
+import { FartRewardsOverlay } from '../components/layout/FartRewardsOverlay';
 import { TabIcon } from '../components/navigation/TabIcon';
+import { useDetectionStore } from '../features/detection/detectionStore';
 import { useProfileStore } from '../features/profile/profileStore';
 import { DetectionScreen } from '../screens/detection/DetectionScreen';
 import { FartDetailsScreen } from '../screens/history/FartDetailsScreen';
@@ -15,7 +19,7 @@ import { PublicUserProfileScreen } from '../screens/profile/PublicUserProfileScr
 import { ShopScreen } from '../screens/shop/ShopScreen';
 import { SocialScreen } from '../screens/social/SocialScreen';
 import { useUserStore } from '../store/userStore';
-import { t } from '../i18n/translations';
+import { t, useLanguageStore } from '../i18n/translations';
 import { appTheme } from '../theme/theme';
 import { routeNames } from './routeNames';
 import type {
@@ -74,6 +78,7 @@ const ProfileNavigator = () => (
 );
 
 export const TabNavigator = () => {
+  useBackendConnectionMonitor();
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(insets.bottom, 8);
   const fallbackCurrentXp = useUserStore((state) => state.currentXp);
@@ -85,6 +90,9 @@ export const TabNavigator = () => {
   const loadProfile = useProfileStore((state) => state.loadProfile);
   const profile = useProfileStore((state) => state.profile);
   const wallet = useProfileStore((state) => state.wallet);
+  const backendStatus = useBackendConnectionStore((state) => state.status);
+  const officialResult = useDetectionStore((state) => state.officialResult);
+  useLanguageStore((state) => state.locale);
 
   useEffect(() => {
     if (!hasLoadedProfile) {
@@ -93,48 +101,55 @@ export const TabNavigator = () => {
   }, [hasLoadedProfile, loadProfile]);
 
   return (
-    <Tab.Navigator
-      initialRouteName={routeNames.homeTab}
-      screenOptions={({ navigation, route }) => ({
-        header: () => (
-          <AppTopBar
-            currentXp={profile?.currentLevelXp ?? fallbackCurrentXp}
-            flatulons={wallet?.flatulons ?? fallbackFlatulons}
-            gems={profile?.gems ?? fallbackGems}
-            level={profile?.level ?? fallbackLevel}
-            onOpenShop={() => navigation.navigate(routeNames.shopTab, { screen: routeNames.shop })}
-            requiredXp={profile?.requiredLevelXp ?? fallbackRequiredXp}
-          />
-        ),
-        headerShown: true,
-        tabBarActiveTintColor: appTheme.colors.neonGreen,
-        tabBarInactiveTintColor: appTheme.colors.textMuted,
-        tabBarIcon: ({ focused }) => (
-          <TabIcon
-            focused={focused}
-            name={route.name as keyof RootTabParamList}
-          />
-        ),
-        tabBarShowLabel: false,
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            height: 78 + bottomInset,
-            paddingBottom: bottomInset,
-          },
-        ],
-      })}
-    >
-      <Tab.Screen component={HomeNavigator} name={routeNames.homeTab} options={{ title: t('nav.home') }} />
-      <Tab.Screen component={DetectionNavigator} name={routeNames.detectionTab} options={{ title: t('nav.detection') }} />
-      <Tab.Screen component={ShopNavigator} name={routeNames.shopTab} options={{ title: t('nav.shop') }} />
-      <Tab.Screen component={SocialNavigator} name={routeNames.socialTab} options={{ title: t('nav.social') }} />
-      <Tab.Screen component={ProfileNavigator} name={routeNames.profileTab} options={{ title: t('nav.profile') }} />
-    </Tab.Navigator>
+    <View style={styles.root}>
+      <Tab.Navigator
+        initialRouteName={routeNames.homeTab}
+        screenOptions={({ navigation, route }) => ({
+          header: () => (
+            <AppTopBar
+              backendStatus={backendStatus}
+              currentXp={profile?.currentLevelXp ?? fallbackCurrentXp}
+              flatulons={wallet?.flatulons ?? fallbackFlatulons}
+              gems={profile?.gems ?? fallbackGems}
+              level={profile?.level ?? fallbackLevel}
+              onOpenShop={() => navigation.navigate(routeNames.shopTab, { screen: routeNames.shop })}
+              requiredXp={profile?.requiredLevelXp ?? fallbackRequiredXp}
+            />
+          ),
+          headerShown: true,
+          tabBarActiveTintColor: appTheme.colors.neonGreen,
+          tabBarInactiveTintColor: appTheme.colors.textMuted,
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              name={route.name as keyof RootTabParamList}
+            />
+          ),
+          tabBarShowLabel: false,
+          tabBarStyle: [
+            styles.tabBar,
+            {
+              height: 78 + bottomInset,
+              paddingBottom: bottomInset,
+            },
+          ],
+        })}
+      >
+        <Tab.Screen component={HomeNavigator} name={routeNames.homeTab} options={{ title: t('nav.home') }} />
+        <Tab.Screen component={DetectionNavigator} name={routeNames.detectionTab} options={{ title: t('nav.detection') }} />
+        <Tab.Screen component={ShopNavigator} name={routeNames.shopTab} options={{ title: t('nav.shop') }} />
+        <Tab.Screen component={SocialNavigator} name={routeNames.socialTab} options={{ title: t('nav.social') }} />
+        <Tab.Screen component={ProfileNavigator} name={routeNames.profileTab} options={{ title: t('nav.profile') }} />
+      </Tab.Navigator>
+      <FartRewardsOverlay result={officialResult} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   tabBar: {
     backgroundColor: '#05070A',
     borderTopColor: '#7CFF0030',

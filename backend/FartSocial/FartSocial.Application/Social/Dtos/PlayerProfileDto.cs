@@ -13,7 +13,9 @@ public sealed record PlayerProfileDto(
     int ProgressPercent,
     int Flatulons,
     int Gems,
+    PlayerProfileLocationDto Location,
     PlayerProfileStatsDto Stats,
+    PlayerProfileRankingsDto Rankings,
     PlayerNotificationSettingsDto Notifications,
     ConnectedDeviceDto? ConnectedDevice);
 
@@ -24,6 +26,22 @@ public sealed record PlayerProfileStatsDto(
     decimal AverageScore,
     int TotalDurationMs,
     decimal TotalGasLevel);
+
+/// <summary>Location used to scope global rankings.</summary>
+public sealed record PlayerProfileLocationDto(
+    string Continent,
+    string Country,
+    string City);
+
+/// <summary>Global rank for each V0 profile statistic.</summary>
+public sealed record PlayerProfileRankingsDto(
+    string Scope,
+    int UserCount,
+    int? TotalFarts,
+    int? BestScore,
+    int? AverageScore,
+    int? TotalDurationMs,
+    int? TotalGasLevel);
 
 /// <summary>Notification state shown in the V0 profile settings section.</summary>
 public sealed record PlayerNotificationSettingsDto(

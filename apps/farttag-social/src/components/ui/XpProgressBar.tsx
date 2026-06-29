@@ -16,7 +16,9 @@ export const XpProgressBar = ({ currentXp, requiredXp }: XpProgressBarProps) => 
     <View style={styles.container}>
       <View style={styles.labelRow}>
         <Text style={styles.label}>XP</Text>
-        <Text style={styles.value}>{currentXp} / {requiredXp}</Text>
+        <Text adjustsFontSizeToFit numberOfLines={1} style={styles.value}>
+          {currentXp} / {requiredXp}
+        </Text>
       </View>
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${progress * 100}%` }]} />
@@ -28,7 +30,7 @@ export const XpProgressBar = ({ currentXp, requiredXp }: XpProgressBarProps) => 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    minWidth: 84,
+    minWidth: 0,
   },
   labelRow: {
     flexDirection: 'row',
@@ -36,21 +38,24 @@ const styles = StyleSheet.create({
   },
   label: {
     color: appTheme.colors.toxicGreen,
-    fontSize: 7,
+    fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   value: {
-    color: appTheme.colors.textMuted,
-    fontSize: 8,
-    fontWeight: '800',
+    color: appTheme.colors.text,
+    flexShrink: 1,
+    fontSize: 11,
+    fontWeight: '900',
+    marginLeft: 8,
+    textAlign: 'right',
   },
   track: {
     backgroundColor: '#122019',
     borderColor: appTheme.colors.borderGlow,
     borderRadius: 4,
     borderWidth: 1,
-    height: 8,
+    height: 9,
     marginTop: 4,
     overflow: 'hidden',
   },

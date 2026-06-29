@@ -22,6 +22,9 @@ CREATE TABLE dbo.Users (
     IsActive bit NOT NULL,
     LastLoginAt datetimeoffset NULL,
     AvatarUrl nvarchar(500) NULL,
+    Continent nvarchar(80) NOT NULL CONSTRAINT DF_Users_Continent DEFAULT N'Europe',
+    Country nvarchar(120) NOT NULL CONSTRAINT DF_Users_Country DEFAULT N'France',
+    City nvarchar(120) NOT NULL CONSTRAINT DF_Users_City DEFAULT N'Montesson',
     Level int NOT NULL CONSTRAINT DF_Users_Level DEFAULT 1,
     TotalXp int NOT NULL CONSTRAINT DF_Users_TotalXp DEFAULT 0,
     Gems int NOT NULL CONSTRAINT DF_Users_Gems DEFAULT 0,
@@ -346,6 +349,11 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Users
     CREATE INDEX IX_Users_EquippedProfileFrameInventoryItemId ON dbo.Users(EquippedProfileFrameInventoryItemId);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Users') AND name = N'IX_Users_EquippedDetectionEffectInventoryItemId')
     CREATE INDEX IX_Users_EquippedDetectionEffectInventoryItemId ON dbo.Users(EquippedDetectionEffectInventoryItemId);
+IF COL_LENGTH(N'dbo.Users', N'Continent') IS NOT NULL
+   AND COL_LENGTH(N'dbo.Users', N'Country') IS NOT NULL
+   AND COL_LENGTH(N'dbo.Users', N'City') IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Users') AND name = N'IX_Users_Continent_Country_City')
+    EXEC sys.sp_executesql N'CREATE INDEX IX_Users_Continent_Country_City ON dbo.Users(Continent, Country, City);';
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Roles') AND name = N'IX_Roles_NormalizedName')
     CREATE UNIQUE INDEX IX_Roles_NormalizedName ON dbo.Roles(NormalizedName);
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Permissions') AND name = N'IX_Permissions_Name')

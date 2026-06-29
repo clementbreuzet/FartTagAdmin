@@ -4,11 +4,11 @@ import type { BackendPlayerProfile, BackendUserProfile, BackendWallet } from '..
 import { mapPlayerProfile, mapUserProfile, mapWallet } from '../../api/backendMappers';
 import { inventoryApi } from '../inventory/inventoryApi';
 import { mockInventory, mockProfile, mockWallet } from '../mockData';
-import type { InventoryItem, UserProfile, Wallet } from './types';
+import type { InventoryItem, RankingScope, UserProfile, Wallet } from './types';
 
 export const profileApi = {
-  getProfile() {
-    return apiRequest<BackendPlayerProfile>(apiEndpoints.profile.current)
+  getProfile(rankingScope: RankingScope = 'world') {
+    return apiRequest<BackendPlayerProfile>(apiEndpoints.profile.current(rankingScope))
       .then(mapPlayerProfile)
       .catch(() => mockProfile);
   },

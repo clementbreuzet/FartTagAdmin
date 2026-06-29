@@ -1,3 +1,5 @@
+export type RankingScope = 'world' | 'continent' | 'country' | 'city';
+
 export type UserProfile = {
   id: string;
   username: string;
@@ -16,6 +18,11 @@ export type UserProfile = {
   requiredLevelXp?: number;
   flatulons?: number;
   gems?: number;
+  location?: {
+    continent: string;
+    country: string;
+    city: string;
+  };
   globalStats: {
     totalFarts: number;
     publicFarts: number;
@@ -41,6 +48,15 @@ export type UserProfile = {
     averageScore: number;
     totalDurationMs: number;
     totalGasLevel: number;
+  };
+  rankings?: {
+    scope: RankingScope;
+    userCount: number;
+    totalFarts: number | null;
+    bestScore: number | null;
+    averageScore: number | null;
+    totalDurationMs: number | null;
+    totalGasLevel: number | null;
   };
   notifications?: {
     socialEnabled: boolean;

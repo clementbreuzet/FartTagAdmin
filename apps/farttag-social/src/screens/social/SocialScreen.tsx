@@ -15,7 +15,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { ReactionBar } from '../../features/feed/components/ReactionBar';
 import { useFeedStore } from '../../features/feed/feedStore';
 import type { FartReactionType, PublicFartEvent } from '../../features/feed/types';
-import { t } from '../../i18n/translations';
+import { t, useLanguageStore } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -31,6 +31,7 @@ const formatDate = (date: string) =>
   }).format(new Date(date));
 
 export const SocialScreen = (_props: SocialScreenProps) => {
+  useLanguageStore((state) => state.locale);
   const error = useFeedStore((state) => state.error);
   const events = useFeedStore((state) => state.events);
   const hasLoaded = useFeedStore((state) => state.hasLoaded);

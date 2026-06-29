@@ -14,6 +14,9 @@ public sealed class User : Entity
     public bool IsActive { get; set; } = true;
     public DateTimeOffset? LastLoginAt { get; set; }
     public string? AvatarUrl { get; set; }
+    public string Continent { get; set; } = "Europe";
+    public string Country { get; set; } = "France";
+    public string City { get; set; } = "Montesson";
     public int Level { get; set; } = 1;
     public int TotalXp { get; set; }
     public int Gems { get; set; }

@@ -42,7 +42,7 @@ export const apiEndpoints = {
     registerToken: '/api/notifications/register-token',
   },
   profile: {
-    current: '/api/profile',
+    current: (rankingScope = 'world') => `/api/profile?rankingScope=${encodeURIComponent(rankingScope)}`,
     publicById: (userId: string) => `/api/profiles/${userId}`,
   },
   shop: {

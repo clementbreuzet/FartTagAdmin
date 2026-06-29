@@ -17,7 +17,7 @@ import { FeedState } from '../../features/feed/components/FeedState';
 import { RevealModal } from '../../features/shop/components/RevealModal';
 import { useShopStore } from '../../features/shop/shopStore';
 import type { LootboxDefinition, LootboxRarity } from '../../features/shop/types';
-import { t } from '../../i18n/translations';
+import { t, useLanguageStore } from '../../i18n/translations';
 import type { RootStackParamList } from '../../navigation/types';
 import { ScreenTitle } from '../../shared/components';
 import { colors } from '../../theme/colors';
@@ -49,6 +49,7 @@ const rarityOrder: Record<LootboxRarity, number> = {
 };
 
 export const ShopScreen = (_props: ShopScreenProps) => {
+  useLanguageStore((state) => state.locale);
   const error = useShopStore((state) => state.error);
   const hasLoaded = useShopStore((state) => state.hasLoaded);
   const isLoading = useShopStore((state) => state.isLoading);

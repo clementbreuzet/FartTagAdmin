@@ -41,22 +41,22 @@ a script fails.
 4. `007_upgrade_user_progression.sql`
 5. `010_seed_security_and_badges.sql` (security only for V0)
 6. `020_seed_shop_catalog.sql`
-7. `900_verify_deployment.sql`
+7. `030_seed_dev_user.sql` (backend startup only in Development)
+8. `900_verify_deployment.sql`
 
 `deploy.sql` runs the complete sequence.
 
-## Optional Dev User
+## Dev User
 
-For local mobile development, seed the known dev account after the security seed
-has created roles:
-
-```powershell
-sqlcmd -S "localhost\SQLEXPRESS" -E -b -i 030_seed_dev_user.sql
-```
+For local mobile development, the backend startup runner executes
+`030_seed_dev_user.sql` automatically when `ASPNETCORE_ENVIRONMENT` is
+`Development`, after roles and shop seed data have been applied and before
+deployment verification.
 
 The script creates or repairs `usb-tester@farttag.local` with username
 `usb-tester` and password `UsbTest!2026`, then assigns the `User` role.
-Do not run it in production.
+It is intentionally not part of `deploy.sql` so production deployments do not
+create a dev account.
 
 ## User Progression Upgrade
 

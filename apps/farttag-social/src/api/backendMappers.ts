@@ -85,6 +85,7 @@ export const mapFeedItem = (item: BackendFeedItem): PublicFartEvent => ({
   audioLevelDb: item.audioLevel,
   gasLevelKohms: item.gasLevel,
   isAuthenticated: item.isAuthenticated,
+  visibility: 'public',
   audioReplayUrl: resolveApiUrl(item.audioReplayUrl),
   reactions: mapReactionSummary(item.reactions),
   commentsCount: item.commentsCount,
@@ -306,7 +307,9 @@ export const mapPlayerProfile = (profile: BackendPlayerProfile): UserProfile => 
   requiredLevelXp: profile.requiredLevelXp,
   flatulons: profile.flatulons,
   gems: profile.gems,
+  location: profile.location,
   stats: profile.stats,
+  rankings: profile.rankings,
   notifications: profile.notifications,
   connectedDevice: profile.connectedDevice,
 });

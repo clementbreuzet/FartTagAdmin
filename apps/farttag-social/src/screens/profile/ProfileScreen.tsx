@@ -1,5 +1,5 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -15,16 +15,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { setApiAccessToken } from '../../api/apiClient';
 import { FeedState } from '../../features/feed/components/FeedState';
-import { HistoryEventCard } from '../../features/history/components/HistoryEventCard';
 import { useHistoryStore } from '../../features/history/historyStore';
 import type { FartHistoryEvent } from '../../features/history/types';
-import { t } from '../../i18n/translations';
+import { languageOptions, t, useLanguageStore } from '../../i18n/translations';
 import { useNotificationStore } from '../../features/notifications/notificationStore';
 import { ProfileStat } from '../../features/profile/components/ProfileStat';
 import { useProfileStore } from '../../features/profile/profileStore';
+import type { RankingScope } from '../../features/profile/types';
 import type { RootStackParamList } from '../../navigation/types';
 import type { NotificationPreferences } from '../../services/notifications/NotificationService';
-import { ScreenTitle, SectionTitle, SurfaceCard } from '../../shared/components';
+import { Dropdown, ScreenTitle, SectionTitle, SurfaceCard } from '../../shared/components';
 import { colors } from '../../theme/colors';
 
 type ProfileScreenProps = NativeStackScreenProps<RootStackParamList, 'ProfileScreen'>;
@@ -37,14 +37,53 @@ const formatDuration = (durationMs: number) => {
   return minutes > 0 ? `${minutes} min ${seconds}s` : `${seconds}s`;
 };
 
-export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
+const formatDate = (date: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(date));
+
+const categoryColor = (category: string) => {
+  const normalized = category.toLowerCase();
+  if (normalized.includes('5') || normalized === 'mythic') return colors.neonGreen;
+  if (normalized.includes('4') || normalized === 'legendary') return '#FF9D00';
+  if (normalized.includes('3') || normalized === 'epic') return colors.neonPurple;
+  if (normalized.includes('2') || normalized === 'rare') return colors.neonCyan;
+  return colors.neonGreen;
+};
+
+const collapsedHistoryLimit = 3;
+const historyPageSize = 3;
+const playButtonImage = require('../../assets/history/play-button.png');
+
+const rankingScopeOptions: Array<{ flag: string; label: string; value: RankingScope }> = [
+  { flag: '🌍', label: 'Mondial', value: 'world' },
+  { flag: '🌐', label: 'Continent', value: 'continent' },
+  { flag: '🇫🇷', label: 'Pays', value: 'country' },
+  { flag: '🏙️', label: 'Ville', value: 'city' },
+];
+
+const rankingScopeLabels: Record<RankingScope, string> = {
+  city: 'ville',
+  continent: 'continent',
+  country: 'pays',
+  world: 'mondial',
+};
+
+export const ProfileScreen = (_props: ProfileScreenProps) => {
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+  const [historyPage, setHistoryPage] = useState(0);
+
   const profileError = useProfileStore((state) => state.error);
   const hasLoadedProfile = useProfileStore((state) => state.hasLoaded);
   const isLoadingProfile = useProfileStore((state) => state.isLoading);
   const isRefreshingProfile = useProfileStore((state) => state.isRefreshing);
   const profile = useProfileStore((state) => state.profile);
+  const rankingScope = useProfileStore((state) => state.rankingScope);
   const loadProfile = useProfileStore((state) => state.loadProfile);
   const refreshProfile = useProfileStore((state) => state.refreshProfile);
+  const setRankingScope = useProfileStore((state) => state.setRankingScope);
 
   const historyError = useHistoryStore((state) => state.error);
   const history = useHistoryStore((state) => state.items);
@@ -56,6 +95,7 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const loadHistory = useHistoryStore((state) => state.loadHistory);
   const playAudio = useHistoryStore((state) => state.playAudio);
   const refreshHistory = useHistoryStore((state) => state.refreshHistory);
+  const toggleVisibility = useHistoryStore((state) => state.toggleVisibility);
 
   const notificationError = useNotificationStore((state) => state.error);
   const isRegistering = useNotificationStore((state) => state.isRegistering);
@@ -64,6 +104,8 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
   const initializeNotifications = useNotificationStore((state) => state.initializeNotifications);
   const registerToken = useNotificationStore((state) => state.registerToken);
   const updatePreference = useNotificationStore((state) => state.updatePreference);
+  const locale = useLanguageStore((state) => state.locale);
+  const setLocale = useLanguageStore((state) => state.setLocale);
 
   useEffect(() => {
     if (!hasLoadedProfile) {
@@ -93,8 +135,23 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
     await Promise.all([refreshProfile(), refreshHistory()]);
   };
 
-  const openHistoryEvent = (event: FartHistoryEvent) => {
-    navigation.navigate('FartDetailsScreen', { fartEventId: event.id });
+  const visibleHistory = useMemo(() => {
+    const start = historyPage * historyPageSize;
+    return history.slice(start, start + historyPageSize);
+  }, [history, historyPage]);
+
+  const historyPageCount = Math.max(1, Math.ceil(history.length / historyPageSize));
+  const rankingUserCount = profile?.rankings?.userCount;
+  const rankingScopeLabel = rankingScopeLabels[profile?.rankings?.scope ?? rankingScope];
+
+  useEffect(() => {
+    if (historyPage > historyPageCount - 1) {
+      setHistoryPage(Math.max(0, historyPageCount - 1));
+    }
+  }, [historyPage, historyPageCount]);
+
+  const toggleHistoryDetails = (event: FartHistoryEvent) => {
+    setExpandedHistoryId((current) => current === event.id ? null : event.id);
   };
 
   const logout = () => {
@@ -168,13 +225,56 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
           </View>
         </SurfaceCard>
 
-        <SectionTitle title="Statistiques" />
+        <View style={styles.sectionHeader}>
+          <SectionTitle title="Statistiques" />
+          <Text style={styles.locationLabel}>
+            {profile.location ? `${profile.location.continent} / ${profile.location.country} / ${profile.location.city}` : ''}
+          </Text>
+        </View>
+        <SurfaceCard style={styles.rankingFilterCard}>
+          <Dropdown
+            label="Classement"
+            onChange={(scope) => void setRankingScope(scope)}
+            options={rankingScopeOptions}
+            value={rankingScope}
+          />
+        </SurfaceCard>
         <View style={styles.stats}>
-          <ProfileStat label="Nombre de pets" value={`${stats.totalFarts}`} />
-          <ProfileStat label="Meilleur score" value={`${stats.bestScore}`} />
-          <ProfileStat label="Score moyen" value={`${stats.averageScore}`} />
-          <ProfileStat label="Temps total" value={formatDuration(stats.totalDurationMs)} />
-          <ProfileStat label="Gaz total" value={`${Math.round(stats.totalGasLevel)}`} />
+          <ProfileStat
+            label="Nombre de pets"
+            ranking={profile.rankings?.totalFarts}
+            rankingScopeLabel={rankingScopeLabel}
+            rankingUserCount={rankingUserCount}
+            value={`${stats.totalFarts}`}
+          />
+          <ProfileStat
+            label="Meilleur score"
+            ranking={profile.rankings?.bestScore}
+            rankingScopeLabel={rankingScopeLabel}
+            rankingUserCount={rankingUserCount}
+            value={`${stats.bestScore}`}
+          />
+          <ProfileStat
+            label="Score moyen"
+            ranking={profile.rankings?.averageScore}
+            rankingScopeLabel={rankingScopeLabel}
+            rankingUserCount={rankingUserCount}
+            value={`${stats.averageScore}`}
+          />
+          <ProfileStat
+            label="Temps total"
+            ranking={profile.rankings?.totalDurationMs}
+            rankingScopeLabel={rankingScopeLabel}
+            rankingUserCount={rankingUserCount}
+            value={formatDuration(stats.totalDurationMs)}
+          />
+          <ProfileStat
+            label="Gaz total"
+            ranking={profile.rankings?.totalGasLevel}
+            rankingScopeLabel={rankingScopeLabel}
+            rankingUserCount={rankingUserCount}
+            value={`${Math.round(stats.totalGasLevel)}`}
+          />
         </View>
 
         <SectionTitle title="Historique complet" />
@@ -183,16 +283,39 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
             <ActivityIndicator color={colors.neonGreen} />
           </SurfaceCard>
         ) : history.length > 0 ? (
-          history.map((event) => (
-            <HistoryEventCard
-              currentlyPlayingId={currentlyPlayingId}
-              event={event}
-              key={event.id}
-              onOpen={openHistoryEvent}
-              onReplay={(nextEvent) => void playAudio(nextEvent)}
-              playbackStatus={playbackStatus}
-            />
-          ))
+          <View style={styles.historyList}>
+            {visibleHistory.map((event) => (
+              <ProfileHistoryRow
+                currentlyPlayingId={currentlyPlayingId}
+                event={event}
+                expanded={expandedHistoryId === event.id}
+                key={event.id}
+                onPress={toggleHistoryDetails}
+                onReplay={(nextEvent) => void playAudio(nextEvent)}
+                onToggleVisibility={(nextEvent) => void toggleVisibility(nextEvent)}
+                playbackStatus={playbackStatus}
+              />
+            ))}
+            {history.length > collapsedHistoryLimit ? (
+              <View style={styles.pagination}>
+                <Pressable
+                  disabled={historyPage === 0}
+                  onPress={() => setHistoryPage((page) => Math.max(0, page - 1))}
+                  style={[styles.pageButton, historyPage === 0 && styles.pageButtonDisabled]}
+                >
+                  <Text style={styles.pageButtonText}>PRECEDENT</Text>
+                </Pressable>
+                <Text style={styles.pageLabel}>{historyPage + 1} / {historyPageCount}</Text>
+                <Pressable
+                  disabled={historyPage >= historyPageCount - 1}
+                  onPress={() => setHistoryPage((page) => Math.min(historyPageCount - 1, page + 1))}
+                  style={[styles.pageButton, historyPage >= historyPageCount - 1 && styles.pageButtonDisabled]}
+                >
+                  <Text style={styles.pageButtonText}>SUIVANT</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         ) : (
           <FeedState
             actionLabel="Actualiser"
@@ -242,6 +365,15 @@ export const ProfileScreen = ({ navigation }: ProfileScreenProps) => {
           </Pressable>
         </SurfaceCard>
 
+        <SurfaceCard style={styles.languageCard}>
+          <Dropdown
+            label="Langue"
+            onChange={setLocale}
+            options={languageOptions}
+            value={locale}
+          />
+        </SurfaceCard>
+
         {profileError || historyError || notificationError ? (
           <Text style={styles.error}>{profileError ?? historyError ?? notificationError}</Text>
         ) : null}
@@ -270,6 +402,86 @@ const SettingToggle = ({
       trackColor={{ false: colors.border, true: '#9CFF0044' }}
       value={value}
     />
+  </View>
+);
+
+const ProfileHistoryRow = ({
+  currentlyPlayingId,
+  event,
+  expanded,
+  onPress,
+  onReplay,
+  onToggleVisibility,
+  playbackStatus,
+}: {
+  currentlyPlayingId: string | null;
+  event: FartHistoryEvent;
+  expanded: boolean;
+  onPress: (event: FartHistoryEvent) => void;
+  onReplay: (event: FartHistoryEvent) => void;
+  onToggleVisibility: (event: FartHistoryEvent) => void;
+  playbackStatus: string;
+}) => {
+  const accent = categoryColor(event.category);
+  const isPlaying = currentlyPlayingId === event.id && playbackStatus === 'playing';
+  return (
+    <View style={[styles.historyRow, { borderColor: `${accent}55` }]}>
+      <View style={styles.historyRowMain}>
+        <Pressable
+          onPress={() => onToggleVisibility(event)}
+          style={[
+            styles.visibilityButton,
+            { borderColor: event.visibility === 'public' ? colors.neonCyan : colors.textMuted },
+          ]}
+        >
+          <Text
+            style={[
+              styles.visibilityText,
+              { color: event.visibility === 'public' ? colors.neonCyan : colors.textMuted },
+            ]}
+          >
+            {event.visibility.toUpperCase()}
+          </Text>
+        </Pressable>
+        <Pressable onPress={() => onPress(event)} style={styles.historyRowTap}>
+          <View style={styles.historyRowCopy}>
+            <Text style={[styles.historyCategory, { color: accent }]}>{event.category.toUpperCase()}</Text>
+            <Text style={styles.historyDate}>{formatDate(event.occurredAt)}</Text>
+          </View>
+          <View style={styles.historyScore}>
+            <Text style={styles.historyScoreLabel}>SCORE</Text>
+            <Text style={styles.historyScoreValue}>{event.officialScore}</Text>
+          </View>
+        </Pressable>
+      </View>
+
+      {expanded ? (
+        <View style={styles.historyDetails}>
+          <View style={styles.historyMetrics}>
+            <InlineMetric label="Duree" value={formatDuration(event.durationMs)} />
+            <InlineMetric label="Audio" value={`${event.audioLevel.toFixed(1)} dB`} />
+            <InlineMetric label="Gaz" value={`${event.gasLevel.toFixed(1)} kOhm`} />
+          </View>
+          <View style={styles.historyDetailFooter}>
+            <Text style={styles.historyAuth}>{event.isAuthenticated ? 'Authentifie' : 'Non authentifie'}</Text>
+            <Pressable
+              disabled={!event.audioReplayUrl && !event.audioFileId}
+              onPress={() => onReplay(event)}
+              style={[styles.playButton, (!event.audioReplayUrl && !event.audioFileId) && styles.pageButtonDisabled]}
+            >
+              <Image source={playButtonImage} style={[styles.playButtonImage, isPlaying && styles.playButtonActive]} />
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+    </View>
+  );
+};
+
+const InlineMetric = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.inlineMetric}>
+    <Text style={styles.inlineMetricLabel}>{label}</Text>
+    <Text style={styles.inlineMetricValue}>{value}</Text>
   </View>
 );
 
@@ -359,12 +571,176 @@ const styles = StyleSheet.create({
     gap: 9,
     marginBottom: 22,
   },
+  sectionHeader: {
+    marginBottom: 8,
+  },
+  locationLabel: {
+    color: colors.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: -8,
+    textTransform: 'uppercase',
+  },
+  rankingFilterCard: {
+    marginBottom: 12,
+  },
   loadingCard: {
     alignItems: 'center',
     marginBottom: 16,
   },
+  historyList: {
+    gap: 8,
+    marginBottom: 20,
+  },
+  historyRow: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    padding: 11,
+  },
+  historyRowMain: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    minHeight: 42,
+  },
+  historyRowTap: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+  },
+  visibilityButton: {
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    minHeight: 30,
+    width: 72,
+  },
+  visibilityText: {
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  historyRowCopy: {
+    flex: 1,
+  },
+  historyCategory: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  historyDate: {
+    color: colors.textSecondary,
+    fontSize: 9,
+    marginTop: 4,
+  },
+  historyScore: {
+    alignItems: 'flex-end',
+    minWidth: 54,
+  },
+  historyScoreLabel: {
+    color: colors.textMuted,
+    fontSize: 7,
+    fontWeight: '900',
+  },
+  historyScoreValue: {
+    color: colors.neonGreen,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  historyDetails: {
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    marginTop: 10,
+    paddingTop: 10,
+  },
+  historyMetrics: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  inlineMetric: {
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: 10,
+    flex: 1,
+    padding: 8,
+  },
+  inlineMetricLabel: {
+    color: colors.textMuted,
+    fontSize: 7,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  inlineMetricValue: {
+    color: colors.textPrimary,
+    fontSize: 9,
+    fontWeight: '900',
+    marginTop: 4,
+  },
+  historyDetailFooter: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  historyAuth: {
+    color: colors.textSecondary,
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  playButton: {
+    alignItems: 'center',
+    borderColor: colors.neonCyan,
+    borderRadius: 21,
+    borderWidth: 1,
+    height: 42,
+    width: 42,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  playButtonActive: {
+    opacity: 0.55,
+  },
+  playButtonImage: {
+    height: 42,
+    resizeMode: 'cover',
+    width: 42,
+  },
+  pagination: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  pageButton: {
+    alignItems: 'center',
+    borderColor: colors.neonCyan,
+    borderRadius: 10,
+    borderWidth: 1,
+    flex: 1,
+    minHeight: 34,
+    justifyContent: 'center',
+  },
+  pageButtonDisabled: {
+    opacity: 0.38,
+  },
+  pageButtonText: {
+    color: colors.neonCyan,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  pageLabel: {
+    color: colors.textPrimary,
+    fontSize: 10,
+    fontWeight: '900',
+    minWidth: 46,
+    textAlign: 'center',
+  },
   settingsCard: {
     gap: 2,
+  },
+  languageCard: {
+    marginTop: 14,
   },
   settingRow: {
     alignItems: 'center',

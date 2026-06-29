@@ -26,6 +26,7 @@ type HistoryState = {
   stopAudio: () => void;
   refreshHistory: () => Promise<void>;
   setFilter: (filter: HistoryFilter) => void;
+  toggleVisibility: (event: FartHistoryItem) => Promise<void>;
 };
 
 const getErrorMessage = (error: unknown) =>
@@ -147,6 +148,23 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   stopAudio: () => {
     audioPlaybackService.stop();
     set({ currentlyPlayingId: null, playbackStatus: 'idle' });
+  },
+
+  toggleVisibility: async (event) => {
+    const nextVisibility = event.visibility === 'public' ? 'private' : 'public';
+    set({ error: null });
+    try {
+      const visibility = await historyApi.setVisibility(event.id, nextVisibility);
+      set((state) => ({
+        events: state.events.map((item) => item.id === event.id ? { ...item, visibility } : item),
+        items: state.items.map((item) => item.id === event.id ? { ...item, visibility } : item),
+        selectedEvent: state.selectedEvent?.id === event.id
+          ? { ...state.selectedEvent, visibility }
+          : state.selectedEvent,
+      }));
+    } catch (error) {
+      set({ error: getErrorMessage(error) });
+    }
   },
 
   setFilter: (filter) => set({ filter }),

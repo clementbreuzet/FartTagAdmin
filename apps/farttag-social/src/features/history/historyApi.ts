@@ -1,7 +1,8 @@
 import { apiRequest, getAccessToken, getApiUrl } from '../../api/apiClient';
 import { apiEndpoints } from '../../api/apiEndpoints';
 import type { BackendFartEvent, BackendFartHistoryItem } from '../../api/backendContracts';
-import { mapFartDetails, mapHistoryItem } from '../../api/backendMappers';
+import { mapFartDetails, mapHistoryItem, mapVisibilityResponse } from '../../api/backendMappers';
+import type { FartVisibility } from '../fart-details/types';
 import type { FartDetails, FartHistoryItem } from './types';
 
 export const getAudioReplayUrl = (audioFileIdOrReplayUrl: string | null): string | null => {
@@ -38,6 +39,14 @@ export const historyApi = {
 
   async getFartEventById(id: string): Promise<FartDetails> {
     return mapFartDetails(await apiRequest<BackendFartEvent>(apiEndpoints.fartEvents.byId(id)));
+  },
+
+  async setVisibility(id: string, visibility: FartVisibility): Promise<FartVisibility> {
+    const response = await apiRequest<BackendFartEvent>(apiEndpoints.fartEvents.visibility(id), {
+      body: JSON.stringify({ isPublic: visibility === 'public' }),
+      method: 'POST',
+    });
+    return mapVisibilityResponse(response).visibility;
   },
 
   getAudioReplayUrl,

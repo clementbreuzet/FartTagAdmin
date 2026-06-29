@@ -36,6 +36,7 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                     fartEvent.OccurredAt,
                     fartEvent.IsAuthenticated,
                     fartEvent.Category,
+                    fartEvent.Visibility.ToString(),
                     fartEvent.AudioFileId))
             .ToListAsync(cancellationToken);
 
@@ -69,6 +70,7 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
                 snapshot.Timestamp,
                 snapshot.IsAuthenticated,
                 snapshot.Category,
+                snapshot.Visibility,
                 snapshot.AudioFileId.HasValue ? $"/api/fart-events/audio/{snapshot.AudioFileId.Value}" : null,
                 reactionSummary,
                 0,
@@ -196,6 +198,7 @@ public sealed class SocialService(FartSocialDbContext dbContext) : ISocialServic
         DateTimeOffset Timestamp,
         bool IsAuthenticated,
         string Category,
+        string Visibility,
         Guid? AudioFileId);
 
 }

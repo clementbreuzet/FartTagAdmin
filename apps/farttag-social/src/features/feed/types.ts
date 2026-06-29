@@ -24,6 +24,7 @@ export type PublicFartEvent = {
   audioLevelDb: number;
   gasLevelKohms: number;
   isAuthenticated: boolean;
+  visibility: 'public';
   audioReplayUrl: string | null;
   reactions: ReactionSummary;
   commentsCount: number;

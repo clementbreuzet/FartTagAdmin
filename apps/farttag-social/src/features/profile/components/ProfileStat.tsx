@@ -5,13 +5,25 @@ import { colors } from '../../../theme/colors';
 
 type ProfileStatProps = {
   label: string;
+  ranking?: number | null;
+  rankingScopeLabel?: string;
+  rankingUserCount?: number;
   value: string;
 };
 
-export const ProfileStat = ({ label, value }: ProfileStatProps) => (
+export const ProfileStat = ({
+  label,
+  ranking,
+  rankingScopeLabel = 'mondial',
+  rankingUserCount,
+  value,
+}: ProfileStatProps) => (
   <View style={styles.stat}>
     <Text style={styles.value}>{value}</Text>
     <Text style={styles.label}>{label}</Text>
+    <Text style={styles.ranking}>
+      {ranking ? `#${ranking}` : '--'}{rankingUserCount ? ` / ${rankingUserCount}` : ''} {rankingScopeLabel}
+    </Text>
   </View>
 );
 
@@ -35,5 +47,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     marginTop: 4,
     textTransform: 'uppercase',
+  },
+  ranking: {
+    color: colors.neonGreen,
+    fontSize: 8,
+    fontWeight: '900',
+    marginTop: 6,
   },
 });

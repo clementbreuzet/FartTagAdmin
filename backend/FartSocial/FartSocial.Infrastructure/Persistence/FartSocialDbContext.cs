@@ -58,6 +58,9 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.PasswordHash).IsRequired();
             builder.Property(x => x.SecurityStamp).HasMaxLength(64).IsRequired();
             builder.Property(x => x.ConcurrencyStamp).HasMaxLength(64).IsRequired();
+            builder.Property(x => x.Continent).HasMaxLength(80).HasDefaultValue("Europe").IsRequired();
+            builder.Property(x => x.Country).HasMaxLength(120).HasDefaultValue("France").IsRequired();
+            builder.Property(x => x.City).HasMaxLength(120).HasDefaultValue("Montesson").IsRequired();
             builder.Property(x => x.Level).HasDefaultValue(1).IsRequired();
             builder.Property(x => x.TotalXp).HasDefaultValue(0).IsRequired();
             builder.Property(x => x.Gems).HasDefaultValue(0).IsRequired();
@@ -67,6 +70,7 @@ public sealed class FartSocialDbContext(DbContextOptions<FartSocialDbContext> op
             builder.Property(x => x.EquippedDetectionEffectInventoryItemId);
             builder.HasIndex(x => x.NormalizedUserName).IsUnique();
             builder.HasIndex(x => x.NormalizedEmail).IsUnique();
+            builder.HasIndex(x => new { x.Continent, x.Country, x.City });
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedTitleInventoryItemId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedProfileFrameInventoryItemId).OnDelete(DeleteBehavior.Restrict);
             builder.HasOne<InventoryItem>().WithMany().HasForeignKey(x => x.EquippedDetectionEffectInventoryItemId).OnDelete(DeleteBehavior.Restrict);

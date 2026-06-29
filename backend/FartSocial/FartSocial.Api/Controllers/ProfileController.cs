@@ -19,7 +19,7 @@ public sealed class ProfileController(FartSocialDbContext dbContext, IProgressio
 {
     /// <summary>Gets the authenticated player's V0 profile.</summary>
     [HttpGet]
-    public async Task<ActionResult<PlayerProfileDto>> Get(CancellationToken cancellationToken)
+    public async Task<ActionResult<PlayerProfileDto>> Get([FromQuery] string? rankingScope, CancellationToken cancellationToken)
     {
         var userId = GetUserId();
         if (userId is null)
@@ -45,6 +45,15 @@ public sealed class ProfileController(FartSocialDbContext dbContext, IProgressio
         var averageScore = totalFarts == 0 ? 0 : Math.Round((decimal)events.Average(item => item.OfficialScore), 1);
         var totalDurationMs = events.Sum(item => item.DurationMs);
         var totalGasLevel = events.Sum(item => item.GasLevel);
+        var rankings = await GetRankingsAsync(
+            user.Id,
+            NormalizeRankingScope(rankingScope),
+            totalFarts,
+            bestScore,
+            averageScore,
+            totalDurationMs,
+            totalGasLevel,
+            cancellationToken);
 
         var notificationPreference = await dbContext.NotificationPreferences.AsNoTracking()
             .FirstOrDefaultAsync(item => item.UserId == userId.Value, cancellationToken);
@@ -70,10 +79,69 @@ public sealed class ProfileController(FartSocialDbContext dbContext, IProgressio
             progression.ProgressPercent,
             flatulons,
             user.Gems,
+            new PlayerProfileLocationDto(user.Continent, user.Country, user.City),
             new PlayerProfileStatsDto(totalFarts, bestScore, averageScore, totalDurationMs, totalGasLevel),
+            rankings,
             Map(notificationPreference, activePushToken is not null),
             device));
     }
+
+    private async Task<PlayerProfileRankingsDto> GetRankingsAsync(
+        Guid userId,
+        string scope,
+        int totalFarts,
+        int bestScore,
+        decimal averageScore,
+        int totalDurationMs,
+        decimal totalGasLevel,
+        CancellationToken cancellationToken)
+    {
+        var user = await dbContext.Users.AsNoTracking().FirstAsync(item => item.Id == userId, cancellationToken);
+        var scopedUsers = dbContext.Users.AsNoTracking().Where(item => item.IsActive);
+        scopedUsers = scope switch
+        {
+            "continent" => scopedUsers.Where(item => item.Continent == user.Continent),
+            "country" => scopedUsers.Where(item => item.Country == user.Country),
+            "city" => scopedUsers.Where(item => item.City == user.City),
+            _ => scopedUsers,
+        };
+
+        var scopedUserIds = scopedUsers.Select(item => item.Id);
+        var userCount = await scopedUsers.CountAsync(cancellationToken);
+        var aggregates = await dbContext.FartEvents.AsNoTracking()
+            .Where(item => scopedUserIds.Contains(item.UserId))
+            .GroupBy(item => item.UserId)
+            .Select(group => new PlayerRankingAggregate(
+                group.Key,
+                group.Count(),
+                group.Max(item => item.OfficialScore),
+                group.Average(item => (decimal)item.OfficialScore),
+                group.Sum(item => item.DurationMs),
+                group.Sum(item => item.GasLevel)))
+            .ToListAsync(cancellationToken);
+
+        return new PlayerProfileRankingsDto(
+            scope,
+            userCount,
+            Rank(aggregates, item => item.TotalFarts, totalFarts),
+            Rank(aggregates, item => item.BestScore, bestScore),
+            Rank(aggregates, item => item.AverageScore, averageScore),
+            Rank(aggregates, item => item.TotalDurationMs, totalDurationMs),
+            Rank(aggregates, item => item.TotalGasLevel, totalGasLevel));
+    }
+
+    private static string NormalizeRankingScope(string? scope) =>
+        scope?.Trim().ToLowerInvariant() switch
+        {
+            "continent" => "continent",
+            "country" => "country",
+            "city" => "city",
+            _ => "world",
+        };
+
+    private static int Rank<T>(IReadOnlyCollection<PlayerRankingAggregate> aggregates, Func<PlayerRankingAggregate, T> selector, T value)
+        where T : IComparable<T> =>
+        1 + aggregates.Count(item => selector(item).CompareTo(value) > 0);
 
     private async Task<int> GetFlatulonsAsync(Guid userId, CancellationToken cancellationToken)
     {
@@ -122,4 +190,12 @@ public sealed class ProfileController(FartSocialDbContext dbContext, IProgressio
             mapped.DailyReminderEnabled,
             hasActivePushToken);
     }
+
+    private sealed record PlayerRankingAggregate(
+        Guid UserId,
+        int TotalFarts,
+        int BestScore,
+        decimal AverageScore,
+        int TotalDurationMs,
+        decimal TotalGasLevel);
 }

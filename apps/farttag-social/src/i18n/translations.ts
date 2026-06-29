@@ -1,4 +1,4 @@
-type Locale = 'en' | 'fr';
+import { useLanguageStore, type Locale } from './languageStore';
 
 const translations = {
   en: {
@@ -29,9 +29,7 @@ const translations = {
 
 export type TranslationKey = keyof typeof translations.fr;
 
-const getLocale = (): Locale => {
-  const locale = Intl.DateTimeFormat().resolvedOptions().locale.toLowerCase();
-  return locale.startsWith('fr') ? 'fr' : 'en';
-};
+const getLocale = (): Locale => useLanguageStore.getState().locale;
 
 export const t = (key: TranslationKey) => translations[getLocale()][key];
+export { languageOptions, useLanguageStore, type Locale } from './languageStore';
