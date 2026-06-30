@@ -14,6 +14,12 @@ public sealed class LeaderboardService(FartSocialDbContext dbContext) : ILeaderb
         return await BuildAsync(null, cancellationToken);
     }
 
+    public async Task<LeaderboardsResponseDto> GetScopedAsync(Guid userId, string scope, CancellationToken cancellationToken)
+    {
+        var scopeUserIds = await GetLocationScopeUserIdsAsync(userId, scope, cancellationToken);
+        return await BuildAsync(scopeUserIds, cancellationToken);
+    }
+
     public async Task<LeaderboardsResponseDto> GetFriendsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var scopeUserIds = await GetFriendScopeUserIdsAsync(userId, cancellationToken);
@@ -192,6 +198,37 @@ public sealed class LeaderboardService(FartSocialDbContext dbContext) : ILeaderb
     private Task<IReadOnlyCollection<Guid>> GetFriendScopeUserIdsAsync(Guid userId, CancellationToken cancellationToken)
     {
         return Task.FromResult<IReadOnlyCollection<Guid>>(new[] { userId });
+    }
+
+    private async Task<IReadOnlyCollection<Guid>> GetLocationScopeUserIdsAsync(Guid userId, string scope, CancellationToken cancellationToken)
+    {
+        var currentUser = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => new
+            {
+                user.City,
+                user.Continent,
+                user.Country,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (currentUser is null)
+        {
+            return Array.Empty<Guid>();
+        }
+
+        var users = dbContext.Users.AsNoTracking();
+        users = scope switch
+        {
+            "continent" => users.Where(user => user.Continent == currentUser.Continent),
+            "country" => users.Where(user => user.Continent == currentUser.Continent && user.Country == currentUser.Country),
+            "city" => users.Where(user => user.Continent == currentUser.Continent && user.Country == currentUser.Country && user.City == currentUser.City),
+            _ => users,
+        };
+
+        return await users
+            .Select(user => user.Id)
+            .ToListAsync(cancellationToken);
     }
 
     private sealed record LeaderboardAggregate(Guid UserId, int Score, int? DurationMs, int? GasLevel);

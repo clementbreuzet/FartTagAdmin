@@ -15,8 +15,8 @@ type LeaderboardsState = {
   mostToxic: LeaderboardEntry[];
   setMode: (mode: LeaderboardMode) => void;
   week: LeaderboardEntry[];
-  loadLeaderboards: () => Promise<void>;
-  refreshLeaderboards: () => Promise<void>;
+  loadLeaderboards: (rankingScope?: string) => Promise<void>;
+  refreshLeaderboards: (rankingScope?: string) => Promise<void>;
 };
 
 const getErrorMessage = (error: unknown) =>
@@ -42,11 +42,11 @@ export const useLeaderboardsStore = create<LeaderboardsState>((set, get) => ({
 
   setMode: (activeMode) => set({ activeMode }),
 
-  loadLeaderboards: async () => {
+  loadLeaderboards: async (rankingScope = 'world') => {
     set({ error: null, isLoading: true });
     try {
       const [boards, friends] = await Promise.all([
-        leaderboardsApi.getGlobal(),
+        leaderboardsApi.getGlobal(rankingScope),
         leaderboardsApi.getFriends(),
       ]);
       set({ ...boards, friends, hasLoaded: true });
@@ -57,11 +57,11 @@ export const useLeaderboardsStore = create<LeaderboardsState>((set, get) => ({
     }
   },
 
-  refreshLeaderboards: async () => {
+  refreshLeaderboards: async (rankingScope = 'world') => {
     set({ error: null, isRefreshing: true });
     try {
       const [boards, friends] = await Promise.all([
-        leaderboardsApi.getGlobal(),
+        leaderboardsApi.getGlobal(rankingScope),
         leaderboardsApi.getFriends(),
       ]);
       set({ ...boards, friends, hasLoaded: true });

@@ -17,9 +17,22 @@ public sealed class LeaderboardsController(ILeaderboardService leaderboardServic
 {
     /// <summary>Gets global score, weekly, longest, and toxic leaderboards.</summary>
     [HttpGet("global")]
-    public async Task<ActionResult<LeaderboardsResponseDto>> GetGlobal(CancellationToken cancellationToken)
+    public async Task<ActionResult<LeaderboardsResponseDto>> GetGlobal([FromQuery] string? rankingScope, CancellationToken cancellationToken)
     {
-        var response = await leaderboardService.GetGlobalAsync(cancellationToken);
+        var scope = NormalizeRankingScope(rankingScope);
+        if (scope == "world")
+        {
+            var globalResponse = await leaderboardService.GetGlobalAsync(cancellationToken);
+            return Ok(globalResponse);
+        }
+
+        var userId = GetUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await leaderboardService.GetScopedAsync(userId.Value, scope, cancellationToken);
         return Ok(response);
     }
 
@@ -42,4 +55,13 @@ public sealed class LeaderboardsController(ILeaderboardService leaderboardServic
         var rawUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
         return Guid.TryParse(rawUserId, out var userId) ? userId : null;
     }
+
+    private static string NormalizeRankingScope(string? scope) =>
+        scope?.Trim().ToLowerInvariant() switch
+        {
+            "continent" => "continent",
+            "country" => "country",
+            "city" => "city",
+            _ => "world",
+        };
 }

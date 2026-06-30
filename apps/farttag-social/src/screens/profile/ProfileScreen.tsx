@@ -21,7 +21,6 @@ import { languageOptions, t, useLanguageStore } from '../../i18n/translations';
 import { useNotificationStore } from '../../features/notifications/notificationStore';
 import { ProfileStat } from '../../features/profile/components/ProfileStat';
 import { useProfileStore } from '../../features/profile/profileStore';
-import type { RankingScope } from '../../features/profile/types';
 import type { RootStackParamList } from '../../navigation/types';
 import type { NotificationPreferences } from '../../services/notifications/NotificationService';
 import { Dropdown, PaginationControls, ScreenTitle, SectionTitle, SurfaceCard } from '../../shared/components';
@@ -57,14 +56,14 @@ const collapsedHistoryLimit = 3;
 const historyPageSize = 3;
 const playButtonImage = require('../../assets/history/play.png');
 
-const rankingScopeOptions: Array<{ flag: string; label: string; value: RankingScope }> = [
+const rankingScopeOptions: Array<{ flag: string; label: string; value: 'world' | 'continent' | 'country' | 'city' }> = [
   { flag: '🌍', label: 'Mondial', value: 'world' },
   { flag: '🌐', label: 'Continent', value: 'continent' },
   { flag: '🇫🇷', label: 'Pays', value: 'country' },
   { flag: '🏙️', label: 'Ville', value: 'city' },
 ];
 
-const rankingScopeLabels: Record<RankingScope, string> = {
+const rankingScopeLabels: Record<'world' | 'continent' | 'country' | 'city', string> = {
   city: 'ville',
   continent: 'continent',
   country: 'pays',
@@ -80,10 +79,9 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
   const isLoadingProfile = useProfileStore((state) => state.isLoading);
   const isRefreshingProfile = useProfileStore((state) => state.isRefreshing);
   const profile = useProfileStore((state) => state.profile);
-  const rankingScope = useProfileStore((state) => state.rankingScope);
   const loadProfile = useProfileStore((state) => state.loadProfile);
   const refreshProfile = useProfileStore((state) => state.refreshProfile);
-  const setRankingScope = useProfileStore((state) => state.setRankingScope);
+
 
   const historyError = useHistoryStore((state) => state.error);
   const history = useHistoryStore((state) => state.items);
@@ -115,7 +113,13 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
       void loadHistory();
     }
     void initializeNotifications();
-  }, [hasLoadedHistory, hasLoadedProfile, initializeNotifications, loadHistory, loadProfile]);
+  }, [
+    hasLoadedHistory,
+    hasLoadedProfile,
+    initializeNotifications,
+    loadHistory,
+    loadProfile,
+  ]);
 
   const stats = useMemo(() => {
     if (profile?.stats) {
@@ -141,8 +145,6 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
   }, [history, historyPage]);
 
   const historyPageCount = Math.max(1, Math.ceil(history.length / historyPageSize));
-  const rankingUserCount = profile?.rankings?.userCount;
-  const rankingScopeLabel = rankingScopeLabels[profile?.rankings?.scope ?? rankingScope];
 
   useEffect(() => {
     if (historyPage > historyPageCount - 1) {
@@ -231,48 +233,30 @@ export const ProfileScreen = (_props: ProfileScreenProps) => {
             {profile.location ? `${profile.location.continent} / ${profile.location.country} / ${profile.location.city}` : ''}
           </Text>
         </View>
-        <SurfaceCard style={styles.rankingFilterCard}>
-          <Dropdown
-            label={t('profile.ranking')}
-            onChange={(scope) => void setRankingScope(scope)}
-            options={rankingScopeOptions}
-            value={rankingScope}
-          />
-        </SurfaceCard>
         <View style={styles.stats}>
           <ProfileStat
             label={t('profile.stats.totalFarts')}
             ranking={profile.rankings?.totalFarts}
-            rankingScopeLabel={rankingScopeLabel}
-            rankingUserCount={rankingUserCount}
             value={`${stats.totalFarts}`}
           />
           <ProfileStat
             label={t('profile.stats.bestScore')}
             ranking={profile.rankings?.bestScore}
-            rankingScopeLabel={rankingScopeLabel}
-            rankingUserCount={rankingUserCount}
             value={`${stats.bestScore}`}
           />
           <ProfileStat
             label={t('profile.stats.averageScore')}
             ranking={profile.rankings?.averageScore}
-            rankingScopeLabel={rankingScopeLabel}
-            rankingUserCount={rankingUserCount}
             value={`${stats.averageScore}`}
           />
           <ProfileStat
             label={t('profile.stats.totalDuration')}
             ranking={profile.rankings?.totalDurationMs}
-            rankingScopeLabel={rankingScopeLabel}
-            rankingUserCount={rankingUserCount}
             value={formatDuration(stats.totalDurationMs)}
           />
           <ProfileStat
             label={t('profile.stats.totalGas')}
             ranking={profile.rankings?.totalGasLevel}
-            rankingScopeLabel={rankingScopeLabel}
-            rankingUserCount={rankingUserCount}
             value={`${Math.round(stats.totalGasLevel)}`}
           />
         </View>
@@ -574,6 +558,59 @@ const styles = StyleSheet.create({
   },
   rankingFilterCard: {
     marginBottom: 12,
+  },
+  playersRankingCard: {
+    gap: 8,
+    marginBottom: 22,
+  },
+  playerRankingRow: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    padding: 8,
+  },
+  playerRankBadge: {
+    alignItems: 'center',
+    borderColor: colors.neonGreen,
+    borderRadius: 10,
+    borderWidth: 1,
+    height: 34,
+    justifyContent: 'center',
+    width: 38,
+  },
+  playerRank: {
+    color: colors.neonGreen,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  playerRankingIdentity: {
+    flex: 1,
+    minWidth: 0,
+  },
+  playerRankingName: {
+    color: colors.textPrimary,
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  playerRankingUsername: {
+    color: colors.textSecondary,
+    fontSize: 8,
+    marginTop: 2,
+  },
+  playerRankingStats: {
+    flexDirection: 'row',
+    gap: 5,
+    width: 168,
+  },
+  emptyRankingText: {
+    color: colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   loadingCard: {
     alignItems: 'center',

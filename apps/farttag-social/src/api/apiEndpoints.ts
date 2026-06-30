@@ -35,7 +35,7 @@ export const apiEndpoints = {
   },
   leaderboards: {
     friends: '/api/leaderboards/friends',
-    global: '/api/leaderboards/global',
+    global: (rankingScope = 'world') => `/api/leaderboards/global?rankingScope=${encodeURIComponent(rankingScope)}`,
   },
   notifications: {
     preferences: '/api/notifications/preferences',

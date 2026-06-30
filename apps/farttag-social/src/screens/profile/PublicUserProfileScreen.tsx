@@ -58,6 +58,9 @@ export const PublicUserProfileScreen = ({ navigation, route }: PublicUserProfile
               <Text style={styles.stat}>{profile.globalStats.totalFarts} FARTS</Text>
               <Text style={styles.stat}>{profile.globalStats.publicFarts} PUBLICS</Text>
               <Text style={styles.stat}>{profile.globalStats.legendaryFarts} LEGENDAIRES</Text>
+              <Text style={styles.stat}>MOY {profile.globalStats.averageOfficialScore}</Text>
+              <Text style={styles.stat}>{profile.globalStats.totalReactionsReceived} REACTIONS</Text>
+              <Text style={styles.stat}>BEST {profile.bestFart?.officialScore ?? '--'}</Text>
             </View>
           ) : null}
         </View>

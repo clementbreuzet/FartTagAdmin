@@ -13,9 +13,9 @@ const fallbackBoards = (): LeaderboardBoards => ({
 });
 
 export const leaderboardsApi = {
-  async getGlobal(): Promise<LeaderboardBoards> {
+  async getGlobal(rankingScope = 'world'): Promise<LeaderboardBoards> {
     try {
-      const response = await apiRequest<BackendLeaderboardsResponse>(apiEndpoints.leaderboards.global);
+      const response = await apiRequest<BackendLeaderboardsResponse>(apiEndpoints.leaderboards.global(rankingScope));
       const boards = {
         global: mapLeaderboardBoard(response.global),
         week: mapLeaderboardBoard(response.week),
